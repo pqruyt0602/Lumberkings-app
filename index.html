@@ -13,6 +13,7 @@
 <title>木作設備中心</title>
 <style>
 :root{--bg:#f4f2ed;--card:#fff;--ink:#1f2328;--muted:#7a7f87;--line:#e7e2d9;--accent:#7a5c3e;--danger:#b24a3a;--ok:#527a5b;--warn:#b57a22}*{box-sizing:border-box}html,body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:430px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:92px}.top{padding:calc(20px + env(safe-area-inset-top)) 18px 14px;background:linear-gradient(180deg,#262321,#37312c);color:#fff}.brand{display:flex;justify-content:space-between;align-items:center}.brand h1{font-size:20px;margin:0;font-weight:800}.badge{font-size:12px;background:#ffffff18;padding:6px 9px;border-radius:999px}.subtitle{margin-top:6px;color:#d6d1cb;font-size:13px}.userline{font-size:11px;color:#d6d1cb;margin-top:5px}.search{margin-top:14px;background:#fff;border-radius:13px;padding:11px 12px}.search input{border:0;outline:0;width:100%}.section{padding:14px 16px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}.metric{cursor:pointer;transition:.15s}.metric:active{transform:scale(.98)}.metric.active{outline:2px solid var(--accent);outline-offset:-2px}.metric strong{font-size:26px;display:block;margin-top:6px}.metric span{font-size:12px;color:var(--muted)}.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;font-size:12px}.q b{display:block;font-size:19px;margin-bottom:5px}.title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}.title h2{font-size:16px;margin:0}.title a{font-size:12px;color:var(--accent)}.item{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:9px}.icon{width:48px;height:48px;border-radius:13px;background:#eee7df;display:grid;place-items:center;font-size:24px}.itemmain{flex:1}.itemmain b{font-size:14px}.meta{font-size:12px;color:var(--muted);margin-top:4px}.status{font-size:11px;padding:5px 8px;border-radius:999px;white-space:nowrap}.red{background:#fae7e3;color:var(--danger)}.green{background:#e6f1e8;color:var(--ok)}.yellow{background:#fbf0da;color:var(--warn)}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:white;border-top:1px solid var(--line);padding:8px 4px calc(10px + env(safe-area-inset-bottom));z-index:10}.nav div{text-align:center;font-size:10px;color:var(--muted)}.nav b{display:block;font-size:20px;margin-bottom:2px}.screen{display:none}.screen.active{display:block}.header{padding:calc(18px + env(safe-area-inset-top)) 16px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.header h2{margin:0;font-size:18px}.header p{margin:5px 0 0;color:var(--muted);font-size:12px}.form{padding:14px 16px}.label{font-size:12px;color:var(--muted);margin:12px 0 6px}.input,.select,.textarea{width:100%;padding:12px;border:1px solid var(--line);background:#fff;border-radius:12px}.textarea{min-height:88px}.btn{width:100%;padding:13px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:700;margin-top:16px}.btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}.btn.ok{background:var(--ok)}.detailactions{padding:0 16px 4px}.detailactions .btn{margin-top:8px}.detailtop{padding:16px}.hero{background:#2f2b27;color:white;border-radius:18px;padding:18px}.hero h3{margin:0 0 6px}.hero p{margin:3px 0;color:#ded8d2;font-size:12px}.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.kv div{background:#ffffff0d;padding:10px;border-radius:10px}.kv b{display:block;font-size:15px}.kv span{font-size:10px;color:#d9d1ca}.timeline{padding:0 16px 16px}.tl{border-left:2px solid #d8c6af;padding:0 0 16px 14px;margin-left:7px;position:relative}.tl:before{content:"";position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;background:var(--accent)}.tl b{font-size:13px}.tl p{font-size:12px;color:var(--muted);margin:4px 0}.empty,.loading{padding:20px;color:var(--muted);text-align:center;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.install{margin:14px 16px 0;padding:12px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:12px;color:var(--muted)}.loginwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,#262321,#3a332d)}.loginbox{width:100%;max-width:390px;background:#fff;border-radius:20px;padding:22px}.loginbox h1{margin:0 0 6px;font-size:23px}.loginbox p{margin:0 0 18px;color:var(--muted);font-size:13px}.err{display:none;margin-top:12px;padding:10px;border-radius:10px;background:#fae7e3;color:var(--danger);font-size:12px}
+.tlhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.tlmenu{display:flex;gap:6px}.mini{border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 8px;font-size:11px;color:var(--accent)}.mini.danger{color:var(--danger)}.modal{position:fixed;inset:0;background:#0008;z-index:50;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modalbox{width:min(430px,100%);max-height:90vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}.modalbox h3{margin:0 0 8px}.modalactions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.modalactions .btn{margin-top:10px}
 </style>
 </head>
 <body>
@@ -22,7 +23,7 @@
 <div id="detail" class="screen"><div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div><div class="detailtop"><div class="hero" id="detailHero"></div></div><div id="detailActions" class="detailactions"></div><div class="section"><div class="title"><h2>維修紀錄</h2><a onclick="reportSelected()">＋報修</a></div></div><div class="timeline" id="repairTimeline"></div><div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div></div>
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
 <div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"><option>電動工具</option><option>氣動工具</option><option>量測工具</option><option>大型設備</option><option>手工具</option><option>其他</option></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
-<div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
+<div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
@@ -91,7 +92,7 @@ window.openDetail=id=>{
       r.description ? `故障：${r.description}` : null
     ].filter(Boolean);
     return `<div class="tl">
-      <b>${esc((r.fault_type||'其他')+'｜'+r.status)}</b>
+      <div class="tlhead"><b>${esc((r.fault_type||'其他')+'｜'+r.status)}</b><div class="tlmenu"><button class="mini" onclick="event.stopPropagation();editRepair(${r.id})">編輯</button><button class="mini danger" onclick="event.stopPropagation();deleteRepair(${r.id})">刪除</button></div></div>
       <p>${lines.map(esc).join('<br>')}</p>
     </div>`;
   }).join('') : '<div class="empty">目前沒有維修紀錄</div>';
@@ -178,6 +179,92 @@ window.completeRepair=async toolId=>{
 
   await refreshAll();
   openDetail(toolId);
+};
+
+
+function findRepairById(id){
+  for(const t of tools){
+    const r=(t.repairs||[]).find(x=>Number(x.id)===Number(id));
+    if(r)return {t,r};
+  }
+  return null;
+}
+window.editRepair=id=>{
+  const found=findRepairById(id);
+  if(!found)return alert('找不到這筆維修紀錄');
+  const {r}=found;
+  $('eRepairId').value=r.id;
+  $('eType').value=r.fault_type||'其他';
+  $('eDesc').value=r.description||'';
+  $('eRepairDate').value=r.repair_date||(r.created_at?r.created_at.slice(0,10):'');
+  $('eSentDate').value=r.sent_date||'';
+  $('eVendor').value=r.repair_vendor||'';
+  $('eContent').value=r.repair_content||'';
+  $('eCost').value=Number(r.repair_cost||0);
+  $('eStatus').value=r.status||'待維修';
+  $('eCompletedDate').value=r.completed_date||'';
+  $('repairEditModal').classList.add('open');
+};
+window.closeRepairEdit=()=>$('repairEditModal').classList.remove('open');
+
+async function syncToolStatusFromRepairs(toolId){
+  const {data,error}=await db.from('repairs').select('status,created_at').eq('tool_id',toolId).order('created_at',{ascending:false});
+  if(error)throw error;
+  const active=(data||[]).find(r=>r.status==='送修中'||r.status==='待維修');
+  const status=active?.status||'正常';
+  const {error:te}=await db.from('tools').update({status}).eq('id',toolId);
+  if(te)throw te;
+  return status;
+}
+
+window.saveRepairEdit=async()=>{
+  const id=Number($('eRepairId').value);
+  const found=findRepairById(id);
+  if(!found)return alert('找不到這筆維修紀錄');
+  const {t}=found;
+  const status=$('eStatus').value;
+  const cost=Number($('eCost').value||0);
+  if(!Number.isFinite(cost)||cost<0)return alert('維修費用格式不正確');
+
+  // 防止同一工具出現兩張同時進行中的維修單
+  if(status==='待維修'||status==='送修中'){
+    const conflict=(t.repairs||[]).find(r=>Number(r.id)!==id&&(r.status==='待維修'||r.status==='送修中'));
+    if(conflict)return alert('這台工具已有另一張進行中的維修單（'+conflict.status+'），不能把這筆改成進行中。');
+  }
+
+  const payload={
+    fault_type:$('eType').value,
+    description:$('eDesc').value.trim()||null,
+    repair_date:$('eRepairDate').value||null,
+    sent_date:$('eSentDate').value||null,
+    repair_vendor:$('eVendor').value.trim()||null,
+    repair_content:$('eContent').value.trim()||null,
+    repair_cost:cost,
+    status,
+    completed_date:status==='已完成'?($('eCompletedDate').value||today()):null,
+    updated_at:new Date().toISOString()
+  };
+  const {error}=await db.from('repairs').update(payload).eq('id',id);
+  if(error)return alert('修改失敗：'+error.message);
+  try{await syncToolStatusFromRepairs(t.id)}catch(e){return alert('維修紀錄已修改，但工具狀態同步失敗：'+e.message)}
+  closeRepairEdit();
+  await refreshAll();
+  openDetail(t.id);
+  alert('維修紀錄已更新');
+};
+
+window.deleteRepair=async id=>{
+  const found=findRepairById(id);
+  if(!found)return alert('找不到這筆維修紀錄');
+  const {t,r}=found;
+  const label=(r.fault_type||'其他')+'｜'+(r.status||'');
+  if(!confirm('確定刪除這筆維修紀錄？\n\n'+label+'\n\n刪除後無法復原。'))return;
+  const {error}=await db.from('repairs').delete().eq('id',id);
+  if(error)return alert('刪除失敗：'+error.message);
+  try{await syncToolStatusFromRepairs(t.id)}catch(e){return alert('維修紀錄已刪除，但工具狀態同步失敗：'+e.message)}
+  await refreshAll();
+  openDetail(t.id);
+  alert('維修紀錄已刪除');
 };
 
 window.saveRepair=async()=>{
