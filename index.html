@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#2f2b27"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="設備中心"/>
+<link rel="apple-touch-icon" href="./icons/icon-192.png"/>
+<link rel="manifest" href="./manifest.webmanifest"/>
+<title>木作設備中心</title>
+<style>
+:root{
+  --bg:#f4f2ed; --card:#fff; --ink:#1f2328; --muted:#7a7f87; --line:#e7e2d9;
+  --accent:#7a5c3e; --danger:#b24a3a; --ok:#527a5b; --warn:#b57a22;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;color:var(--ink)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:430px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:92px}
+.top{padding:calc(20px + env(safe-area-inset-top)) 18px 14px;background:linear-gradient(180deg,#262321,#37312c);color:#fff}
+.brand{display:flex;justify-content:space-between;align-items:center}.brand h1{font-size:20px;margin:0;font-weight:800}
+.badge{font-size:12px;background:#ffffff18;padding:6px 9px;border-radius:999px}.subtitle{margin-top:6px;color:#d6d1cb;font-size:13px}
+.search{margin-top:14px;background:#fff;border-radius:13px;padding:11px 12px}.search input{border:0;outline:0;width:100%}
+.section{padding:14px 16px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 2px 10px #00000008}
+.metric strong{font-size:26px;display:block;margin-top:6px}.metric span{font-size:12px;color:var(--muted)}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;font-size:12px}
+.q b{display:block;font-size:19px;margin-bottom:5px}.title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.title h2{font-size:16px;margin:0}.title a{font-size:12px;color:var(--accent)}
+.item{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:9px}
+.icon{width:48px;height:48px;border-radius:13px;background:#eee7df;display:grid;place-items:center;font-size:24px}
+.itemmain{flex:1}.itemmain b{font-size:14px}.meta{font-size:12px;color:var(--muted);margin-top:4px}
+.status{font-size:11px;padding:5px 8px;border-radius:999px;white-space:nowrap}.red{background:#fae7e3;color:var(--danger)} .green{background:#e6f1e8;color:var(--ok)} .yellow{background:#fbf0da;color:var(--warn)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:white;border-top:1px solid var(--line);padding:8px 4px calc(10px + env(safe-area-inset-bottom));z-index:10}
+.nav div{text-align:center;font-size:10px;color:var(--muted)} .nav b{display:block;font-size:20px;margin-bottom:2px}
+.screen{display:none}.screen.active{display:block}.header{padding:calc(18px + env(safe-area-inset-top)) 16px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.header h2{margin:0;font-size:18px}.header p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.form{padding:14px 16px}.label{font-size:12px;color:var(--muted);margin:12px 0 6px}.input,.select,.textarea{width:100%;padding:12px;border:1px solid var(--line);background:#fff;border-radius:12px}
+.textarea{min-height:88px}.btn{width:100%;padding:13px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:700;margin-top:16px}.btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.detailtop{padding:16px}.hero{background:#2f2b27;color:white;border-radius:18px;padding:18px}.hero h3{margin:0 0 6px}.hero p{margin:3px 0;color:#ded8d2;font-size:12px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.kv div{background:#ffffff0d;padding:10px;border-radius:10px}.kv b{display:block;font-size:15px}.kv span{font-size:10px;color:#d9d1ca}
+.timeline{padding:0 16px 16px}.tl{border-left:2px solid #d8c6af;padding:0 0 16px 14px;margin-left:7px;position:relative}.tl:before{content:"";position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.tl b{font-size:13px}.tl p{font-size:12px;color:var(--muted);margin:4px 0}.notice{margin:14px 16px;padding:12px;border-radius:12px;background:#fff7df;border:1px solid #f0d79b;font-size:12px}
+.empty{padding:20px;color:var(--muted);text-align:center;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.install{margin:14px 16px 0;padding:12px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="home" class="screen active">
+    <div class="top">
+      <div class="brand"><h1>木作設備中心</h1><div class="badge">PWA</div></div>
+      <div class="subtitle">工具、維修、保養，一支手機管起來</div>
+      <div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div>
+    </div>
+    <div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+    <div class="section">
+      <div class="grid">
+        <div class="card metric"><span>工具總數</span><strong id="mTotal">0</strong><span>目前建檔</span></div>
+        <div class="card metric"><span>待維修</span><strong id="mRepair">0</strong><span>需要處理</span></div>
+        <div class="card metric"><span>送修中</span><strong id="mFixing">0</strong><span>維修進度</span></div>
+        <div class="card metric"><span>累積維修費</span><strong id="mCost">$0</strong><span>所有設備</span></div>
+      </div>
+      <div class="quick">
+        <div class="q" onclick="show('add')"><b>＋</b>新增工具</div>
+        <div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div>
+        <div class="q" onclick="exportData()"><b>⬇️</b>匯出備份</div>
+        <div class="q" onclick="document.getElementById('importFile').click()"><b>⬆️</b>匯入備份</div>
+      </div>
+      <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="section"><div class="title"><h2>工具清單</h2><a onclick="show('add')">＋新增</a></div><div id="toolList"></div></div>
+  </div>
+
+  <div id="detail" class="screen">
+    <div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div>
+    <div class="detailtop"><div class="hero" id="detailHero"></div></div>
+    <div class="section"><div class="title"><h2>維修紀錄</h2><a onclick="reportSelected()">＋報修</a></div></div>
+    <div class="timeline" id="repairTimeline"></div>
+    <div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button><button class="btn secondary" onclick="deleteSelected()">刪除此工具</button></div>
+  </div>
+
+  <div id="report" class="screen">
+    <div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>建立後會直接保存到這支手機</p></div>
+    <div class="form">
+      <div class="label">設備</div><select id="rTool" class="select"></select>
+      <div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select>
+      <div class="label">故障描述</div><textarea id="rDesc" class="textarea" placeholder="例如：開機後馬達聲音變大，轉速不穩"></textarea>
+      <div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" inputmode="numeric" placeholder="0">
+      <div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select>
+      <button class="btn" onclick="saveRepair()">送出報修</button>
+    </div>
+  </div>
+
+  <div id="add" class="screen">
+    <div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div>
+    <div class="form">
+      <div class="label">工具名稱</div><input id="aName" class="input" placeholder="例如：修邊機">
+      <div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input" placeholder="Makita"></div><div><div class="label">型號</div><input id="aModel" class="input" placeholder="RT0700C"></div></div>
+      <div class="label">分類</div><select id="aCat" class="select"><option>電動工具</option><option>氣動工具</option><option>量測工具</option><option>大型設備</option><option>手工具</option><option>其他</option></select>
+      <div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number" inputmode="numeric" placeholder="6800"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div>
+      <div class="label">目前位置</div><input id="aLoc" class="input" placeholder="公司倉庫 / 某某工地">
+      <div class="label">使用人</div><input id="aUser" class="input" placeholder="例如：阿明">
+      <button class="btn" onclick="saveTool()">建立工具</button>
+    </div>
+  </div>
+
+  <div id="backup" class="screen"><div class="header"><h2 onclick="show('home')">‹ 備份說明</h2></div><div class="notice">這一版資料存在「這支手機的瀏覽器」裡。清除瀏覽器資料前，請先匯出備份。</div></div>
+
+  <div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="show('backup')"><b>☁</b>備份</div></div>
+</div>
+<script>
+const KEY='woodtool_manager_v3';let selectedId=null;
+function seed(){if(localStorage.getItem(KEY))return;localStorage.setItem(KEY,JSON.stringify({seq:3,tools:[
+{id:'TR-001',name:'修邊機',brand:'Makita',model:'RT0700C',category:'電動工具',price:6800,date:'2026-01-15',location:'板橋工地',user:'阿明',status:'待維修',repairs:[{date:'2026-08-17',type:'異音',desc:'啟動後有異音',cost:0,status:'待維修'},{date:'2026-04-12',type:'保養',desc:'更換碳刷',cost:1200,status:'已完成'}]},
+{id:'TR-002',name:'釘槍',brand:'MAX',model:'TA-35A/1022J',category:'氣動工具',price:5200,date:'2026-02-01',location:'公司倉庫',user:'',status:'送修中',repairs:[{date:'2026-08-10',type:'其他',desc:'連續擊發異常',cost:850,status:'送修中'}]},
+{id:'TR-003',name:'雷射水平儀',brand:'Leica',model:'Lino L2P5',category:'量測工具',price:9800,date:'2025-11-20',location:'信義區工地',user:'阿哲',status:'正常',repairs:[]}
+]}))}
+function getData(){return JSON.parse(localStorage.getItem(KEY)||'{"seq":0,"tools":[]}')}function setData(d){localStorage.setItem(KEY,JSON.stringify(d))}
+function money(n){return '$'+Number(n||0).toLocaleString('zh-TW')}function today(){return new Date().toISOString().slice(0,10)}
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)}
+function renderHome(){const d=getData(),q=(document.getElementById('search')?.value||'').trim().toLowerCase(),tools=d.tools.filter(t=>[t.id,t.name,t.brand,t.model,t.location,t.user].join(' ').toLowerCase().includes(q));mTotal.textContent=d.tools.length;mRepair.textContent=d.tools.filter(t=>t.status==='待維修').length;mFixing.textContent=d.tools.filter(t=>t.status==='送修中').length;mCost.textContent=money(d.tools.flatMap(t=>t.repairs||[]).reduce((s,r)=>s+Number(r.cost||0),0));toolList.innerHTML=tools.length?tools.map(t=>{const cls=t.status==='待維修'?'red':t.status==='送修中'?'yellow':'green';return `<div class="item" onclick="openDetail('${t.id}')"><div class="icon">${t.category==='氣動工具'?'🔩':t.category==='量測工具'?'📐':'🪚'}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(t.id+'・'+(t.model||'無型號')+'・'+(t.location||'未設定位置'))}</div></div><div class="status ${cls}">${esc(t.status||'正常')}</div></div>`}).join(''):'<div class="empty">目前沒有符合的工具</div>'}
+function saveTool(){const name=aName.value.trim();if(!name){alert('請輸入工具名稱');return}const d=getData();d.seq=Number(d.seq||0)+1;const id='TR-'+String(d.seq).padStart(3,'0');d.tools.push({id,name,brand:aBrand.value.trim(),model:aModel.value.trim(),category:aCat.value,price:Number(aPrice.value||0),date:aDate.value,location:aLoc.value.trim(),user:aUser.value.trim(),status:'正常',repairs:[]});setData(d);alert('已建立 '+id);show('home')}
+function openDetail(id){selectedId=id;const t=getData().tools.find(x=>x.id===id);if(!t)return;detailSub.textContent=t.id+'・'+(t.category||'');const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.cost||0),0);detailHero.innerHTML=`<h3>${esc((t.brand||'')+' '+t.name)}</h3><p>${esc(t.model||'無型號')}</p><div class="kv"><div><span>目前狀態</span><b>${esc(t.status||'正常')}</b></div><div><span>目前位置</span><b>${esc(t.location||'未設定')}</b></div><div><span>目前使用人</span><b>${esc(t.user||'未指定')}</b></div><div><span>購入價格</span><b>${money(t.price)}</b></div><div><span>累積維修費</span><b>${money(cost)}</b></div><div><span>維修占比</span><b>${t.price?Math.round(cost/t.price*100):0}%</b></div></div>`;const rs=[...(t.repairs||[])].reverse();repairTimeline.innerHTML=rs.length?rs.map(r=>`<div class="tl"><b>${esc(r.date+'｜'+r.type+'｜'+r.status)}</b><p>${esc(r.desc||'無描述')}・${money(r.cost)}</p></div>`).join(''):'<div class="empty">目前沒有維修紀錄</div>';show('detail')}
+function fillReportTools(){const d=getData();rTool.innerHTML=d.tools.map(t=>`<option value="${t.id}">${esc(t.id+'｜'+(t.brand||'')+' '+t.name)}</option>`).join('');if(selectedId&&d.tools.some(t=>t.id===selectedId))rTool.value=selectedId}
+function quickReport(){selectedId=null;show('report')}function reportSelected(){show('report')}function backFromReport(){selectedId?openDetail(selectedId):show('home')}
+function saveRepair(){const id=rTool.value;if(!id){alert('目前沒有工具可報修');return}const d=getData(),t=d.tools.find(x=>x.id===id),rec={date:today(),type:rType.value,desc:rDesc.value.trim(),cost:Number(rCost.value||0),status:rStatus.value};t.repairs=t.repairs||[];t.repairs.push(rec);t.status=rec.status==='已完成'?'正常':rec.status;setData(d);rDesc.value='';rCost.value='';alert('報修紀錄已保存');selectedId=id;openDetail(id)}
+function deleteSelected(){if(!selectedId)return;if(!confirm('確定刪除這台工具？'))return;const d=getData();d.tools=d.tools.filter(t=>t.id!==selectedId);setData(d);selectedId=null;show('home')}
+function exportData(){const blob=new Blob([localStorage.getItem(KEY)||'{}'],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='木作設備中心_備份_'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(!obj.tools||!Array.isArray(obj.tools))throw new Error();setData(obj);alert('備份匯入完成');renderHome()}catch(err){alert('這不是有效的備份檔')}};r.readAsText(f)}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+seed();renderHome();
+if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone){document.getElementById('installHint').style.display='none'}
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
