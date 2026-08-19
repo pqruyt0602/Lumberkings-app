@@ -58,15 +58,143 @@ window.setStatusFilter=s=>{statusFilter=s;renderHome();window.scrollTo({top:docu
 window.renderHome=()=>{const q=($('search')?.value||'').trim().toLowerCase();let f=tools.filter(t=>[t.tool_code,t.name,t.brand,t.model,t.location,t.current_user_name].join(' ').toLowerCase().includes(q));if(statusFilter!=='全部')f=f.filter(t=>t.status===statusFilter);$('mTotal').textContent=tools.length;$('mRepair').textContent=tools.filter(t=>t.status==='待維修').length;$('mFixing').textContent=tools.filter(t=>t.status==='送修中').length;$('mCost').textContent=money(tools.flatMap(t=>t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0));['cardAll','cardRepair','cardFixing','cardCost'].forEach(id=>$(id)?.classList.remove('active'));$(statusFilter==='待維修'?'cardRepair':statusFilter==='送修中'?'cardFixing':'cardAll')?.classList.add('active');$('toolList').innerHTML=f.length?f.map(t=>{const cls=t.status==='待維修'?'red':t.status==='送修中'?'yellow':'green',icon=t.category==='氣動工具'?'🔩':t.category==='量測工具'?'📐':'🪚';return `<div class="item" onclick="openDetail(${t.id})"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(t.tool_code+'・'+(t.model||'無型號')+'・'+(t.location||'未設定位置'))}</div></div><div class="status ${cls}">${esc(t.status||'正常')}</div></div>`}).join(''):`<div class="empty">${statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`};
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
 window.saveTool=async()=>{const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
-window.openDetail=id=>{selectedId=id;const t=tools.find(x=>x.id===id);if(!t)return;$('detailSub').textContent=t.tool_code+'・'+(t.category||'');const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0);$('detailHero').innerHTML=`<h3>${esc((t.brand||'')+' '+t.name)}</h3><p>${esc(t.model||'無型號')}</p><div class="kv"><div><span>目前狀態</span><b>${esc(t.status||'正常')}</b></div><div><span>目前位置</span><b>${esc(t.location||'未設定')}</b></div><div><span>目前使用人</span><b>${esc(t.current_user_name||'未指定')}</b></div><div><span>購入價格</span><b>${money(t.purchase_price)}</b></div><div><span>累積維修費</span><b>${money(cost)}</b></div><div><span>維修占比</span><b>${t.purchase_price?Math.round(cost/Number(t.purchase_price)*100):0}%</b></div></div>`;const rs=[...(t.repairs||[])].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));$('repairTimeline').innerHTML=rs.length?rs.map(r=>`<div class="tl"><b>${esc((r.repair_date||r.created_at?.slice(0,10)||'')+'｜'+(r.fault_type||'其他')+'｜'+r.status)}</b><p>${esc(r.description||'無描述')}・${money(r.repair_cost)}</p></div>`).join(''):'<div class="empty">目前沒有維修紀錄</div>';let actions='';if((t.status||'正常')==='正常')actions=`<button class="btn" onclick="reportSelected()">建立報修單</button>`;else if(t.status==='待維修')actions=`<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button><button class="btn secondary" onclick="reportSelected()">補充維修紀錄</button>`;else if(t.status==='送修中')actions=`<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;$('detailActions').innerHTML=actions;show('detail')};
+window.openDetail=id=>{
+  selectedId=id;
+  const t=tools.find(x=>x.id===id);
+  if(!t)return;
+
+  $('detailSub').textContent=t.tool_code+'・'+(t.category||'');
+  const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0);
+
+  $('detailHero').innerHTML=`
+    <h3>${esc((t.brand||'')+' '+t.name)}</h3>
+    <p>${esc(t.model||'無型號')}</p>
+    <div class="kv">
+      <div><span>目前狀態</span><b>${esc(t.status||'正常')}</b></div>
+      <div><span>目前位置</span><b>${esc(t.location||'未設定')}</b></div>
+      <div><span>目前使用人</span><b>${esc(t.current_user_name||'未指定')}</b></div>
+      <div><span>購入價格</span><b>${money(t.purchase_price)}</b></div>
+      <div><span>累積維修費</span><b>${money(cost)}</b></div>
+      <div><span>維修占比</span><b>${t.purchase_price?Math.round(cost/Number(t.purchase_price)*100):0}%</b></div>
+    </div>`;
+
+  const rs=[...(t.repairs||[])].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  $('repairTimeline').innerHTML=rs.length ? rs.map(r=>{
+    const reportDate=r.repair_date || (r.created_at ? r.created_at.slice(0,10) : '');
+    const lines=[
+      `報修：${reportDate||'未填'}`,
+      r.sent_date ? `送修：${r.sent_date}` : null,
+      r.completed_date ? `完成：${r.completed_date}` : null,
+      r.repair_vendor ? `廠商：${r.repair_vendor}` : null,
+      r.repair_content ? `維修內容：${r.repair_content}` : null,
+      `費用：${money(r.repair_cost)}`,
+      r.description ? `故障：${r.description}` : null
+    ].filter(Boolean);
+    return `<div class="tl">
+      <b>${esc((r.fault_type||'其他')+'｜'+r.status)}</b>
+      <p>${lines.map(esc).join('<br>')}</p>
+    </div>`;
+  }).join('') : '<div class="empty">目前沒有維修紀錄</div>';
+
+  let actions='';
+  if((t.status||'正常')==='正常'){
+    actions=`<button class="btn" onclick="reportSelected()">建立報修單</button>`;
+  }else if(t.status==='待維修'){
+    actions=`<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
+  }else if(t.status==='送修中'){
+    actions=`<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
+  }
+  $('detailActions').innerHTML=actions;
+  show('detail');
+};
 window.fillReportTools=()=>{$('rTool').innerHTML=tools.map(t=>`<option value="${t.id}">${esc(t.tool_code+'｜'+(t.brand||'')+' '+t.name)}</option>`).join('');if(selectedId&&tools.some(t=>t.id===selectedId))$('rTool').value=selectedId};window.quickReport=()=>{selectedId=null;show('report')};window.reportSelected=()=>show('report');window.backFromReport=()=>selectedId?openDetail(selectedId):show('home');
-window.startRepair=async toolId=>{if(!confirm('確定將這台工具改為「送修中」？'))return;const t=tools.find(x=>x.id===toolId),rs=[...(t?.repairs||[])].filter(r=>r.status==='待維修').sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));if(rs[0]){const {error}=await db.from('repairs').update({status:'送修中'}).eq('id',rs[0].id);if(error)return alert('更新維修單失敗：'+error.message)}const {error}=await db.from('tools').update({status:'送修中'}).eq('id',toolId);if(error)return alert('更新工具狀態失敗：'+error.message);await refreshAll();openDetail(toolId)};
-window.completeRepair=async toolId=>{const t=tools.find(x=>x.id===toolId),rs=[...(t?.repairs||[])].filter(r=>r.status==='送修中'||r.status==='待維修').sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)),r=rs[0];if(!r)return alert('找不到進行中的維修紀錄');const v=prompt('請輸入實際維修費用',String(r.repair_cost||0));if(v===null)return;const cost=Number(v);if(!Number.isFinite(cost)||cost<0)return alert('維修費用格式不正確');if(!confirm('確認維修完成，並將工具恢復為「正常」？'))return;const {error}=await db.from('repairs').update({status:'已完成',repair_cost:cost,completed_date:today()}).eq('id',r.id);if(error)return alert('完成維修失敗：'+error.message);const {error:te}=await db.from('tools').update({status:'正常'}).eq('id',toolId);if(te)return alert('工具狀態更新失敗：'+te.message);await refreshAll();openDetail(toolId)};
+window.startRepair=async toolId=>{
+  const t=tools.find(x=>x.id===toolId);
+  const active=[...(t?.repairs||[])]
+    .filter(r=>r.status==='待維修')
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const r=active[0];
+
+  if(!r)return alert('找不到待維修的維修單');
+
+  const vendor=prompt('請輸入維修廠商（可先留空）',r.repair_vendor||'');
+  if(vendor===null)return;
+
+  const sentDate=prompt('請輸入送修日期 YYYY-MM-DD',today());
+  if(sentDate===null)return;
+
+  if(!confirm('確定將這張維修單改為「送修中」？'))return;
+
+  const {error}=await db.from('repairs').update({
+    status:'送修中',
+    sent_date:sentDate||today(),
+    repair_vendor:vendor.trim()||null,
+    updated_at:new Date().toISOString()
+  }).eq('id',r.id);
+
+  if(error)return alert('更新維修單失敗：'+error.message);
+
+  const {error:te}=await db.from('tools').update({status:'送修中'}).eq('id',toolId);
+  if(te)return alert('維修單已更新，但工具狀態更新失敗：'+te.message);
+
+  await refreshAll();
+  openDetail(toolId);
+};
+
+window.completeRepair=async toolId=>{
+  const t=tools.find(x=>x.id===toolId);
+  const active=[...(t?.repairs||[])]
+    .filter(r=>r.status==='送修中')
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const r=active[0];
+
+  if(!r)return alert('找不到送修中的維修單');
+
+  const content=prompt('請輸入實際維修內容',r.repair_content||'');
+  if(content===null)return;
+
+  const v=prompt('請輸入實際維修費用',String(r.repair_cost||0));
+  if(v===null)return;
+  const cost=Number(v);
+  if(!Number.isFinite(cost)||cost<0)return alert('維修費用格式不正確');
+
+  const completedDate=prompt('請輸入完成日期 YYYY-MM-DD',today());
+  if(completedDate===null)return;
+
+  if(!confirm('確認維修完成，並將工具恢復為「正常」？'))return;
+
+  const {error}=await db.from('repairs').update({
+    status:'已完成',
+    repair_content:content.trim()||null,
+    repair_cost:cost,
+    completed_date:completedDate||today(),
+    updated_at:new Date().toISOString()
+  }).eq('id',r.id);
+
+  if(error)return alert('完成維修失敗：'+error.message);
+
+  const {error:te}=await db.from('tools').update({status:'正常'}).eq('id',toolId);
+  if(te)return alert('工具狀態更新失敗：'+te.message);
+
+  await refreshAll();
+  openDetail(toolId);
+};
+
 window.saveRepair=async()=>{
   const toolId=Number($('rTool').value);
   if(!toolId)return alert('目前沒有工具可報修');
 
   const status=$('rStatus').value;
+
+  const existingTool=tools.find(t=>t.id===toolId);
+  const activeTicket=(existingTool?.repairs||[]).find(r=>r.status==='待維修'||r.status==='送修中');
+  if(activeTicket){
+    alert('這台工具目前已有進行中的維修單（'+activeTicket.status+'），請先完成原本的維修單。');
+    selectedId=toolId;
+    openDetail(toolId);
+    return;
+  }
+
   const p={
     tool_id:toolId,
     fault_type:$('rType').value,
