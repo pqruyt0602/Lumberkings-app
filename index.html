@@ -34,8 +34,26 @@ $('loginBtn').onclick=login;$('loginPassword').addEventListener('keydown',e=>{if
 async function login(){const email=$('loginEmail').value.trim(),password=$('loginPassword').value;$('loginErr').style.display='none';if(!email||!password){return loginErr('請輸入 Email 與密碼')}$('loginBtn').disabled=true;const {error}=await db.auth.signInWithPassword({email,password});$('loginBtn').disabled=false;if(error)loginErr('登入失敗：'+error.message)}
 function loginErr(m){$('loginErr').textContent=m;$('loginErr').style.display='block'}window.logout=()=>db.auth.signOut();
 window.show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)};
-async function loadTools(){const {data,error}=await db.from('tools').select('*, repairs(*)').order('tool_code');if(error){$('toolList').innerHTML='<div class="empty">讀取失敗：'+esc(error.message)+'</div>';return}tools=data||[];renderHome()}
-window.refreshAll=async()=>{if($('toolList'))$('toolList').innerHTML='<div class="loading">同步雲端資料中…</div>';await loadTools()};
+async function loadTools(){
+  const [{data:toolRows,error:toolErr},{data:repairRows,error:repairErr}] = await Promise.all([
+    db.from('tools').select('*').order('tool_code'),
+    db.from('repairs').select('*').order('created_at',{ascending:false})
+  ]);
+  if(toolErr){
+    $('toolList').innerHTML='<div class="empty">工具讀取失敗：'+esc(toolErr.message)+'</div>';
+    return false;
+  }
+  if(repairErr){
+    $('toolList').innerHTML='<div class="empty">維修紀錄讀取失敗：'+esc(repairErr.message)+'</div>';
+    return false;
+  }
+  const byTool={};
+  (repairRows||[]).forEach(r=>(byTool[r.tool_id]??=[]).push(r));
+  tools=(toolRows||[]).map(t=>({...t,repairs:byTool[t.id]||[]}));
+  renderHome();
+  return true;
+}
+window.refreshAll=async()=>{if($('toolList'))$('toolList').innerHTML='<div class="loading">同步雲端資料中…</div>';return await loadTools()};
 window.setStatusFilter=s=>{statusFilter=s;renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
 window.renderHome=()=>{const q=($('search')?.value||'').trim().toLowerCase();let f=tools.filter(t=>[t.tool_code,t.name,t.brand,t.model,t.location,t.current_user_name].join(' ').toLowerCase().includes(q));if(statusFilter!=='全部')f=f.filter(t=>t.status===statusFilter);$('mTotal').textContent=tools.length;$('mRepair').textContent=tools.filter(t=>t.status==='待維修').length;$('mFixing').textContent=tools.filter(t=>t.status==='送修中').length;$('mCost').textContent=money(tools.flatMap(t=>t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0));['cardAll','cardRepair','cardFixing','cardCost'].forEach(id=>$(id)?.classList.remove('active'));$(statusFilter==='待維修'?'cardRepair':statusFilter==='送修中'?'cardFixing':'cardAll')?.classList.add('active');$('toolList').innerHTML=f.length?f.map(t=>{const cls=t.status==='待維修'?'red':t.status==='送修中'?'yellow':'green',icon=t.category==='氣動工具'?'🔩':t.category==='量測工具'?'📐':'🪚';return `<div class="item" onclick="openDetail(${t.id})"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(t.tool_code+'・'+(t.model||'無型號')+'・'+(t.location||'未設定位置'))}</div></div><div class="status ${cls}">${esc(t.status||'正常')}</div></div>`}).join(''):`<div class="empty">${statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`};
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
@@ -44,7 +62,53 @@ window.openDetail=id=>{selectedId=id;const t=tools.find(x=>x.id===id);if(!t)retu
 window.fillReportTools=()=>{$('rTool').innerHTML=tools.map(t=>`<option value="${t.id}">${esc(t.tool_code+'｜'+(t.brand||'')+' '+t.name)}</option>`).join('');if(selectedId&&tools.some(t=>t.id===selectedId))$('rTool').value=selectedId};window.quickReport=()=>{selectedId=null;show('report')};window.reportSelected=()=>show('report');window.backFromReport=()=>selectedId?openDetail(selectedId):show('home');
 window.startRepair=async toolId=>{if(!confirm('確定將這台工具改為「送修中」？'))return;const t=tools.find(x=>x.id===toolId),rs=[...(t?.repairs||[])].filter(r=>r.status==='待維修').sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));if(rs[0]){const {error}=await db.from('repairs').update({status:'送修中'}).eq('id',rs[0].id);if(error)return alert('更新維修單失敗：'+error.message)}const {error}=await db.from('tools').update({status:'送修中'}).eq('id',toolId);if(error)return alert('更新工具狀態失敗：'+error.message);await refreshAll();openDetail(toolId)};
 window.completeRepair=async toolId=>{const t=tools.find(x=>x.id===toolId),rs=[...(t?.repairs||[])].filter(r=>r.status==='送修中'||r.status==='待維修').sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)),r=rs[0];if(!r)return alert('找不到進行中的維修紀錄');const v=prompt('請輸入實際維修費用',String(r.repair_cost||0));if(v===null)return;const cost=Number(v);if(!Number.isFinite(cost)||cost<0)return alert('維修費用格式不正確');if(!confirm('確認維修完成，並將工具恢復為「正常」？'))return;const {error}=await db.from('repairs').update({status:'已完成',repair_cost:cost,completed_date:today()}).eq('id',r.id);if(error)return alert('完成維修失敗：'+error.message);const {error:te}=await db.from('tools').update({status:'正常'}).eq('id',toolId);if(te)return alert('工具狀態更新失敗：'+te.message);await refreshAll();openDetail(toolId)};
-window.saveRepair=async()=>{const toolId=Number($('rTool').value);if(!toolId)return alert('目前沒有工具可報修');const status=$('rStatus').value,p={tool_id:toolId,fault_type:$('rType').value,description:$('rDesc').value.trim()||null,repair_cost:Number($('rCost').value||0),status,reported_by_name:currentUser?.email||null,repair_date:today(),completed_date:status==='已完成'?today():null,created_by:currentUser?.id||null};const {error}=await db.from('repairs').insert(p);if(error)return alert('報修失敗：'+error.message);await db.from('tools').update({status:status==='已完成'?'正常':status}).eq('id',toolId);alert('報修紀錄已保存');selectedId=toolId;await refreshAll();openDetail(toolId)};
+window.saveRepair=async()=>{
+  const toolId=Number($('rTool').value);
+  if(!toolId)return alert('目前沒有工具可報修');
+
+  const status=$('rStatus').value;
+  const p={
+    tool_id:toolId,
+    fault_type:$('rType').value,
+    description:$('rDesc').value.trim()||null,
+    repair_cost:Number($('rCost').value||0),
+    status,
+    reported_by_name:currentUser?.email||null,
+    repair_date:today(),
+    completed_date:status==='已完成'?today():null,
+    created_by:currentUser?.id||null
+  };
+
+  const btn=$('saveRepairBtn');
+  btn.disabled=true;
+  btn.textContent='儲存中…';
+
+  const {error:repairError}=await db.from('repairs').insert(p);
+  if(repairError){
+    btn.disabled=false;
+    btn.textContent='送出報修';
+    return alert('報修紀錄寫入失敗：'+repairError.message);
+  }
+
+  const newToolStatus=status==='已完成'?'正常':status;
+  const {error:toolError}=await db.from('tools').update({status:newToolStatus}).eq('id',toolId);
+  if(toolError){
+    btn.disabled=false;
+    btn.textContent='送出報修';
+    return alert('報修紀錄已建立，但工具狀態更新失敗：'+toolError.message);
+  }
+
+  selectedId=toolId;
+  const ok=await refreshAll();
+
+  btn.disabled=false;
+  btn.textContent='送出報修';
+
+  if(ok===false)return;
+  openDetail(toolId);
+  alert('報修完成，工具狀態已更新為「'+newToolStatus+'」');
+};
+
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));init();
 </script>
 </body></html>
