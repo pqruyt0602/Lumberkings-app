@@ -703,7 +703,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.19 自動更新 ===== */
+/* ===== V17.20 自動更新 ===== */
 .update-toast{
   position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
   transform:translateX(-50%);z-index:2147483647;
@@ -713,6 +713,29 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 .update-toast.show{display:block}
 
+
+/* ===== V17.20 記工人員資料可修改 ===== */
+#workerEditModal{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  padding-top:20px!important;
+  background:rgba(0,0,0,.58)!important;
+}
+#workerEditModal.show{display:flex!important}
+#workerEditModal .work-sheet{
+  width:min(430px,calc(100% - 20px));
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+  background:var(--bg);
+  border-radius:20px;
+  padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+}
+.worker-info-edit{color:var(--accent)!important}
+
 </style>
 </head>
 <body>
@@ -720,7 +743,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.19</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.20</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -3355,6 +3378,7 @@ function renderWorkMasterManager(tab=workMasterTab){
       <div class="master-row">
         <div><b>${esc(w.worker_name)}</b><small>${esc(w.worker_type||'師傅')}｜日薪 ${money(w.daily_wage||0)}</small></div>
         <div class="master-row-actions">
+          <button class="worker-info-edit" type="button" onclick="editWorkerInfo(${Number(w.id)})">資料</button>
           <button class="wage-edit" type="button" onclick="editWorkerWage(${Number(w.id)})">薪資</button>
           <button type="button" onclick="disableWorker(${Number(w.id)})">停用</button>
         </div>
@@ -3387,6 +3411,78 @@ async function addWorker(){
   document.getElementById('newWorkerWage').value='';
   await loadWorkMaster();
   renderWorkMasterManager('workers');
+}
+
+
+function editWorkerInfo(id){
+  if(!isAdmin())return alert('只有管理員可以修改人員資料');
+  const worker=workers.find(w=>Number(w.id)===Number(id));
+  if(!worker)return alert('找不到這位人員');
+
+  document.getElementById('editWorkerInfoId').value=worker.id;
+  document.getElementById('editWorkerInfoName').value=worker.worker_name||'';
+  document.getElementById('editWorkerInfoType').value=worker.worker_type||'師傅';
+
+  const masterModal=document.getElementById('workMasterModal');
+  if(masterModal?.classList.contains('show')){
+    masterModal.dataset.reopenAfterWorkerEdit='1';
+    masterModal.classList.remove('show');
+  }
+
+  const modal=document.getElementById('workerEditModal');
+  if(modal){
+    document.body.appendChild(modal);
+    modal.classList.add('show');
+  }
+
+  setTimeout(()=>{
+    const input=document.getElementById('editWorkerInfoName');
+    input?.focus();
+    input?.select();
+  },80);
+}
+
+function closeWorkerInfoEdit(){
+  document.getElementById('workerEditModal')?.classList.remove('show');
+
+  const masterModal=document.getElementById('workMasterModal');
+  if(masterModal?.dataset.reopenAfterWorkerEdit==='1'){
+    delete masterModal.dataset.reopenAfterWorkerEdit;
+    masterModal.classList.add('show');
+  }
+}
+
+async function saveWorkerInfoEdit(){
+  if(!isAdmin())return alert('只有管理員可以修改人員資料');
+
+  const id=Number(document.getElementById('editWorkerInfoId').value);
+  const name=(document.getElementById('editWorkerInfoName').value||'').trim();
+  const type=(document.getElementById('editWorkerInfoType').value||'師傅').trim();
+
+  if(!id)return alert('找不到人員資料');
+  if(!name)return alert('姓名不能空白');
+
+  const current=workers.find(w=>Number(w.id)===id);
+  if(!current)return alert('找不到這位人員');
+
+  const {data,error}=await db.rpc('admin_update_worker_info',{
+    p_worker_id:id,
+    p_worker_name:name,
+    p_worker_type:type
+  });
+
+  if(error)return alert('修改人員資料失敗：'+error.message);
+
+  await loadWorkMaster();
+  await loadAttendance(attendanceDateKey);
+  renderWorkMasterManager('workers');
+  closeWorkerInfoEdit();
+
+  alert(
+    current.worker_name!==name
+      ? `已更新人員資料：${current.worker_name} → ${name}`
+      : `已更新人員資料：${name}`
+  );
 }
 
 function showWageStatus(message,type='ok'){
@@ -4061,6 +4157,9 @@ Object.assign(window,{
   renderWorkMasterManager,
   addWorkSite,
   addWorker,
+  editWorkerInfo,
+  closeWorkerInfoEdit,
+  saveWorkerInfoEdit,
   editWorkerWage,
   closeWageModal,
   saveWorkerWage,
@@ -4186,6 +4285,39 @@ Object.assign(window,{
   </div>
 </div>
 
+
+
+<div id="workerEditModal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <div>
+        <h2>✏️ 修改記工人員</h2>
+        <div class="stats-sub" style="margin-top:4px">可修改姓名與人員類型；過去記工姓名會一起同步。</div>
+      </div>
+      <button class="work-close" type="button" onclick="closeWorkerInfoEdit()">×</button>
+    </div>
+
+    <input id="editWorkerInfoId" type="hidden">
+
+    <div class="work-field">
+      <label>姓名</label>
+      <input id="editWorkerInfoName" type="text" maxlength="30">
+    </div>
+
+    <div class="work-field">
+      <label>人員類型</label>
+      <select id="editWorkerInfoType">
+        <option>師傅</option>
+        <option>半技</option>
+        <option>學徒</option>
+        <option>臨時工</option>
+      </select>
+    </div>
+
+    <button class="work-submit" type="button" onclick="saveWorkerInfoEdit()">儲存人員資料</button>
+    <div class="stats-sub" style="margin-top:8px">日薪仍請使用人員列表中的「薪資」按鈕修改。</div>
+  </div>
+</div>
 
 <div id="wageModal" class="work-modal">
   <div class="work-sheet">
