@@ -1,94 +1,76 @@
-const CACHE = 'woodtool-github-v2';
+const CACHE='woodtool-github-v17';
 
-const STATIC_ASSETS = [
+const ASSETS=[
+  './',
+  './index.html',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install',event=>{
   self.skipWaiting();
-
   event.waitUntil(
-    caches.open(CACHE).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE).then(cache=>cache.addAll(ASSETS))
   );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate',event=>{
   event.waitUntil(
     Promise.all([
-      caches.keys().then(keys => {
-        return Promise.all(
+      caches.keys().then(keys=>
+        Promise.all(
           keys
-            .filter(key => key !== CACHE)
-            .map(key => caches.delete(key))
-        );
-      }),
+            .filter(key=>key!==CACHE)
+            .map(key=>caches.delete(key))
+        )
+      ),
       self.clients.claim()
     ])
   );
 });
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET') return;
 
-  const request = event.request;
-  const url = new URL(request.url);
+  const request=event.request;
 
-  // HTML：優先抓 GitHub 最新版本
-  // 沒網路時才使用快取
-  if (
-    request.mode === 'navigate' ||
-    request.headers.get('accept')?.includes('text/html')
-  ) {
+  // HTML / 頁面導覽：優先抓最新版
+  if(
+    request.mode==='navigate' ||
+    request.destination==='document'
+  ){
     event.respondWith(
-      fetch(request, { cache: 'no-store' })
-        .then(response => {
-          const copy = response.clone();
+      fetch(request,{cache:'no-store'})
+        .then(response=>{
+          const copy=response.clone();
 
-          caches.open(CACHE).then(cache => {
-            cache.put('./index.html', copy);
-          });
+          caches
+            .open(CACHE)
+            .then(cache=>cache.put('./index.html',copy));
 
           return response;
         })
-        .catch(() => {
-          return caches.match('./index.html');
-        })
+        .catch(()=>caches.match('./index.html'))
     );
 
     return;
   }
 
-  // Supabase / API 資料不進 Service Worker 快取
-  if (
-    url.hostname.includes('supabase.co') ||
-    url.pathname.includes('/rest/v1/')
-  ) {
-    event.respondWith(fetch(request));
-    return;
-  }
-
-  // 圖示、manifest 等靜態檔案使用快取
+  // 其他靜態資源：快取優先
   event.respondWith(
-    caches.match(request).then(cached => {
-      const networkFetch = fetch(request)
-        .then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
+    caches.match(request).then(cached=>{
+      if(cached) return cached;
 
-            caches.open(CACHE).then(cache => {
-              cache.put(request, copy);
-            });
-          }
+      return fetch(request).then(response=>{
+        const copy=response.clone();
 
-          return response;
-        })
-        .catch(() => cached);
+        caches
+          .open(CACHE)
+          .then(cache=>cache.put(request,copy));
 
-      return cached || networkFetch;
+        return response;
+      });
     })
   );
 });
