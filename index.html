@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="theme-color" content="#2f2b27"/>
+<meta name="theme-color" content="#171717"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="設備中心"/>
@@ -532,6 +532,40 @@
   overflow:auto;background:var(--bg);border-radius:20px;padding:18px 16px 22px
 }
 
+
+/* ===== V17.11 深色系主題 ===== */
+:root{--bg:#171717;--card:#242321;--ink:#f3eee7;--muted:#aaa39a;--line:#3b3834;--accent:#9a7550;--danger:#e07a68;--ok:#78a984;--warn:#d7a14c}
+html,body,.app{background:var(--bg);color:var(--ink)}
+.top{background:linear-gradient(180deg,#111,#211d19)}
+.card,.q,.item,.header,.input,.select,.textarea,.install,.modalbox,.loanbox,.historyfilter,.batch-row,.qrLabelCard,.notice-item,.attendance-overview,.today-group,.attendance-nav button,.work-sheet,.worker-row,.master-tab,.master-add input,.master-add select,.master-row,.stats-range input,.stats-card,.stats-row,.wage-input,.worker-add-grid input,.worker-add-grid select,.worker-wage-row input,.worker-leave,.worker-overtime,.auth-secondary,.loginbox,.search,.mini,.label-size-btn,.custom-size input{background:#242321!important;color:var(--ink);border-color:var(--line)}
+.search input{background:transparent;color:var(--ink)}
+.search input::placeholder,input::placeholder,textarea::placeholder{color:#77716a}
+.nav{background:#1d1c1a;border-color:var(--line)}
+.nav div{color:#aaa39a}.nav b{color:#d5c3b0}
+.header{background:#1d1c1a}
+.hero{background:#111}
+.icon{background:#35302b}
+.btn.secondary{background:#242321;color:#c89c70;border-color:#9a7550}
+.label-size-btn.active,.catbtn.active,.historyfilter.active,.master-tab.active{background:var(--accent)!important;color:#fff}
+.catbtn{background:#242321;color:#aaa39a;border-color:var(--line)}
+.catfade{background:linear-gradient(90deg,rgba(23,23,23,0),rgba(23,23,23,.98) 55%)}
+.notice-card{background:#2b2421;border-color:#66463e;color:var(--ink)}
+.notice-item.unread{background:#2b2421;border-color:#704b42}
+.red{background:#402622;color:#f09a8c}.green{background:#22352a;color:#92c49e}.yellow{background:#3b3020;color:#e5b766}
+.loanactive{background:#32291f;border-color:#725b40}
+.stats-bar{background:#3a3631}
+.work-success,#wageStatus.ok{background:#213328;color:#8fc19b}
+#wageStatus.err,.err{background:#402622;color:#f09a8c}
+.work-delete{background:#242321!important}
+.loginwrap{background:linear-gradient(180deg,#0d0d0d,#211d19)}
+.loginbox{box-shadow:0 18px 60px #0008}
+.pending-badge{background:#3b3020;color:#e5b766}
+.site-total-chip{background:#3b3028;color:#d4aa7d}
+.leave-tag{background:#3b2925;color:#d9947c}.overtime-tag{background:#273141;color:#8fa9d1}
+#roleManagerModal,#registerModal,#resetPasswordModal,#newPasswordModal,.modal,.work-modal{background:rgba(0,0,0,.72)!important}
+/* 保持 QR／列印標籤為白底，避免列印變黑 */
+.qrimg,.qrurl,.labelpreview,.batch-label,.qrLabelCard{background:#fff!important;color:#111}
+@media print{html,body{background:#fff!important;color:#111!important}}
 </style>
 </head>
 <body>
