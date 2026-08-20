@@ -478,10 +478,52 @@
   padding:7px 8px!important;
 }
 
+
+/* ===== V17.9 帳號申請 ===== */
+.auth-secondary{
+  width:100%;
+  margin-top:10px;
+  padding:11px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+#registerModal{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483646!important;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:20px;
+  background:rgba(0,0,0,.55);
+}
+#registerModal.show{display:flex!important}
+#registerModal .work-sheet{
+  width:min(430px,calc(100% - 20px));
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+  background:var(--bg);
+  border-radius:20px;
+  padding:18px 16px 22px;
+}
+.pending-badge{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#fff0d9;
+  color:#9a6500;
+  font-size:10px;
+  font-weight:900;
+}
+
 </style>
 </head>
 <body>
-<div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button><div id="loginErr" class="err"></div></div></div>
+<div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button>
+      <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
 <div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版</div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
@@ -724,7 +766,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.8.3｜修正加班半天與1天算法
+// Lumberkings 木作設備中心 V17.9｜帳號申請＋管理員審核
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -3132,6 +3174,50 @@ async function loadWorkStats(){
 
 // V17.2.1：讓 HTML onclick 可以呼叫 module 內的案場記工函式
 
+
+function openRegisterModal(){
+  document.getElementById('registerModal')?.classList.add('show');
+}
+function closeRegisterModal(){
+  document.getElementById('registerModal')?.classList.remove('show');
+}
+function bindRegisterButton(){
+  const btn=document.getElementById('openRegisterBtn');
+  if(!btn || btn.dataset.bound==='1')return;
+  btn.dataset.bound='1';
+  btn.addEventListener('click',openRegisterModal);
+}
+async function submitRegistration(){
+  const name=document.getElementById('registerName')?.value.trim()||'';
+  const email=document.getElementById('registerEmail')?.value.trim().toLowerCase()||'';
+  const password=document.getElementById('registerPassword')?.value||'';
+  const password2=document.getElementById('registerPassword2')?.value||'';
+
+  if(!name)return alert('請輸入姓名');
+  if(!email)return alert('請輸入 Email');
+  if(password.length<6)return alert('密碼至少需要 6 碼');
+  if(password!==password2)return alert('兩次密碼不一致');
+
+  const {data,error}=await db.auth.signUp({
+    email,
+    password,
+    options:{data:{display_name:name}}
+  });
+  if(error)return alert('申請失敗：'+error.message);
+
+  // 若 Supabase 專案開啟 Email confirmation，這裡可能沒有 session；
+  // profile 由資料庫 trigger 自動建立為 pending。
+  await db.auth.signOut();
+  closeRegisterModal();
+
+  document.getElementById('registerName').value='';
+  document.getElementById('registerEmail').value='';
+  document.getElementById('registerPassword').value='';
+  document.getElementById('registerPassword2').value='';
+
+  alert('帳號申請已送出，請等待管理員核准後再登入。');
+}
+
 async function openRoleManager(){
   if(!isAdmin())return alert('只有管理員可以管理權限');
 
@@ -3170,15 +3256,32 @@ async function loadRoleManager(){
     <div class="master-row">
       <div>
         <b>${esc(u.display_name||u.email||'使用者')}</b>
-        <small>${esc(u.email||'')}｜目前：${roleLabel(u.role)}</small>
+        <small>${esc(u.email||'')}｜目前：${roleLabel(u.role)} ${u.approval_status==='pending'?'<span class="pending-badge">待審核</span>':''}</small>
       </div>
-      <select onchange="setUserRole('${esc(u.user_id)}',this.value)" ${u.user_id===currentProfile?.id?'disabled':''}>
-        <option value="employee" ${u.role==='employee'?'selected':''}>一般員工</option>
-        <option value="foreman" ${u.role==='foreman'?'selected':''}>師傅頭</option>
-        <option value="admin" ${u.role==='admin'?'selected':''}>管理員</option>
-      </select>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        <select onchange="setUserRole('${esc(u.user_id)}',this.value)" ${u.user_id===currentProfile?.id || u.approval_status!=='approved'?'disabled':''}>
+          <option value="employee" ${u.role==='employee'?'selected':''}>一般員工</option>
+          <option value="foreman" ${u.role==='foreman'?'selected':''}>師傅頭</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>管理員</option>
+        </select>
+        ${u.approval_status==='pending'?`
+          <button class="mini" type="button" onclick="reviewAccount('${esc(u.user_id)}','approved')">核准</button>
+          <button class="mini" type="button" onclick="reviewAccount('${esc(u.user_id)}','rejected')">拒絕</button>
+        `:''}
+      </div>
     </div>`).join('')||'<div class="empty">目前沒有使用者</div>';
 }
+
+async function reviewAccount(userId,status){
+  if(!isAdmin())return alert('只有管理員可以審核帳號');
+  const {error}=await db.rpc('admin_review_account',{
+    p_user_id:userId,
+    p_status:status
+  });
+  if(error)return alert('帳號審核失敗：'+error.message);
+  await loadRoleManager();
+}
+
 async function setUserRole(userId,role){
   if(!isAdmin())return alert('只有管理員可以修改權限');
   if(!['admin','foreman','employee'].includes(role))return;
@@ -3188,8 +3291,13 @@ async function setUserRole(userId,role){
 }
 
 setTimeout(bindRoleManagerButton,0);
+setTimeout(bindRegisterButton,0);
 
 Object.assign(window,{
+  openRegisterModal,
+  closeRegisterModal,
+  submitRegistration,
+  reviewAccount,
   openRoleManager,
   closeRoleManager,
   setUserRole,
@@ -3428,6 +3536,41 @@ Object.assign(window,{
       管理員：全部權限｜師傅頭：記工、修改記工、工具與報修｜一般員工：工具、報修、查看案場總工數
     </div>
     <div id="roleManagerList"></div>
+  </div>
+</div>
+
+
+<div id="registerModal">
+  <div class="work-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+      <div>
+        <b style="display:block;font-size:19px">申請帳號</b>
+        <small>送出後需由管理員核准才能使用</small>
+      </div>
+      <button class="mini" type="button" onclick="closeRegisterModal()">關閉</button>
+    </div>
+
+    <div class="work-field">
+      <label>姓名</label>
+      <input id="registerName" type="text" autocomplete="name" placeholder="請輸入姓名">
+    </div>
+    <div class="work-field">
+      <label>Email</label>
+      <input id="registerEmail" type="email" autocomplete="email" placeholder="name@example.com">
+    </div>
+    <div class="work-field">
+      <label>密碼</label>
+      <input id="registerPassword" type="password" autocomplete="new-password" placeholder="至少 6 碼">
+    </div>
+    <div class="work-field">
+      <label>確認密碼</label>
+      <input id="registerPassword2" type="password" autocomplete="new-password" placeholder="再輸入一次密碼">
+    </div>
+
+    <button class="primary" type="button" onclick="submitRegistration()" style="width:100%;margin-top:8px">送出申請</button>
+    <div class="stats-sub" style="margin-top:10px">
+      申請者不能自行選擇管理員或師傅頭；帳號核准與權限由管理員設定。
+    </div>
   </div>
 </div>
 
