@@ -574,6 +574,81 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .load-more-btn:active{transform:translateY(1px)}
 .load-more-meta{margin-top:7px;font-size:11px;color:var(--muted);font-weight:800}
 
+
+/* ===== V17.13 工具分類管理 ===== */
+.category-manage-btn{
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:900;
+  padding:0;
+}
+#categoryManagerModal{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483646!important;
+  display:none;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  padding-top:20px!important;
+  background:rgba(0,0,0,.58)!important;
+}
+#categoryManagerModal.show{display:flex!important}
+#categoryManagerModal .work-sheet{
+  width:min(430px,calc(100% - 20px));
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+  background:var(--bg);
+  border-radius:20px;
+  padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+}
+.category-add-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  margin:12px 0;
+}
+.category-add-row input{
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--card);
+  color:var(--ink);
+}
+.category-add-row button{
+  border:0;
+  border-radius:11px;
+  padding:0 15px;
+  background:var(--accent);
+  color:#fff;
+  font-weight:900;
+}
+.category-manage-list{display:grid;gap:8px}
+.category-manage-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--card);
+}
+.category-manage-row b{font-size:13px}
+.category-manage-row small{display:block;color:var(--muted);margin-top:3px}
+.category-delete{
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--danger);
+  border-radius:9px;
+  padding:6px 9px;
+  font-size:11px;
+  font-weight:800;
+}
+.category-delete:disabled{opacity:.45;cursor:not-allowed}
+
 </style>
 </head>
 <body>
@@ -602,7 +677,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     ↩ QR 批次歸還
   </button>
 </div>
-<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單 <span id="toolListCount" class="tool-list-count"></span></h2><div style="display:flex;gap:10px"><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
+<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單 <span id="toolListCount" class="tool-list-count"></span></h2><div style="display:flex;gap:10px;align-items:center"><button id="categoryManageBtn" class="category-manage-btn" type="button" style="display:none" onclick="openCategoryManager()">分類管理</button><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
 <div id="attendanceSection" class="section attendance-section">
   <div class="title attendance-head">
     <h2>👷 今日出勤</h2>
@@ -650,14 +725,14 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div>
 </div>
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
-<div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"><option>釘槍</option><option>風車</option><option>電鋸</option><option>鋸台</option><option>修邊機</option><option>砂輪機</option><option>磨切機</option><option>雷射</option><option>砂紙機</option><option>線鋸機</option><option>電動</option><option>夾頭</option><option>電鑽</option><option>電風扇</option><option>其他</option></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
+<div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
 
 <div id="editToolModal" class="modal"><div class="modalbox">
 <h3>編輯工具資料</h3>
 <div class="label">工具編號</div><input id="eToolCode" class="input" disabled>
 <div class="label">工具名稱</div><input id="eToolName" class="input">
 <div class="row"><div><div class="label">品牌</div><input id="eToolBrand" class="input"></div><div><div class="label">型號</div><input id="eToolModel" class="input"></div></div>
-<div class="label">分類</div><select id="eToolCat" class="select"><option>釘槍</option><option>風車</option><option>電鋸</option><option>鋸台</option><option>修邊機</option><option>砂輪機</option><option>磨切機</option><option>雷射</option><option>砂紙機</option><option>線鋸機</option><option>電動</option><option>夾頭</option><option>電鑽</option><option>電風扇</option><option>其他</option></select>
+<div class="label">分類</div><select id="eToolCat" class="select"></select>
 <div class="row"><div><div class="label">購入價格</div><input id="eToolPrice" class="input" type="number" min="0"></div><div><div class="label">購入日期</div><input id="eToolDate" class="input" type="date"></div></div>
 <div class="label">目前位置</div><input id="eToolLoc" class="input">
 <div class="label">目前使用人</div><input id="eToolUser" class="input">
@@ -832,7 +907,7 @@ db.auth.onAuthStateChange((event,session)=>{
     },0);
   }
 });
-let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[],toolVisibleLimit=20,lastToolFilterKey='';const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[],toolVisibleLimit=20,lastToolFilterKey='',toolCategories=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 function qrPayloadForTool(t){
   // 掃碼借出/歸還目前接受 TR-001 這類工具代碼，QR 直接存工具代碼最穩定。
@@ -984,6 +1059,8 @@ function syncAdminNoticeVisibility(){
   if(workStatsBtn) workStatsBtn.style.display=canViewWorkStats()?'inline-block':'none';
   const roleManageBtn=$('roleManageBtn');
   if(roleManageBtn) roleManageBtn.style.display=admin?'inline-block':'none';
+  const categoryManageBtn=$('categoryManageBtn');
+  if(categoryManageBtn) categoryManageBtn.style.display=admin?'inline-block':'none';
 
   if(admin && $('noticeHint') && !notifications.length){
     $('noticeHint').textContent='正在讀取通知…';
@@ -1175,13 +1252,164 @@ async function loadTools(){
 }
 window.refreshAll=async()=>{
   if($('toolList'))$('toolList').innerHTML='<div class="loading">同步雲端資料中…</div>';
+  await loadToolCategories();
   const ok=await loadTools();
+  await loadToolCategories();
   await loadNotifications();
   await loadAttendance();
   return ok;
 };
 window.setStatusFilter=s=>{borrowedOnly=false;statusFilter=s;renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
 window.setBorrowedFilter=()=>{borrowedOnly=true;statusFilter='全部';renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
+
+
+const DEFAULT_TOOL_CATEGORIES=['釘槍','風車','電鋸','鋸台','修邊機','砂輪機','磨切機','雷射','砂紙機','線鋸機','電動','夾頭','電鑽','電風扇','其他'];
+
+async function loadToolCategories(){
+  const {data,error}=await db
+    .from('tool_categories')
+    .select('id,name,sort_order,is_active')
+    .eq('is_active',true)
+    .order('sort_order')
+    .order('name');
+
+  if(error){
+    console.warn('工具分類讀取失敗，使用目前分類備援',error);
+    const toolCats=[...new Set((tools||[]).map(t=>String(t.category||'其他')).filter(Boolean))];
+    toolCategories=[...new Set([...DEFAULT_TOOL_CATEGORIES,...toolCats])].map((name,i)=>({
+      id:null,name,sort_order:i+1,is_active:true
+    }));
+  }else{
+    toolCategories=data||[];
+    if(!toolCategories.some(c=>c.name==='其他')){
+      toolCategories.push({id:null,name:'其他',sort_order:9999,is_active:true});
+    }
+  }
+
+  renderCategoryUI();
+}
+
+function activeToolCategoryNames(){
+  const names=toolCategories.map(c=>c.name).filter(Boolean);
+  return [...new Set(names)];
+}
+
+function renderCategoryUI(){
+  const names=activeToolCategoryNames();
+
+  if(categoryFilter!=='全部' && !names.includes(categoryFilter)){
+    categoryFilter='全部';
+  }
+
+  const bar=$('categoryBar');
+  if(bar){
+    bar.innerHTML=[
+      `<button class="catbtn ${categoryFilter==='全部'?'active':''}" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button>`,
+      ...names.map(name=>`<button class="catbtn ${categoryFilter===name?'active':''}" data-cat="${esc(name)}" onclick="setCategoryFilter('${String(name).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${esc(name)}</button>`)
+    ].join('');
+  }
+
+  const addSelect=$('aCat');
+  if(addSelect){
+    const oldValue=addSelect.value;
+    addSelect.innerHTML=names.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+    if(names.includes(oldValue))addSelect.value=oldValue;
+    else if(names.length)addSelect.value=names[0];
+  }
+
+  const editSelect=$('eToolCat');
+  if(editSelect){
+    const oldValue=editSelect.value;
+    editSelect.innerHTML=names.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+    if(names.includes(oldValue))editSelect.value=oldValue;
+  }
+
+  renderCategoryManagerList();
+}
+
+function openCategoryManager(){
+  if(!isAdmin())return alert('只有管理員可以管理工具分類');
+  renderCategoryManagerList();
+  document.getElementById('categoryManagerModal')?.classList.add('show');
+  setTimeout(()=>document.getElementById('newToolCategory')?.focus(),80);
+}
+
+function closeCategoryManager(){
+  document.getElementById('categoryManagerModal')?.classList.remove('show');
+}
+
+function renderCategoryManagerList(){
+  const box=document.getElementById('categoryManageList');
+  if(!box)return;
+
+  const counts={};
+  (tools||[]).forEach(t=>{
+    const name=String(t.category||'其他');
+    counts[name]=(counts[name]||0)+1;
+  });
+
+  const rows=toolCategories.map(c=>{
+    const count=counts[c.name]||0;
+    const locked=c.name==='其他';
+    return `
+      <div class="category-manage-row">
+        <div>
+          <b>${esc(c.name)}</b>
+          <small>${count} 支工具${locked?'｜系統保留分類':''}</small>
+        </div>
+        <button class="category-delete" type="button"
+          ${locked?'disabled':''}
+          onclick="deleteToolCategory(${c.id===null?'null':Number(c.id)},'${String(c.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">
+          刪除
+        </button>
+      </div>`;
+  }).join('');
+
+  box.innerHTML=rows||'<div class="empty">目前沒有分類</div>';
+}
+
+async function addToolCategory(){
+  if(!isAdmin())return alert('只有管理員可以管理工具分類');
+  const input=document.getElementById('newToolCategory');
+  const name=(input?.value||'').trim();
+  if(!name)return alert('請輸入分類名稱');
+  if(name==='全部')return alert('「全部」是系統篩選名稱，不能當分類');
+  if(toolCategories.some(c=>c.name.toLowerCase()===name.toLowerCase())){
+    return alert('這個分類已經存在');
+  }
+
+  const nextSort=Math.max(0,...toolCategories.map(c=>Number(c.sort_order||0)))+1;
+  const {error}=await db.from('tool_categories').insert({
+    name,
+    sort_order:nextSort,
+    is_active:true
+  });
+  if(error)return alert('新增分類失敗：'+error.message);
+
+  input.value='';
+  await loadToolCategories();
+  renderHome();
+}
+
+async function deleteToolCategory(id,name){
+  if(!isAdmin())return alert('只有管理員可以管理工具分類');
+  if(name==='其他')return alert('「其他」是系統保留分類，不能刪除');
+
+  const used=(tools||[]).filter(t=>String(t.category||'其他')===name).length;
+  if(used>0){
+    return alert(`「${name}」目前還有 ${used} 支工具使用中。\n請先把這些工具改到其他分類，再刪除。`);
+  }
+
+  if(!id)return alert('這個分類是舊版備援分類，請先執行 V17.13 SQL 建立分類資料。');
+  if(!confirm(`確定刪除工具分類「${name}」？`))return;
+
+  const {error}=await db.from('tool_categories').delete().eq('id',id);
+  if(error)return alert('刪除分類失敗：'+error.message);
+
+  if(categoryFilter===name)categoryFilter='全部';
+  await loadToolCategories();
+  renderHome();
+}
 
 function initCategoryScroll(){
   const bar=$('categoryBar');
@@ -1437,6 +1665,13 @@ window.openToolEdit=id=>{
   $('eToolName').value=t.name||'';
   $('eToolBrand').value=t.brand||'';
   $('eToolModel').value=t.model||'';
+  renderCategoryUI();
+  if(!activeToolCategoryNames().includes(t.category||'其他')){
+    const opt=document.createElement('option');
+    opt.value=t.category||'其他';
+    opt.textContent=t.category||'其他';
+    $('eToolCat').appendChild(opt);
+  }
   $('eToolCat').value=t.category||'其他';
   $('eToolPrice').value=Number(t.purchase_price||0);
   $('eToolDate').value=t.purchase_date||'';
@@ -3425,6 +3660,10 @@ setTimeout(bindRegisterButton,0);
 setTimeout(bindForgotPasswordButton,0);
 
 Object.assign(window,{
+  openCategoryManager,
+  closeCategoryManager,
+  addToolCategory,
+  deleteToolCategory,
   openResetPasswordModal,
   closeResetPasswordModal,
   sendPasswordReset,
@@ -3739,6 +3978,26 @@ Object.assign(window,{
       <input id="newPassword2" type="password" autocomplete="new-password" placeholder="再輸入一次">
     </div>
     <button class="primary" type="button" onclick="saveNewPassword()" style="width:100%">儲存新密碼</button>
+  </div>
+</div>
+
+
+<div id="categoryManagerModal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <div>
+        <h2>🧰 工具分類管理</h2>
+        <div class="stats-sub" style="margin-top:4px">新增或刪除工具分類；有工具正在使用的分類不能直接刪除。</div>
+      </div>
+      <button class="work-close" type="button" onclick="closeCategoryManager()">×</button>
+    </div>
+
+    <div class="category-add-row">
+      <input id="newToolCategory" type="text" maxlength="30" placeholder="例如：空壓機">
+      <button type="button" onclick="addToolCategory()">＋新增</button>
+    </div>
+
+    <div id="categoryManageList" class="category-manage-list"></div>
   </div>
 </div>
 
