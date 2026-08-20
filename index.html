@@ -341,6 +341,13 @@
   z-index:2147483647!important;
 }
 
+
+/* ===== V17.6 案場負責人加給 ===== */
+.worker-main{min-width:0;flex:1}
+.worker-role{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;font-weight:800;color:#9b6500}
+.worker-role input{width:17px;height:17px;accent-color:var(--accent)}
+.bonus-tag{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;background:#fff0d8;color:#9b6500;font-size:10px;font-weight:900}
+.stats-bonus{font-size:11px;color:#9b6500;font-weight:800;margin-top:3px}
 </style>
 </head>
 <body>
@@ -586,7 +593,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.5.3｜修正薪資視窗真正置頂
+// Lumberkings 木作設備中心 V17.6｜案場負責人加給
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2217,7 +2224,7 @@ function renderAttendance(dateStr){
       <strong>${esc(site)}｜${rows.length} 人</strong>
       ${rows.map(r=>`
         <div class="today-person">
-          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}</div>
+          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?`<span class="bonus-tag">負責人 +${money(r.role_bonus||0)}</span>`:''}</div>
           <button class="today-edit" type="button" onclick="openWorkLogEdit(${Number(r.id)})">修改</button>
         </div>`).join('')}
     </div>`).join('');
@@ -2239,14 +2246,20 @@ async function openWorkLog(){
   document.getElementById('workDate').value=localDateISO(attendanceViewDate);
   document.getElementById('workSite').innerHTML=workSites.map(s=>`<option value="${s.id}">${esc(s.site_name)}</option>`).join('');
   document.getElementById('workerList').innerHTML=workers.map(w=>`
-    <label class="worker-row">
+    <div class="worker-row">
       <input type="checkbox" class="worker-check" value="${w.id}">
-      <span><strong>${esc(w.worker_name)}</strong><br><small>${esc(w.worker_type||'')}</small></span>
+      <div class="worker-main">
+        <strong>${esc(w.worker_name)}</strong><br><small>${esc(w.worker_type||'')}</small>
+        <label class="worker-role">
+          <input type="checkbox" class="worker-leader">
+          案場負責人（+300／工）
+        </label>
+      </div>
       <select class="worker-day">
         <option value="1">1 工</option>
         <option value="0.5">0.5 工</option>
       </select>
-    </label>`).join('');
+    </div>`).join('');
   document.getElementById('workNote').value='';
   document.getElementById('workLogModal').classList.add('show');
 }
@@ -2276,7 +2289,10 @@ async function saveWorkLogs(){
   const recorder=currentProfile?.display_name||currentUser?.email||'';
   const rows=selected.map(chk=>{
     const worker=workers.find(w=>Number(w.id)===Number(chk.value));
-    const day=chk.closest('.worker-row').querySelector('.worker-day').value;
+    const rowEl=chk.closest('.worker-row');
+    const day=rowEl.querySelector('.worker-day').value;
+    const isLeader=!!rowEl.querySelector('.worker-leader')?.checked;
+    const roleBonus=isLeader ? Number(day)*300 : 0;
     return {
       work_date:date,
       site_name:site.site_name,
@@ -2284,6 +2300,8 @@ async function saveWorkLogs(){
       recorded_by:userId,
       recorded_by_name:recorder,
       daily_wage:Number(worker.daily_wage||0),
+      is_site_leader:isLeader,
+      role_bonus:roleBonus,
       note:`${day}工${note?'｜'+note:''}`
     };
   });
@@ -2564,6 +2582,7 @@ async function openWorkLogEdit(id){
   const parsed=parseWorkNote(row.note);
   document.getElementById('editWorkUnits').value=parsed.units;
   document.getElementById('editWorkNote').value=parsed.note;
+  document.getElementById('editWorkLeader').checked=!!row.is_site_leader;
 
   const deleteBtn=document.getElementById('deleteWorkLogBtn');
   if(deleteBtn)deleteBtn.style.display=isAdmin()?'block':'none';
@@ -2582,6 +2601,8 @@ async function saveWorkLogEdit(){
   const employee_name=document.getElementById('editWorkWorker').value;
   const units=document.getElementById('editWorkUnits').value;
   const note=document.getElementById('editWorkNote').value.trim();
+  const isLeader=!!document.getElementById('editWorkLeader')?.checked;
+  const roleBonus=isLeader ? Number(units)*300 : 0;
 
   if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
   if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
@@ -2592,6 +2613,8 @@ async function saveWorkLogEdit(){
     site_name,
     employee_name,
     daily_wage:Number(selectedWorker?.daily_wage||0),
+    is_site_leader:isLeader,
+    role_bonus:roleBonus,
     note:`${units}工${note?'｜'+note:''}`,
     updated_at:new Date().toISOString()
   };
@@ -2720,14 +2743,14 @@ async function loadWorkStats(){
   if(start>end)return alert('開始日期不能晚於結束日期');
 
   const {data,error}=await db.from('work_logs')
-    .select('work_date,site_name,employee_name,note,daily_wage')
+    .select('work_date,site_name,employee_name,note,daily_wage,is_site_leader,role_bonus')
     .gte('work_date',start).lte('work_date',end)
     .order('work_date',{ascending:true});
   if(error)return alert('統計讀取失敗：'+error.message);
 
   const rows=data||[];
   const workersMap={}, sitesMap={};
-  let totalUnits=0,totalCost=0;
+  let totalUnits=0,totalCost=0,totalBonus=0;
 
   // 舊記工若 daily_wage 還是 0，改用目前 workers 日薪補算；
   // 新記工仍優先使用當次記錄的日薪快照。
@@ -2738,17 +2761,24 @@ async function loadWorkStats(){
     const units=workUnitsFromNote(r.note);
     const snapshotWage=Number(r.daily_wage||0);
     const wage=snapshotWage>0?snapshotWage:Number(currentWageByName.get(r.employee_name)||0);
-    const cost=units*wage;
+    const baseCost=units*wage;
+    const bonus=Number(r.role_bonus||0);
+    const cost=baseCost+bonus;
     totalUnits+=units;
+    totalBonus+=bonus;
     totalCost+=cost;
 
-    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,wage};
+    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,baseCost:0,bonus:0,wage};
     workersMap[r.employee_name].units+=units;
+    workersMap[r.employee_name].baseCost+=baseCost;
+    workersMap[r.employee_name].bonus+=bonus;
     workersMap[r.employee_name].cost+=cost;
     if(wage)workersMap[r.employee_name].wage=wage;
 
-    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0};
+    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0,baseCost:0,bonus:0};
     sitesMap[r.site_name].units+=units;
+    sitesMap[r.site_name].baseCost+=baseCost;
+    sitesMap[r.site_name].bonus+=bonus;
     sitesMap[r.site_name].cost+=cost;
   });
 
@@ -2757,6 +2787,8 @@ async function loadWorkStats(){
   document.getElementById('statsTotalSites').textContent=Object.keys(sitesMap).length;
   const totalCostEl=document.getElementById('statsTotalCost');
   if(totalCostEl)totalCostEl.textContent=money(totalCost);
+  const totalBonusEl=document.getElementById('statsTotalBonus');
+  if(totalBonusEl)totalBonusEl.textContent=money(totalBonus);
 
   const maxWorker=Math.max(1,...Object.values(workersMap).map(x=>x.units));
   const maxSite=Math.max(1,...Object.values(sitesMap).map(x=>x.units));
@@ -2767,7 +2799,8 @@ async function loadWorkStats(){
       <div class="stats-row">
         <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
         <div class="stats-cost">人工 ${money(x.cost)}</div>
-        <div class="stats-sub">目前記錄日薪 ${money(x.wage)}</div>
+        <div class="stats-sub">基本人工 ${money(x.baseCost)}｜日薪 ${money(x.wage)}</div>
+        ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxWorker*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有記工資料</div>';
@@ -2778,6 +2811,8 @@ async function loadWorkStats(){
       <div class="stats-row">
         <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
         <div class="stats-cost">人工成本 ${money(x.cost)}</div>
+        <div class="stats-sub">基本人工 ${money(x.baseCost)}</div>
+        ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxSite*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有案場資料</div>';
@@ -2848,6 +2883,14 @@ Object.assign(window,{
     </div>
 
     <div class="work-field">
+      <label>職務加給</label>
+      <label class="worker-role">
+        <input id="editWorkLeader" type="checkbox">
+        案場負責人（1工 +$300／0.5工 +$150）
+      </label>
+    </div>
+
+    <div class="work-field">
       <label>備註</label>
       <textarea id="editWorkNote" rows="2" placeholder="可留空"></textarea>
     </div>
@@ -2871,13 +2914,13 @@ Object.assign(window,{
       <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
     </div>
     <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
-    <div class="stats-sub" style="margin-top:8px">人工成本＝每筆記工工數 × 當次記錄日薪；0.5 工自動以半薪計算。</div>
+    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪＋負責人加給；負責人 1工 +$300、0.5工 +$150。</div>
 
     <div class="stats-cards">
       <div class="stats-card"><b id="statsTotalWorkers">0</b><small>出勤人數</small></div>
       <div class="stats-card"><b id="statsTotalDays">0</b><small>總工數</small></div>
       <div class="stats-card"><b id="statsTotalSites">0</b><small>案場數</small></div>
-      <div class="stats-card stats-money-card"><small>人工成本合計</small><b id="statsTotalCost">$0</b></div>
+      <div class="stats-card stats-money-card"><small>人工成本合計（含負責人加給）</small><b id="statsTotalCost">$0</b><div class="stats-bonus">其中負責人加給 <span id="statsTotalBonus">$0</span></div></div>
     </div>
 
     <div class="stats-section-title">依人員統計</div>
