@@ -327,6 +327,20 @@
 #wageStatus.ok{background:#e8f2ea;color:var(--ok)}
 #wageStatus.err{background:#fae7e3;color:var(--danger)}
 
+
+/* ===== V17.5.3 薪資視窗真正置頂 ===== */
+#wageModal{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  isolation:isolate;
+}
+#wageModal.show{display:flex!important}
+#wageModal .work-sheet{
+  position:relative!important;
+  z-index:2147483647!important;
+}
+
 </style>
 </head>
 <body>
@@ -572,7 +586,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.5.2｜日薪視窗置頂＋薪資同步＋記工統計穩定
+// Lumberkings 木作設備中心 V17.5.3｜修正薪資視窗真正置頂
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2397,10 +2411,19 @@ function editWorkerWage(id){
   const status=document.getElementById('wageStatus');
   if(status){status.className='';status.textContent='';}
 
-  // 薪資視窗獨立置頂，避免被「人員／案場管理」蓋住。
+  // 薪資視窗開啟時先隱藏底下的人員／案場管理視窗，
+  // 避免同時存在兩個 fixed modal 造成 stacking context 蓋住薪資視窗。
+  const masterModal=document.getElementById('workMasterModal');
+  if(masterModal?.classList.contains('show')){
+    masterModal.dataset.reopenAfterWage='1';
+    masterModal.classList.remove('show');
+  }
+
   const modal=document.getElementById('wageModal');
   if(modal){
-    modal.style.zIndex='20050';
+    // 搬到 body 最後，確保 DOM stacking order 也在最上層。
+    document.body.appendChild(modal);
+    modal.style.zIndex='2147483647';
     modal.classList.add('show');
   }
   setTimeout(()=>{
@@ -2412,6 +2435,12 @@ function editWorkerWage(id){
 
 function closeWageModal(){
   document.getElementById('wageModal')?.classList.remove('show');
+
+  const masterModal=document.getElementById('workMasterModal');
+  if(masterModal?.dataset.reopenAfterWage==='1'){
+    delete masterModal.dataset.reopenAfterWage;
+    masterModal.classList.add('show');
+  }
 }
 
 async function saveWorkerWage(){
