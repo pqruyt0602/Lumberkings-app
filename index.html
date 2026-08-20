@@ -717,7 +717,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.8｜加班時數與加班費
+// Lumberkings 木作設備中心 V17.8.1｜修正重複人員新增
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2651,12 +2651,12 @@ async function addWorker(){
   const wage=Number(document.getElementById('newWorkerWage')?.value||0);
   if(!name)return alert('請輸入人員姓名');
   if(wage<0)return alert('日薪不能小於 0');
-  const {error}=await db.rpc('admin_add_worker',{
+  const {data,error}=await db.rpc('admin_add_worker',{
     p_worker_name:name,
     p_worker_type:type,
     p_daily_wage:wage
   });
-  if(error)return alert('新增人員失敗：'+error.message);
+  if(error)return alert('新增／更新人員失敗：'+error.message);
   document.getElementById('newWorkerName').value='';
   document.getElementById('newWorkerWage').value='';
   await loadWorkMaster();
