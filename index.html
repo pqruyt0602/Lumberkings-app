@@ -139,6 +139,23 @@
 .scan-box{padding:12px;border:1px dashed var(--brown);border-radius:14px;background:#fffaf5;margin:10px 0}
 .scan-video{width:100%;border-radius:14px;background:#111;display:none;max-height:280px}
 
+
+.qrLabelGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.qrLabelCard{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;display:flex;gap:12px;align-items:center;break-inside:avoid}
+.qrBox{width:112px;height:112px;display:flex;align-items:center;justify-content:center;flex:0 0 112px}
+.qrBox img,.qrBox canvas{max-width:112px!important;max-height:112px!important}
+.qrInfo{min-width:0}
+.qrCode{font-weight:900;font-size:18px}
+.qrName{font-weight:800;margin-top:4px}
+.qrMeta{font-size:12px;color:var(--muted);margin-top:4px}
+@media(max-width:560px){.qrLabelGrid{grid-template-columns:1fr}}
+@media print{
+  body *{visibility:hidden!important}
+  #qrLabelGrid,#qrLabelGrid *{visibility:visible!important}
+  #qrLabelGrid{position:absolute;left:0;top:0;width:100%;display:grid;grid-template-columns:repeat(2,1fr);gap:6mm}
+  .qrLabelCard{border:1px solid #999;border-radius:0;padding:4mm;page-break-inside:avoid}
+}
+
 </style>
 </head>
 <body>
@@ -333,10 +350,53 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.5｜移除重複掃碼借出按鈕
+// Lumberkings 木作設備中心 V16.6｜工具 QR Code 標籤系統
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+function qrPayloadForTool(t){
+  // 掃碼借出/歸還目前接受 TR-001 這類工具代碼，QR 直接存工具代碼最穩定。
+  return String(t.code || "").trim();
+}
+function closeQRLabels(){
+  document.getElementById("qrLabelsModal").classList.remove("show");
+}
+function openQRLabels(){
+  const modal = document.getElementById("qrLabelsModal");
+  const grid = document.getElementById("qrLabelGrid");
+  grid.innerHTML = "";
+  const list = [...tools].sort((a,b)=>String(a.code||"").localeCompare(String(b.code||"")));
+  if(!list.length){
+    grid.innerHTML = '<div class="muted">目前沒有工具資料。</div>';
+  }else{
+    list.forEach((t,i)=>{
+      const card = document.createElement("div");
+      card.className = "qrLabelCard";
+      const qrid = "toolqr_"+i;
+      card.innerHTML = `
+        <div class="qrBox" id="${qrid}"></div>
+        <div class="qrInfo">
+          <div class="qrCode">${esc(t.code||"")}</div>
+          <div class="qrName">${esc(t.brand||"")} ${esc(t.name||"")}</div>
+          <div class="qrMeta">${esc(t.model||"")}</div>
+        </div>`;
+      grid.appendChild(card);
+      const payload = qrPayloadForTool(t);
+      if(payload && window.QRCode){
+        new QRCode(document.getElementById(qrid), {
+          text: payload, width:112, height:112,
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    });
+  }
+  modal.classList.add("show");
+}
+function printQRLabels(){
+  window.print();
+}
+
 async function init(){const {data:{session}}=await db.auth.getSession();session?enterApp(session.user):showLogin();db.auth.onAuthStateChange((_e,s)=>s?enterApp(s.user):showLogin())}
 function showLogin(){$('mainApp').style.display='none';$('loginScreen').style.display='flex'}
 async function loadCurrentProfile(){
