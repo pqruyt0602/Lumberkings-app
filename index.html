@@ -1338,9 +1338,17 @@ async function loadToolCategories(){
   }else{
     toolCategories=data||[];
     if(!toolCategories.some(c=>c.name==='其他')){
-      toolCategories.push({id:null,name:'其他',sort_order:9999,is_active:true});
+      toolCategories.push({id:null,name:'其他',sort_order:2147483647,is_active:true});
     }
   }
+
+  // V17.15.1：「其他」永遠只在畫面最後，不受舊 sort_order 影響
+  toolCategories.sort((a,b)=>{
+    if(a.name==='其他' && b.name!=='其他')return 1;
+    if(b.name==='其他' && a.name!=='其他')return -1;
+    return Number(a.sort_order||0)-Number(b.sort_order||0)
+      || String(a.name||'').localeCompare(String(b.name||''));
+  });
 
   renderCategoryUI();
 }
@@ -1404,10 +1412,12 @@ function renderCategoryManagerList(){
     counts[name]=(counts[name]||0)+1;
   });
 
-  const ordered=[...toolCategories].sort((a,b)=>
-    Number(a.sort_order||0)-Number(b.sort_order||0)
-    || String(a.name||'').localeCompare(String(b.name||''))
-  );
+  const ordered=[...toolCategories].sort((a,b)=>{
+    if(a.name==='其他' && b.name!=='其他')return 1;
+    if(b.name==='其他' && a.name!=='其他')return -1;
+    return Number(a.sort_order||0)-Number(b.sort_order||0)
+      || String(a.name||'').localeCompare(String(b.name||''));
+  });
 
   const rows=ordered.map((c,index)=>{
     const count=counts[c.name]||0;
@@ -1447,10 +1457,12 @@ async function moveToolCategory(id,direction){
   if(!isAdmin())return alert('只有管理員可以調整工具分類順序');
   if(!id)return alert('請先執行 V17.13 之後的分類資料庫設定');
 
-  const ordered=[...toolCategories].sort((a,b)=>
-    Number(a.sort_order||0)-Number(b.sort_order||0)
-    || String(a.name||'').localeCompare(String(b.name||''))
-  );
+  const ordered=[...toolCategories].sort((a,b)=>{
+    if(a.name==='其他' && b.name!=='其他')return 1;
+    if(b.name==='其他' && a.name!=='其他')return -1;
+    return Number(a.sort_order||0)-Number(b.sort_order||0)
+      || String(a.name||'').localeCompare(String(b.name||''));
+  });
 
   const currentIndex=ordered.findIndex(c=>Number(c.id)===Number(id));
   if(currentIndex<0)return;
@@ -1488,7 +1500,8 @@ async function addToolCategory(){
     return alert('這個分類已經存在');
   }
 
-  const nextSort=Math.max(0,...toolCategories.map(c=>Number(c.sort_order||0)))+1;
+  const normalCategories=toolCategories.filter(c=>c.name!=='其他');
+  const nextSort=Math.max(0,...normalCategories.map(c=>Number(c.sort_order||0)))+1;
   const {error}=await db.from('tool_categories').insert({
     name,
     sort_order:nextSort,
