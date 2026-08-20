@@ -533,7 +533,7 @@
 }
 
 
-/* ===== V17.11 深色系主題 ===== */
+/* ===== V17.12 深色系主題 ===== */
 :root{--bg:#171717;--card:#242321;--ink:#f3eee7;--muted:#aaa39a;--line:#3b3834;--accent:#9a7550;--danger:#e07a68;--ok:#78a984;--warn:#d7a14c}
 html,body,.app{background:var(--bg);color:var(--ink)}
 .top{background:linear-gradient(180deg,#111,#211d19)}
@@ -566,6 +566,14 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 /* 保持 QR／列印標籤為白底，避免列印變黑 */
 .qrimg,.qrurl,.labelpreview,.batch-label,.qrLabelCard{background:#fff!important;color:#111}
 @media print{html,body{background:#fff!important;color:#111!important}}
+
+/* ===== V17.12 工具清單分批載入 ===== */
+.tool-list-count{font-size:12px;color:var(--muted);font-weight:800;margin-left:6px}
+.load-more-wrap{padding:14px 0 4px;text-align:center}
+.load-more-btn{width:min(280px,100%);border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer}
+.load-more-btn:active{transform:translateY(1px)}
+.load-more-meta{margin-top:7px;font-size:11px;color:var(--muted);font-weight:800}
+
 </style>
 </head>
 <body>
@@ -594,7 +602,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     ↩ QR 批次歸還
   </button>
 </div>
-<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
+<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單 <span id="toolListCount" class="tool-list-count"></span></h2><div style="display:flex;gap:10px"><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
 <div id="attendanceSection" class="section attendance-section">
   <div class="title attendance-head">
     <h2>👷 今日出勤</h2>
@@ -824,7 +832,7 @@ db.auth.onAuthStateChange((event,session)=>{
     },0);
   }
 });
-let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[],toolVisibleLimit=20,lastToolFilterKey='';const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 function qrPayloadForTool(t){
   // 掃碼借出/歸還目前接受 TR-001 這類工具代碼，QR 直接存工具代碼最穩定。
@@ -1212,6 +1220,10 @@ window.setCategoryFilter=c=>{
   document.querySelectorAll('.catbtn').forEach(b=>b.classList.toggle('active',b.dataset.cat===c));
   renderHome();
 };
+window.loadMoreTools=()=>{
+  toolVisibleLimit+=20;
+  renderHome();
+};
 window.renderHome=()=>{
   const q=($('search')?.value||'').trim().toLowerCase();
   const activeLoans=new Map();
@@ -1228,6 +1240,15 @@ window.renderHome=()=>{
   if(borrowedOnly)f=f.filter(t=>activeLoans.has(Number(t.id)));
   if(categoryFilter!=='全部')f=f.filter(t=>(t.category||'其他')===categoryFilter);
 
+  const toolFilterKey=[q,statusFilter,borrowedOnly?'1':'0',categoryFilter].join('|');
+  if(toolFilterKey!==lastToolFilterKey){
+    toolVisibleLimit=20;
+    lastToolFilterKey=toolFilterKey;
+  }
+  const totalFilteredTools=f.length;
+  const visibleTools=f.slice(0,toolVisibleLimit);
+  if($('toolListCount')) $('toolListCount').textContent=`共 ${totalFilteredTools} 項`;
+
   $('mTotal').textContent=tools.length;
   $('mRepair').textContent=tools.filter(t=>t.status==='待維修').length;
   $('mFixing').textContent=tools.filter(t=>t.status==='送修中').length;
@@ -1238,7 +1259,7 @@ window.renderHome=()=>{
   if(borrowedOnly)$('cardBorrowed')?.classList.add('active');
   else $(statusFilter==='待維修'?'cardRepair':statusFilter==='送修中'?'cardFixing':'cardAll')?.classList.add('active');
 
-  $('toolList').innerHTML=f.length?f.map(t=>{
+  $('toolList').innerHTML=f.length?visibleTools.map(t=>{
     const loan=activeLoans.get(Number(t.id));
     const isBorrowed=!!loan;
     const displayStatus=t.status==='待維修'?'待維修':t.status==='送修中'?'送修中':isBorrowed?'借出中':'正常';
@@ -1258,7 +1279,7 @@ window.renderHome=()=>{
     }
 
     return `<div class="item tool-card" data-tool-id="${t.id}" role="button" tabindex="0"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(metaParts.join('・'))}</div></div><div class="status ${cls}">${esc(displayStatus)}</div></div>`;
-  }).join(''):`<div class="empty">${borrowedOnly?'目前沒有借出中的工具':statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`;
+  }).join('') + (totalFilteredTools>visibleTools.length?`<div class="load-more-wrap"><button class="load-more-btn" type="button" onclick="loadMoreTools()">載入更多</button><div class="load-more-meta">目前顯示 ${visibleTools.length} / ${totalFilteredTools} 項</div></div>`:(totalFilteredTools?`<div class="load-more-meta" style="text-align:center;padding:12px 0 2px">已顯示全部 ${totalFilteredTools} 項</div>`:'')):`<div class="empty">${borrowedOnly?'目前沒有借出中的工具':statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`;
 };
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
 window.saveTool=async()=>{const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
