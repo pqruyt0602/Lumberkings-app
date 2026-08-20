@@ -545,7 +545,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.4｜記工可修改｜修正記工後今日出勤同步
+// Lumberkings 木作設備中心 V17.4.1｜修正修改後畫面不同步｜修正記工後今日出勤同步
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2445,7 +2445,39 @@ async function saveWorkLogEdit(){
   closeWorkLogEdit();
 
   attendanceViewDate=new Date(work_date+'T12:00:00');
-  await loadAttendance(work_date);
+
+  // 先用 UPDATE 實際回傳的資料直接更新畫面，避免重新查詢時仍看到舊快取資料。
+  attendanceLogs=attendanceLogs
+    .filter(x=>Number(x.id)!==Number(data.id));
+  attendanceLogs.push(data);
+  attendanceLogs.sort((a,b)=>
+    String(a.site_name||'').localeCompare(String(b.site_name||''))
+    || String(a.employee_name||'').localeCompare(String(b.employee_name||''))
+  );
+  renderAttendance(work_date);
+
+  // 再從資料庫重抓；若同一筆仍回傳舊內容，保留剛剛 UPDATE 回傳的新資料。
+  const loaded=await loadAttendance(work_date);
+  if(loaded?.ok){
+    const freshRows=(loaded.rows||[]).map(r=>{
+      if(Number(r.id)!==Number(data.id))return r;
+      const freshTime=new Date(r.updated_at||0).getTime();
+      const savedTime=new Date(data.updated_at||0).getTime();
+      return savedTime>=freshTime?data:r;
+    });
+
+    // 若新資料因查詢同步延遲暫時沒出現在結果裡，補回去。
+    if(!freshRows.some(r=>Number(r.id)===Number(data.id))){
+      freshRows.push(data);
+    }
+
+    attendanceLogs=freshRows.sort((a,b)=>
+      String(a.site_name||'').localeCompare(String(b.site_name||''))
+      || String(a.employee_name||'').localeCompare(String(b.employee_name||''))
+    );
+    renderAttendance(work_date);
+  }
+
   showWorkSuccess(`記工已修改｜${employee_name}｜${units}工`);
   document.getElementById('attendanceSection')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
