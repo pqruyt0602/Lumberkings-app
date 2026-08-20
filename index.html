@@ -593,7 +593,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6｜案場負責人加給
+// Lumberkings 木作設備中心 V17.6.1｜薪資隱私版
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -721,6 +721,8 @@ function syncAdminNoticeVisibility(){
 
   const attendanceManageBtn=$('attendanceManageBtn');
   if(attendanceManageBtn) attendanceManageBtn.style.display=admin?'inline-block':'none';
+  const workStatsBtn=$('workStatsBtn');
+  if(workStatsBtn) workStatsBtn.style.display=admin?'inline-block':'none';
 
   if(admin && $('noticeHint') && !notifications.length){
     $('noticeHint').textContent='正在讀取通知…';
@@ -2177,19 +2179,31 @@ function formatWorkDate(s){
   return `${Number(m)}/${Number(d)}`;
 }
 async function loadWorkMaster(){
-  const [siteRes,workerRes]=await Promise.all([
-    db.from('work_sites').select('*').eq('is_active',true).order('site_name'),
-    db.from('workers').select('*').eq('is_active',true).order('worker_name')
-  ]);
+  const sitePromise=db.from('work_sites')
+    .select('id,site_name,address,client_name,is_active,created_at')
+    .eq('is_active',true)
+    .order('site_name');
+
+  const workerPromise=isAdmin()
+    ? db.rpc('admin_get_workers')
+    : db.from('workers')
+        .select('id,worker_name,worker_type,is_active,note,created_at')
+        .eq('is_active',true)
+        .order('worker_name');
+
+  const [siteRes,workerRes]=await Promise.all([sitePromise,workerPromise]);
+
   if(siteRes.error) console.warn('案場讀取失敗',siteRes.error);
   if(workerRes.error) console.warn('師傅名單讀取失敗',workerRes.error);
-  workSites=siteRes.data||[];
-  workers=workerRes.data||[];
+
+  workSites=(siteRes.data||[]).filter(x=>x.is_active!==false);
+  workers=(workerRes.data||[]).filter(x=>x.is_active!==false)
+    .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||'')));
 }
 async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
   // 一律使用傳入的 YYYY-MM-DD 查詢，避免手機時區造成日期偏移。
   const {data,error}=await db.from('work_logs')
-    .select('*')
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,created_at,updated_at')
     .eq('work_date',dateStr)
     .order('site_name')
     .order('employee_name');
@@ -2224,7 +2238,7 @@ function renderAttendance(dateStr){
       <strong>${esc(site)}｜${rows.length} 人</strong>
       ${rows.map(r=>`
         <div class="today-person">
-          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?`<span class="bonus-tag">負責人 +${money(r.role_bonus||0)}</span>`:''}</div>
+          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}</div>
           <button class="today-edit" type="button" onclick="openWorkLogEdit(${Number(r.id)})">修改</button>
         </div>`).join('')}
     </div>`).join('');
@@ -2252,7 +2266,7 @@ async function openWorkLog(){
         <strong>${esc(w.worker_name)}</strong><br><small>${esc(w.worker_type||'')}</small>
         <label class="worker-role">
           <input type="checkbox" class="worker-leader">
-          案場負責人（+300／工）
+          案場負責人
         </label>
       </div>
       <select class="worker-day">
@@ -2292,16 +2306,13 @@ async function saveWorkLogs(){
     const rowEl=chk.closest('.worker-row');
     const day=rowEl.querySelector('.worker-day').value;
     const isLeader=!!rowEl.querySelector('.worker-leader')?.checked;
-    const roleBonus=isLeader ? Number(day)*300 : 0;
     return {
       work_date:date,
       site_name:site.site_name,
       employee_name:worker.worker_name,
       recorded_by:userId,
       recorded_by_name:recorder,
-      daily_wage:Number(worker.daily_wage||0),
       is_site_leader:isLeader,
-      role_bonus:roleBonus,
       note:`${day}工${note?'｜'+note:''}`
     };
   });
@@ -2309,7 +2320,7 @@ async function saveWorkLogs(){
   // 寫入後直接把資料取回。這樣不是只看「送出了幾人」，而是確認 Supabase 真正存進去的資料。
   const {data:savedRows,error}=await db.from('work_logs')
     .upsert(rows,{onConflict:'work_date,site_name,employee_name'})
-    .select('*');
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,created_at,updated_at');
   if(error){
     alert('記工失敗：'+error.message);
     return;
@@ -2401,7 +2412,11 @@ async function addWorker(){
   const wage=Number(document.getElementById('newWorkerWage')?.value||0);
   if(!name)return alert('請輸入人員姓名');
   if(wage<0)return alert('日薪不能小於 0');
-  const {error}=await db.from('workers').insert({worker_name:name,worker_type:type,daily_wage:wage,is_active:true});
+  const {error}=await db.rpc('admin_add_worker',{
+    p_worker_name:name,
+    p_worker_type:type,
+    p_daily_wage:wage
+  });
   if(error)return alert('新增人員失敗：'+error.message);
   document.getElementById('newWorkerName').value='';
   document.getElementById('newWorkerWage').value='';
@@ -2474,50 +2489,40 @@ async function saveWorkerWage(){
   if(btn){btn.disabled=true;btn.textContent='儲存中…';}
 
   try{
-    const {data,error}=await db
-      .from('workers')
-      .update({daily_wage:wage})
-      .eq('id',id)
-      .select('id,worker_name,worker_type,daily_wage,is_active')
-      .maybeSingle();
+    const {data,error}=await db.rpc('admin_set_worker_wage',{
+      p_worker_id:id,
+      p_daily_wage:wage
+    });
 
     if(error){
-      console.error('workers 日薪更新失敗',error);
+      console.error('日薪更新失敗',error);
       showWageStatus('修改失敗：'+error.message,'err');
       return;
     }
 
-    if(!data){
-      showWageStatus('日薪沒有更新成功。請執行 V17.5.2 的 workers UPDATE 權限 SQL。','err');
+    if(!data || !data.length){
+      showWageStatus('日薪沒有更新成功','err');
       return;
     }
 
-    // 再讀一次 DB，確認不是只更新前端畫面。
-    const {data:verify,error:verifyError}=await db
-      .from('workers')
-      .select('id,worker_name,worker_type,daily_wage,is_active')
-      .eq('id',id)
-      .maybeSingle();
-
+    const saved=data[0];
+    const {data:allWorkers,error:verifyError}=await db.rpc('admin_get_workers');
     if(verifyError){
-      showWageStatus('日薪已送出，但重新確認失敗：'+verifyError.message,'err');
+      showWageStatus('日薪已更新，但重新確認失敗：'+verifyError.message,'err');
       return;
     }
 
-    if(!verify || Number(verify.daily_wage)!==Number(wage)){
-      showWageStatus(`資料庫仍是 ${money(verify?.daily_wage||0)}，代表 UPDATE 權限尚未真正生效。`,'err');
+    workers=(allWorkers||[]).filter(x=>x.is_active!==false)
+      .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||'')));
+
+    const verified=workers.find(w=>Number(w.id)===id);
+    if(!verified || Number(verified.daily_wage)!==Number(wage)){
+      showWageStatus('資料庫薪資確認失敗，請重新整理後再試','err');
       return;
     }
 
-    const idx=workers.findIndex(w=>Number(w.id)===id);
-    if(idx>=0)workers[idx]={...workers[idx],...verify};
-
-    document.getElementById('wageCurrent').textContent=`目前日薪：${money(verify.daily_wage)}`;
-    showWageStatus(`已更新：${verify.worker_name}｜${money(verify.daily_wage)}`,'ok');
-
-    // 重新讀取人員與今日記工，避免薪資操作讓首頁記工顯示不同步。
-    await loadWorkMaster();
-    await loadAttendance(localDateISO(attendanceViewDate));
+    document.getElementById('wageCurrent').textContent=`目前日薪：${money(verified.daily_wage)}`;
+    showWageStatus(`已更新：${verified.worker_name}｜${money(verified.daily_wage)}`,'ok');
     renderWorkMasterManager('workers');
 
     setTimeout(()=>closeWageModal(),700);
@@ -2602,19 +2607,14 @@ async function saveWorkLogEdit(){
   const units=document.getElementById('editWorkUnits').value;
   const note=document.getElementById('editWorkNote').value.trim();
   const isLeader=!!document.getElementById('editWorkLeader')?.checked;
-  const roleBonus=isLeader ? Number(units)*300 : 0;
-
   if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
   if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
 
-  const selectedWorker=workers.find(w=>w.worker_name===employee_name);
   const payload={
     work_date,
     site_name,
     employee_name,
-    daily_wage:Number(selectedWorker?.daily_wage||0),
     is_site_leader:isLeader,
-    role_bonus:roleBonus,
     note:`${units}工${note?'｜'+note:''}`,
     updated_at:new Date().toISOString()
   };
@@ -2622,7 +2622,7 @@ async function saveWorkLogEdit(){
   const {data,error}=await db.from('work_logs')
     .update(payload)
     .eq('id',id)
-    .select('*')
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,created_at,updated_at')
     .maybeSingle();
 
   if(error){
@@ -2726,6 +2726,7 @@ function workUnitsFromNote(note=''){
   return Number.isFinite(n)?n:1;
 }
 function openWorkStats(){
+  if(!isAdmin())return alert('記工成本統計只有管理員可以查看');
   const start=document.getElementById('statsStart');
   const end=document.getElementById('statsEnd');
   if(start&&!start.value)start.value=firstDayOfMonth();
@@ -2742,20 +2743,23 @@ async function loadWorkStats(){
   if(!start||!end)return alert('請選擇日期區間');
   if(start>end)return alert('開始日期不能晚於結束日期');
 
-  const {data,error}=await db.from('work_logs')
-    .select('work_date,site_name,employee_name,note,daily_wage,is_site_leader,role_bonus')
-    .gte('work_date',start).lte('work_date',end)
-    .order('work_date',{ascending:true});
+  if(!isAdmin())return alert('記工成本統計只有管理員可以查看');
+
+  const {data,error}=await db.rpc('admin_get_work_costs',{
+    p_start:start,
+    p_end:end
+  });
   if(error)return alert('統計讀取失敗：'+error.message);
 
   const rows=data||[];
   const workersMap={}, sitesMap={};
   let totalUnits=0,totalCost=0,totalBonus=0;
 
-  // 舊記工若 daily_wage 還是 0，改用目前 workers 日薪補算；
-  // 新記工仍優先使用當次記錄的日薪快照。
-  await loadWorkMaster();
-  const currentWageByName=new Map(workers.map(w=>[w.worker_name,Number(w.daily_wage||0)]));
+  const currentWageByName=new Map();
+  if(isAdmin()){
+    await loadWorkMaster();
+    workers.forEach(w=>currentWageByName.set(w.worker_name,Number(w.daily_wage||0)));
+  }
 
   rows.forEach(r=>{
     const units=workUnitsFromNote(r.note);
@@ -2886,7 +2890,7 @@ Object.assign(window,{
       <label>職務加給</label>
       <label class="worker-role">
         <input id="editWorkLeader" type="checkbox">
-        案場負責人（1工 +$300／0.5工 +$150）
+        案場負責人
       </label>
     </div>
 
