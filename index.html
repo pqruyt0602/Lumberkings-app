@@ -318,6 +318,15 @@
 /* ===== V17.5.1 日薪修改 ===== */
 .wage-current{margin:8px 0 2px;font-size:12px;color:var(--muted)}
 
+
+/* ===== V17.5.2 日薪視窗與記工統計穩定 ===== */
+#wageModal{z-index:20050!important}
+#wageModal .work-sheet{position:relative;z-index:20051}
+#wageStatus{display:none;margin-top:10px;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:800}
+#wageStatus.show{display:block}
+#wageStatus.ok{background:#e8f2ea;color:var(--ok)}
+#wageStatus.err{background:#fae7e3;color:var(--danger)}
+
 </style>
 </head>
 <body>
@@ -563,7 +572,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.5.1｜修正日薪修改
+// Lumberkings 木作設備中心 V17.5.2｜日薪視窗置頂＋薪資同步＋記工統計穩定
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2368,6 +2377,13 @@ async function addWorker(){
   renderWorkMasterManager('workers');
 }
 
+function showWageStatus(message,type='ok'){
+  const box=document.getElementById('wageStatus');
+  if(!box)return;
+  box.textContent=message;
+  box.className=`show ${type}`;
+}
+
 function editWorkerWage(id){
   if(!isAdmin())return alert('只有管理員可以修改日薪');
   const worker=workers.find(w=>Number(w.id)===Number(id));
@@ -2377,8 +2393,21 @@ function editWorkerWage(id){
   document.getElementById('wageWorkerName').textContent=worker.worker_name;
   document.getElementById('wageCurrent').textContent=`目前日薪：${money(worker.daily_wage||0)}`;
   document.getElementById('wageInput').value=Number(worker.daily_wage||0);
-  document.getElementById('wageModal')?.classList.add('show');
-  setTimeout(()=>document.getElementById('wageInput')?.focus(),80);
+
+  const status=document.getElementById('wageStatus');
+  if(status){status.className='';status.textContent='';}
+
+  // 薪資視窗獨立置頂，避免被「人員／案場管理」蓋住。
+  const modal=document.getElementById('wageModal');
+  if(modal){
+    modal.style.zIndex='20050';
+    modal.classList.add('show');
+  }
+  setTimeout(()=>{
+    const input=document.getElementById('wageInput');
+    input?.focus();
+    input?.select();
+  },100);
 }
 
 function closeWageModal(){
@@ -2391,8 +2420,8 @@ async function saveWorkerWage(){
   const id=Number(document.getElementById('wageWorkerId').value);
   const wage=Number(document.getElementById('wageInput').value);
 
-  if(!id)return alert('找不到人員資料');
-  if(!Number.isFinite(wage)||wage<0)return alert('請輸入正確的日薪金額');
+  if(!id)return showWageStatus('找不到人員資料','err');
+  if(!Number.isFinite(wage)||wage<0)return showWageStatus('請輸入正確的日薪金額','err');
 
   const btn=document.getElementById('saveWageBtn');
   if(btn){btn.disabled=true;btn.textContent='儲存中…';}
@@ -2402,32 +2431,54 @@ async function saveWorkerWage(){
       .from('workers')
       .update({daily_wage:wage})
       .eq('id',id)
-      .select('id,worker_name,daily_wage')
+      .select('id,worker_name,worker_type,daily_wage,is_active')
       .maybeSingle();
 
     if(error){
-      return alert('修改日薪失敗：'+error.message);
+      console.error('workers 日薪更新失敗',error);
+      showWageStatus('修改失敗：'+error.message,'err');
+      return;
     }
 
-    // RLS 擋住 UPDATE 時，有時不一定丟錯，只會回傳 0 rows。
     if(!data){
-      return alert(
-        '日薪沒有更新成功。\n\n' +
-        '通常是 Supabase 的 workers UPDATE 權限（RLS）擋住。'
-      );
+      showWageStatus('日薪沒有更新成功。請執行 V17.5.2 的 workers UPDATE 權限 SQL。','err');
+      return;
+    }
+
+    // 再讀一次 DB，確認不是只更新前端畫面。
+    const {data:verify,error:verifyError}=await db
+      .from('workers')
+      .select('id,worker_name,worker_type,daily_wage,is_active')
+      .eq('id',id)
+      .maybeSingle();
+
+    if(verifyError){
+      showWageStatus('日薪已送出，但重新確認失敗：'+verifyError.message,'err');
+      return;
+    }
+
+    if(!verify || Number(verify.daily_wage)!==Number(wage)){
+      showWageStatus(`資料庫仍是 ${money(verify?.daily_wage||0)}，代表 UPDATE 權限尚未真正生效。`,'err');
+      return;
     }
 
     const idx=workers.findIndex(w=>Number(w.id)===id);
-    if(idx>=0)workers[idx]={...workers[idx],daily_wage:Number(data.daily_wage||0)};
+    if(idx>=0)workers[idx]={...workers[idx],...verify};
 
-    closeWageModal();
+    document.getElementById('wageCurrent').textContent=`目前日薪：${money(verify.daily_wage)}`;
+    showWageStatus(`已更新：${verify.worker_name}｜${money(verify.daily_wage)}`,'ok');
+
+    // 重新讀取人員與今日記工，避免薪資操作讓首頁記工顯示不同步。
+    await loadWorkMaster();
+    await loadAttendance(localDateISO(attendanceViewDate));
     renderWorkMasterManager('workers');
 
-    alert(`日薪已更新：${data.worker_name}｜${money(data.daily_wage)}`);
+    setTimeout(()=>closeWageModal(),700);
   }finally{
     if(btn){btn.disabled=false;btn.textContent='儲存日薪';}
   }
 }
+
 async function disableWorkSite(id){
   if(!confirm('確定停用這個案場？過去記工紀錄不會刪除。'))return;
   const {error}=await db.from('work_sites').update({is_active:false}).eq('id',id);
@@ -2649,9 +2700,15 @@ async function loadWorkStats(){
   const workersMap={}, sitesMap={};
   let totalUnits=0,totalCost=0;
 
+  // 舊記工若 daily_wage 還是 0，改用目前 workers 日薪補算；
+  // 新記工仍優先使用當次記錄的日薪快照。
+  await loadWorkMaster();
+  const currentWageByName=new Map(workers.map(w=>[w.worker_name,Number(w.daily_wage||0)]));
+
   rows.forEach(r=>{
     const units=workUnitsFromNote(r.note);
-    const wage=Number(r.daily_wage||0);
+    const snapshotWage=Number(r.daily_wage||0);
+    const wage=snapshotWage>0?snapshotWage:Number(currentWageByName.get(r.employee_name)||0);
     const cost=units*wage;
     totalUnits+=units;
     totalCost+=cost;
@@ -2819,6 +2876,7 @@ Object.assign(window,{
       <label>新日薪</label>
       <input id="wageInput" type="number" min="0" step="100" placeholder="例如 4000">
     </div>
+    <div id="wageStatus"></div>
     <div class="work-edit-actions">
       <button class="work-submit work-delete" type="button" onclick="closeWageModal()">取消</button>
       <button id="saveWageBtn" class="work-submit" type="button" onclick="saveWorkerWage()">儲存日薪</button>
