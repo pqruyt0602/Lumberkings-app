@@ -249,7 +249,7 @@
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
-// Lumberkings 木作設備中心 V15｜多人帳號 / profiles 身分整合
+// Lumberkings 木作設備中心 V15.1｜多人帳號 / 借出姓名自動帶入修正
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -271,7 +271,7 @@ function currentDisplayName(){
 }
 function currentRoleLabel(){
   const role=(currentProfile?.role||'').toLowerCase();
-  return role==='admin'?'管理員':role==='staff'?'員工':(currentProfile?.role||'使用者');
+  return role==='admin'?'管理員':(role==='staff'||role==='employee')?'員工':(currentProfile?.role||'使用者');
 }
 async function enterApp(user){
   currentUser=user;
@@ -588,13 +588,23 @@ function activeLoanForTool(toolId){
     .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0]||null;
 }
 
-window.openCheckout=toolId=>{
+window.openCheckout=async toolId=>{
   const t=tools.find(x=>x.id===toolId);
   if(!t)return alert('找不到工具');
   if(activeLoanForTool(toolId))return alert('這台工具目前已借出');
   if((t.status||'正常')!=='正常')return alert('這台工具目前在維修流程中，不能借出');
   selectedId=toolId;
-  $('checkoutEmployee').value=currentDisplayName();
+
+  // V15.1：每次開啟借出視窗時重新確認 profiles，確保多人登入姓名正確帶入
+  if(currentUser){
+    await loadCurrentProfile();
+    const name=currentDisplayName();
+    $('checkoutEmployee').value=name;
+    $('userLine').textContent='登入：'+name+(currentProfile?.role?'｜'+currentRoleLabel():'');
+  }else{
+    $('checkoutEmployee').value='';
+  }
+
   $('checkoutLocation').value=t.location==='公司倉庫'?'':(t.location||'');
   $('checkoutExpected').value='';
   $('checkoutCondition').value='正常';
