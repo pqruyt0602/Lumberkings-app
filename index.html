@@ -521,7 +521,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.3.1｜修正記工完成顯示
+// Lumberkings 木作設備中心 V17.3.2｜修正記工後今日出勤同步
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2115,10 +2115,19 @@ async function loadWorkMaster(){
   workers=workerRes.data||[];
 }
 async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
-  const {data,error}=await db.from('work_logs').select('*').eq('work_date',dateStr).order('site_name');
-  if(error){console.warn('記工讀取失敗',error);return;}
-  attendanceLogs=data||[];
+  // 一律使用傳入的 YYYY-MM-DD 查詢，避免手機時區造成日期偏移。
+  const {data,error}=await db.from('work_logs')
+    .select('*')
+    .eq('work_date',dateStr)
+    .order('site_name')
+    .order('employee_name');
+  if(error){
+    console.warn('記工讀取失敗',error);
+    return {ok:false,rows:[]};
+  }
+  attendanceLogs=Array.isArray(data)?data:[];
   renderAttendance(dateStr);
+  return {ok:true,rows:attendanceLogs};
 }
 function renderAttendance(dateStr){
   const label=document.getElementById('attendanceDateLabel');
@@ -2209,18 +2218,33 @@ async function saveWorkLogs(){
     };
   });
 
-  const {error}=await db.from('work_logs').upsert(rows,{onConflict:'work_date,site_name,employee_name'});
+  // 寫入後直接把資料取回。這樣不是只看「送出了幾人」，而是確認 Supabase 真正存進去的資料。
+  const {data:savedRows,error}=await db.from('work_logs')
+    .upsert(rows,{onConflict:'work_date,site_name,employee_name'})
+    .select('*');
   if(error){
     alert('記工失敗：'+error.message);
     return;
   }
+  if(!savedRows || !savedRows.length){
+    alert('記工未完成：資料庫沒有回傳已儲存的記工資料，請檢查 work_logs 的 RLS / SELECT 權限。');
+    return;
+  }
+
   closeWorkLog();
   attendanceViewDate=new Date(date+'T12:00:00');
 
-  // 重新讀取當天資料，確保首頁立即顯示最新記工
-  await loadAttendance(date);
+  // 先用資料庫實際回傳的資料立即更新畫面，再重新查詢整天資料。
+  // 即使網路快取/同步稍慢，畫面也不會再出現「記工完成但 0 人」。
+  attendanceLogs=savedRows;
+  renderAttendance(date);
+  const loaded=await loadAttendance(date);
+  if(!loaded?.ok || !loaded.rows.length){
+    attendanceLogs=savedRows;
+    renderAttendance(date);
+  }
 
-  const msg=`記工完成｜${site.site_name}｜${rows.length} 人`;
+  const msg=`記工完成｜${site.site_name}｜${savedRows.length} 人`;
   showWorkSuccess(msg);
 
   // 自動捲到今日出勤，讓師傅頭馬上看到已記錄的人員
