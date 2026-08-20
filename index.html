@@ -236,6 +236,25 @@
 .worker-row input[type=checkbox]{width:20px;height:20px}
 .worker-row select{padding:8px;border:1px solid var(--line);border-radius:9px;background:#fff}
 .work-submit{width:100%;margin-top:15px;padding:13px;border:0;border-radius:13px;background:var(--ok);color:#fff;font-weight:900}
+.attendance-head-actions{display:flex;align-items:center;gap:8px}
+.attendance-manage{border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:800;padding:5px 0}
+.attendance-overview{padding:14px 15px}
+.attendance-number{font-size:27px}
+.attendance-main-btn{min-width:92px;padding:12px 13px}
+.attendance-nav{margin-top:8px}
+.attendance-groups{margin-top:8px}
+.today-group{padding:11px 12px}
+.master-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0}
+.master-tab{padding:10px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--muted);font-weight:800}
+.master-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.master-add{display:grid;grid-template-columns:1fr auto;gap:8px;margin:10px 0 12px}
+.master-add input,.master-add select{min-width:0;padding:11px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.master-add button{border:0;border-radius:11px;padding:0 14px;background:var(--accent);color:#fff;font-weight:900}
+.master-list{display:grid;gap:8px}
+.master-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.master-row b{font-size:13px}.master-row small{display:block;color:var(--muted);margin-top:3px}
+.master-row button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 8px;color:var(--danger);font-size:11px}
+
 
 </style>
 </head>
@@ -267,7 +286,10 @@
 <div id="attendanceSection" class="section attendance-section">
   <div class="title attendance-head">
     <h2>👷 今日出勤</h2>
-    <span id="attendanceDateLabel" class="attendance-date"></span>
+    <div class="attendance-head-actions">
+      <span id="attendanceDateLabel" class="attendance-date"></span>
+      <button id="attendanceManageBtn" class="attendance-manage" type="button" onclick="openWorkMasterManager()" style="display:none">人員／案場管理</button>
+    </div>
   </div>
 
   <div class="attendance-overview">
@@ -476,7 +498,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.1｜案場記工版面重整
+// Lumberkings 木作設備中心 V17.2｜人員＋案場管理＋記工整合
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -601,6 +623,9 @@ function syncAdminNoticeVisibility(){
   if(bell){
     bell.classList.toggle('show',admin);
   }
+
+  const attendanceManageBtn=$('attendanceManageBtn');
+  if(attendanceManageBtn) attendanceManageBtn.style.display=admin?'inline-block':'none';
 
   if(admin && $('noticeHint') && !notifications.length){
     $('noticeHint').textContent='正在讀取通知…';
@@ -794,6 +819,7 @@ window.refreshAll=async()=>{
   if($('toolList'))$('toolList').innerHTML='<div class="loading">同步雲端資料中…</div>';
   const ok=await loadTools();
   await loadNotifications();
+  await loadAttendance();
   return ok;
 };
 window.setStatusFilter=s=>{borrowedOnly=false;statusFilter=s;renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
@@ -2109,7 +2135,7 @@ async function openWorkLog(){
     alert('目前沒有師傅名單，請先由管理員新增師傅。');
     return;
   }
-  document.getElementById('workDate').value=localDateISO();
+  document.getElementById('workDate').value=localDateISO(attendanceViewDate);
   document.getElementById('workSite').innerHTML=workSites.map(s=>`<option value="${s.id}">${escapeHtml(s.site_name)}</option>`).join('');
   document.getElementById('workerList').innerHTML=workers.map(w=>`
     <label class="worker-row">
@@ -2161,9 +2187,120 @@ async function saveWorkLogs(){
   alert(`記工完成，共 ${rows.length} 人`);
 }
 
+async function openWorkMasterManager(){
+  if(!isAdmin()){ alert('只有管理員可以管理人員與案場'); return; }
+  await loadWorkMaster();
+  renderWorkMasterManager('sites');
+  document.getElementById('workMasterModal')?.classList.add('show');
+}
+function closeWorkMasterManager(){
+  document.getElementById('workMasterModal')?.classList.remove('show');
+}
+let workMasterTab='sites';
+function renderWorkMasterManager(tab=workMasterTab){
+  workMasterTab=tab;
+  const siteTab=document.getElementById('masterTabSites');
+  const workerTab=document.getElementById('masterTabWorkers');
+  if(siteTab)siteTab.classList.toggle('active',tab==='sites');
+  if(workerTab)workerTab.classList.toggle('active',tab==='workers');
+
+  const sitePane=document.getElementById('masterSitesPane');
+  const workerPane=document.getElementById('masterWorkersPane');
+  if(sitePane)sitePane.style.display=tab==='sites'?'block':'none';
+  if(workerPane)workerPane.style.display=tab==='workers'?'block':'none';
+
+  const siteList=document.getElementById('masterSiteList');
+  if(siteList){
+    siteList.innerHTML=workSites.length?workSites.map(s=>`
+      <div class="master-row">
+        <div><b>${escapeHtml(s.site_name)}</b><small>啟用中案場</small></div>
+        <button type="button" onclick="disableWorkSite(${Number(s.id)})">停用</button>
+      </div>`).join(''):'<div class="empty">目前沒有啟用中的案場</div>';
+  }
+
+  const workerList=document.getElementById('masterWorkerList');
+  if(workerList){
+    workerList.innerHTML=workers.length?workers.map(w=>`
+      <div class="master-row">
+        <div><b>${escapeHtml(w.worker_name)}</b><small>${escapeHtml(w.worker_type||'師傅')}</small></div>
+        <button type="button" onclick="disableWorker(${Number(w.id)})">停用</button>
+      </div>`).join(''):'<div class="empty">目前沒有啟用中的人員</div>';
+  }
+}
+async function addWorkSite(){
+  const input=document.getElementById('newSiteName');
+  const name=(input?.value||'').trim();
+  if(!name)return alert('請輸入案場名稱');
+  const {error}=await db.from('work_sites').insert({site_name:name,is_active:true});
+  if(error)return alert('新增案場失敗：'+error.message);
+  input.value='';
+  await loadWorkMaster();
+  renderWorkMasterManager('sites');
+}
+async function addWorker(){
+  const name=(document.getElementById('newWorkerName')?.value||'').trim();
+  const type=(document.getElementById('newWorkerType')?.value||'師傅').trim();
+  if(!name)return alert('請輸入人員姓名');
+  const {error}=await db.from('workers').insert({worker_name:name,worker_type:type,is_active:true});
+  if(error)return alert('新增人員失敗：'+error.message);
+  document.getElementById('newWorkerName').value='';
+  await loadWorkMaster();
+  renderWorkMasterManager('workers');
+}
+async function disableWorkSite(id){
+  if(!confirm('確定停用這個案場？過去記工紀錄不會刪除。'))return;
+  const {error}=await db.from('work_sites').update({is_active:false}).eq('id',id);
+  if(error)return alert('停用失敗：'+error.message);
+  await loadWorkMaster();
+  renderWorkMasterManager('sites');
+}
+async function disableWorker(id){
+  if(!confirm('確定停用這位人員？過去記工紀錄不會刪除。'))return;
+  const {error}=await db.from('workers').update({is_active:false}).eq('id',id);
+  if(error)return alert('停用失敗：'+error.message);
+  await loadWorkMaster();
+  renderWorkMasterManager('workers');
+}
+
 </script>
 
 
+
+
+<div id="workMasterModal" class="work-modal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <h2>👷 人員／案場管理</h2>
+      <button class="work-close" type="button" onclick="closeWorkMasterManager()">×</button>
+    </div>
+    <div class="master-tabs">
+      <button id="masterTabSites" class="master-tab active" type="button" onclick="renderWorkMasterManager('sites')">案場</button>
+      <button id="masterTabWorkers" class="master-tab" type="button" onclick="renderWorkMasterManager('workers')">人員</button>
+    </div>
+
+    <div id="masterSitesPane">
+      <div class="master-add">
+        <input id="newSiteName" placeholder="新增案場名稱">
+        <button type="button" onclick="addWorkSite()">＋新增</button>
+      </div>
+      <div id="masterSiteList" class="master-list"></div>
+    </div>
+
+    <div id="masterWorkersPane" style="display:none">
+      <div class="master-add">
+        <input id="newWorkerName" placeholder="人員姓名">
+        <select id="newWorkerType">
+          <option>師傅</option>
+          <option>半技</option>
+          <option>學徒</option>
+          <option>臨時工</option>
+        </select>
+      </div>
+      <button class="work-submit" style="margin-top:0;margin-bottom:12px" type="button" onclick="addWorker()">＋ 新增人員</button>
+      <div id="masterWorkerList" class="master-list"></div>
+    </div>
+  </div>
+</div>
 
 <div id="workLogModal" class="work-modal">
   <div class="work-sheet">
