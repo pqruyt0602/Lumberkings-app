@@ -52,15 +52,38 @@
   .batch-label{break-inside:avoid;page-break-inside:avoid}
 }
 
+
+.loanbox{margin:0 16px 12px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px}
+.loanbox b{font-size:13px}.loanbox p{margin:5px 0 0;font-size:12px;color:var(--muted);line-height:1.55}
+.loanactive{background:#fff8ee;border-color:#d7b98f}
+
 </style>
 </head>
 <body>
 <div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
 <div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="badge">雲端版</div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div><div class="section"><div class="grid"><div id="cardAll" class="card metric" onclick="setStatusFilter('全部')"><span>工具總數</span><strong id="mTotal">0</strong><span>點我查看全部</span></div><div id="cardRepair" class="card metric" onclick="setStatusFilter('待維修')"><span>待維修</span><strong id="mRepair">0</strong><span>點我查看待處理</span></div><div id="cardFixing" class="card metric" onclick="setStatusFilter('送修中')"><span>送修中</span><strong id="mFixing">0</strong><span>點我查看送修設備</span></div><div id="cardCost" class="card metric" onclick="setStatusFilter('全部')"><span>累積維修費</span><strong id="mCost">$0</strong><span>點我查看全部設備</span></div></div><div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div><div id="toolList"><div class="loading">載入中…</div></div></div></div>
-<div id="detail" class="screen"><div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div><div class="detailtop"><div class="hero" id="detailHero"></div></div><div id="detailActions" class="detailactions"></div><div class="section"><div class="title"><h2>維修紀錄</h2><a onclick="reportSelected()">＋報修</a></div></div><div class="timeline" id="repairTimeline"></div><div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div></div>
+<div id="detail" class="screen"><div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div><div class="detailtop"><div class="hero" id="detailHero"></div></div><div id="detailActions" class="detailactions"></div><div class="section"><div class="title"><h2>借用紀錄</h2></div></div><div id="loanTimeline"></div><div class="section"><div class="title"><h2>維修紀錄</h2><a onclick="reportSelected()">＋報修</a></div></div><div class="timeline" id="repairTimeline"></div><div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div></div>
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
 <div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"><option>電動工具</option><option>氣動工具</option><option>量測工具</option><option>大型設備</option><option>手工具</option><option>其他</option></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
+
+<div id="checkoutModal" class="modal"><div class="modalbox">
+<h3>借出工具</h3>
+<div class="label">借用人</div><input id="checkoutEmployee" class="input" placeholder="例如：王小明">
+<div class="label">工地／位置</div><input id="checkoutLocation" class="input" placeholder="例如：信義區 XX 案">
+<div class="label">預計歸還日期</div><input id="checkoutExpected" class="input" type="date">
+<div class="label">借出狀況</div><select id="checkoutCondition" class="select"><option>正常</option><option>輕微損傷</option><option>需注意</option></select>
+<div class="label">備註</div><textarea id="checkoutNote" class="textarea" placeholder="可留空"></textarea>
+<div class="modalactions"><button class="btn secondary" onclick="closeCheckout()">取消</button><button id="checkoutBtn" class="btn" onclick="confirmCheckout()">確認借出</button></div>
+</div></div>
+
+<div id="returnModal" class="modal"><div class="modalbox">
+<h3>歸還工具</h3>
+<p id="returnSummary" class="meta"></p>
+<div class="label">歸還狀況</div><select id="returnCondition" class="select"><option>正常</option><option>輕微損傷</option><option>需維修</option></select>
+<div class="label">備註</div><textarea id="returnNote" class="textarea" placeholder="可留空"></textarea>
+<div class="modalactions"><button class="btn secondary" onclick="closeReturn()">取消</button><button id="returnBtn" class="btn" onclick="confirmReturn()">確認歸還</button></div>
+</div></div>
 <div id="qrModal" class="modal"><div class="modalbox qrbox"><h3>工具 QR Code</h3><p id="qrTitle" class="meta"></p><img id="qrImage" class="qrimg" alt="工具 QR Code"><div id="qrUrl" class="qrurl"></div><button class="btn secondary" onclick="closeQr()">關閉</button></div></div><div id="labelModal" class="modal"><div class="modalbox">
 <h3>QR 工具標籤列印</h3>
 <p class="meta">選擇標籤尺寸後即可預覽與列印</p>
@@ -129,7 +152,7 @@
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
-let tools=[],selectedId=null,currentUser=null,statusFilter='全部';const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],selectedId=null,currentUser=null,statusFilter='全部';const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 async function init(){const {data:{session}}=await db.auth.getSession();session?enterApp(session.user):showLogin();db.auth.onAuthStateChange((_e,s)=>s?enterApp(s.user):showLogin())}
 function showLogin(){$('mainApp').style.display='none';$('loginScreen').style.display='flex'}
 async function enterApp(user){currentUser=user;$('loginScreen').style.display='none';$('mainApp').style.display='block';$('userLine').textContent='登入：'+(user.email||'');await refreshAll();openToolFromUrl()}
@@ -138,9 +161,10 @@ async function login(){const email=$('loginEmail').value.trim(),password=$('logi
 function loginErr(m){$('loginErr').textContent=m;$('loginErr').style.display='block'}window.logout=()=>db.auth.signOut();
 window.show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)};
 async function loadTools(){
-  const [{data:toolRows,error:toolErr},{data:repairRows,error:repairErr}] = await Promise.all([
+  const [{data:toolRows,error:toolErr},{data:repairRows,error:repairErr},{data:txRows,error:txErr}] = await Promise.all([
     db.from('tools').select('*').order('tool_code'),
-    db.from('repairs').select('*').order('created_at',{ascending:false})
+    db.from('repairs').select('*').order('created_at',{ascending:false}),
+    db.from('tool_transactions').select('*').order('created_at',{ascending:false})
   ]);
   if(toolErr){
     $('toolList').innerHTML='<div class="empty">工具讀取失敗：'+esc(toolErr.message)+'</div>';
@@ -150,6 +174,11 @@ async function loadTools(){
     $('toolList').innerHTML='<div class="empty">維修紀錄讀取失敗：'+esc(repairErr.message)+'</div>';
     return false;
   }
+  if(txErr){
+    $('toolList').innerHTML='<div class="empty">借用紀錄讀取失敗：'+esc(txErr.message)+'</div>';
+    return false;
+  }
+  transactions=txRows||[];
   const byTool={};
   (repairRows||[]).forEach(r=>(byTool[r.tool_id]??=[]).push(r));
   tools=(toolRows||[]).map(t=>({...t,repairs:byTool[t.id]||[]}));
@@ -199,18 +228,134 @@ window.openDetail=id=>{
     </div>`;
   }).join('') : '<div class="empty">目前沒有維修紀錄</div>';
 
+  const txs=transactions.filter(x=>Number(x.tool_id)===Number(t.id)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const activeLoan=txs.find(x=>x.action==='借出'&&!x.return_date);
+  $('loanTimeline').innerHTML=txs.length?txs.slice(0,10).map(x=>{
+    const isActive=x.action==='借出'&&!x.return_date;
+    const lines=[
+      x.employee_name?`借用人：${x.employee_name}`:null,
+      x.location?`工地／位置：${x.location}`:null,
+      x.checkout_date?`借出：${new Date(x.checkout_date).toLocaleString('zh-TW')}`:null,
+      x.expected_return_date?`預計歸還：${x.expected_return_date}`:null,
+      x.return_date?`歸還：${new Date(x.return_date).toLocaleString('zh-TW')}`:null,
+      x.condition_out?`借出狀況：${x.condition_out}`:null,
+      x.condition_return?`歸還狀況：${x.condition_return}`:null,
+      x.note?`備註：${x.note}`:null
+    ].filter(Boolean);
+    return `<div class="loanbox ${isActive?'loanactive':''}"><b>${isActive?'借出中':'已歸還'}｜${esc(x.employee_name||'未指定')}</b><p>${lines.map(esc).join('<br>')}</p></div>`;
+  }).join(''):'<div class="empty">目前沒有借用紀錄</div>';
+
   let actions='';
+  if(activeLoan){
+    actions += `<button class="btn ok" onclick="openReturn(${t.id})">↩ 歸還工具</button>`;
+  }else if((t.status||'正常')==='正常'){
+    actions += `<button class="btn" onclick="openCheckout(${t.id})">⇢ 借出工具</button>`;
+  }
   if((t.status||'正常')==='正常'){
-    actions=`<button class="btn" onclick="reportSelected()">建立報修單</button>`;
+    actions+=`<button class="btn secondary" onclick="reportSelected()">建立報修單</button>`;
   }else if(t.status==='待維修'){
-    actions=`<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
+    actions+=`<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
   }else if(t.status==='送修中'){
-    actions=`<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
+    actions+=`<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
   }
   actions += `<button class="btn secondary" onclick="showQr(${t.id})">▦ 顯示 QR Code</button>`;
   actions += `<button class="btn secondary" onclick="showLabel(${t.id})">▣ QR 標籤列印</button>`;
   $('detailActions').innerHTML=actions;
   show('detail');
+};
+
+
+function activeLoanForTool(toolId){
+  return transactions
+    .filter(x=>Number(x.tool_id)===Number(toolId)&&x.action==='借出'&&!x.return_date)
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0]||null;
+}
+
+window.openCheckout=toolId=>{
+  const t=tools.find(x=>x.id===toolId);
+  if(!t)return alert('找不到工具');
+  if(activeLoanForTool(toolId))return alert('這台工具目前已借出');
+  if((t.status||'正常')!=='正常')return alert('這台工具目前在維修流程中，不能借出');
+  selectedId=toolId;
+  $('checkoutEmployee').value='';
+  $('checkoutLocation').value=t.location==='公司倉庫'?'':(t.location||'');
+  $('checkoutExpected').value='';
+  $('checkoutCondition').value='正常';
+  $('checkoutNote').value='';
+  $('checkoutModal').classList.add('open');
+};
+window.closeCheckout=()=>$('checkoutModal').classList.remove('open');
+
+window.confirmCheckout=async()=>{
+  const toolId=selectedId;
+  const t=tools.find(x=>x.id===toolId);
+  if(!t)return alert('找不到工具');
+  const employee=$('checkoutEmployee').value.trim();
+  const location=$('checkoutLocation').value.trim();
+  if(!employee)return alert('請輸入借用人');
+  if(!location)return alert('請輸入工地／位置');
+
+  const btn=$('checkoutBtn');btn.disabled=true;btn.textContent='借出中…';
+  const payload={
+    tool_id:toolId,
+    action:'借出',
+    employee_name:employee,
+    location,
+    note:$('checkoutNote').value.trim()||null,
+    created_by:currentUser?.id||null,
+    checkout_date:new Date().toISOString(),
+    expected_return_date:$('checkoutExpected').value||null,
+    condition_out:$('checkoutCondition').value
+  };
+  const {error}=await db.from('tool_transactions').insert(payload);
+  if(error){btn.disabled=false;btn.textContent='確認借出';return alert('借出失敗：'+error.message)}
+  const {error:te}=await db.from('tools').update({current_user_name:employee,location}).eq('id',toolId);
+  btn.disabled=false;btn.textContent='確認借出';
+  if(te)return alert('借出紀錄已建立，但工具資料更新失敗：'+te.message);
+  closeCheckout();await refreshAll();openDetail(toolId);alert('工具已借出');
+};
+
+window.openReturn=toolId=>{
+  const loan=activeLoanForTool(toolId);
+  if(!loan)return alert('找不到進行中的借出紀錄');
+  selectedId=toolId;
+  $('returnSummary').textContent='借用人：'+(loan.employee_name||'未指定')+'｜位置：'+(loan.location||'未指定');
+  $('returnCondition').value='正常';
+  $('returnNote').value='';
+  $('returnModal').classList.add('open');
+};
+window.closeReturn=()=>$('returnModal').classList.remove('open');
+
+window.confirmReturn=async()=>{
+  const toolId=selectedId;
+  const loan=activeLoanForTool(toolId);
+  if(!loan)return alert('找不到進行中的借出紀錄');
+  const condition=$('returnCondition').value;
+  const note=$('returnNote').value.trim();
+
+  const btn=$('returnBtn');btn.disabled=true;btn.textContent='歸還中…';
+  const mergedNote=[loan.note,note?('歸還備註：'+note):null].filter(Boolean).join('｜')||null;
+  const {error}=await db.from('tool_transactions').update({
+    return_date:new Date().toISOString(),
+    condition_return:condition,
+    note:mergedNote
+  }).eq('id',loan.id);
+  if(error){btn.disabled=false;btn.textContent='確認歸還';return alert('歸還失敗：'+error.message)}
+
+  const {error:te}=await db.from('tools').update({
+    current_user_name:null,
+    location:'公司倉庫'
+  }).eq('id',toolId);
+
+  btn.disabled=false;btn.textContent='確認歸還';
+  if(te)return alert('歸還紀錄已更新，但工具資料更新失敗：'+te.message);
+
+  closeReturn();await refreshAll();openDetail(toolId);
+  if(condition==='需維修'){
+    if(confirm('工具已歸還，且你選擇「需維修」。要現在建立報修單嗎？')) reportSelected();
+  }else{
+    alert('工具已歸還公司倉庫');
+  }
 };
 
 function toolShareUrl(t){
