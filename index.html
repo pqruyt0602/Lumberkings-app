@@ -702,6 +702,17 @@ html,body,.app{background:var(--bg);color:var(--ink)}
   line-height:1.5;
 }
 
+
+/* ===== V17.19 自動更新 ===== */
+.update-toast{
+  position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);z-index:2147483647;
+  width:min(390px,calc(100% - 28px));padding:11px 13px;
+  border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--ink);
+  box-shadow:0 10px 30px #0006;font-size:12px;font-weight:800;display:none;
+}
+.update-toast.show{display:block}
+
 </style>
 </head>
 <body>
@@ -709,7 +720,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版</div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.19</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2642,7 +2653,92 @@ window.saveRepair=async()=>{
   alert('報修完成，工具狀態已更新為「'+actualStatus+'」');
 };
 
-if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));init();
+if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
+
+const APP_VERSION='17.19';
+let lastVersionCheckAt=0;
+let updateInProgress=false;
+
+function versionParts(v){
+  return String(v||'0').replace(/^v/i,'').split('.').map(x=>Number(x)||0);
+}
+function compareVersions(a,b){
+  const aa=versionParts(a),bb=versionParts(b),n=Math.max(aa.length,bb.length);
+  for(let i=0;i<n;i++){
+    const x=aa[i]||0,y=bb[i]||0;
+    if(x>y)return 1;
+    if(x<y)return -1;
+  }
+  return 0;
+}
+function showUpdateToast(msg){
+  const el=document.getElementById('updateToast');
+  if(!el)return;
+  el.textContent=msg;
+  el.classList.add('show');
+}
+async function fetchPublishedVersion(){
+  try{
+    const cleanPath=location.pathname.endsWith('/')?location.pathname+'index.html':location.pathname;
+    const url=cleanPath+'?__version_check='+Date.now();
+    const res=await fetch(url,{cache:'no-store',headers:{'Cache-Control':'no-cache'}});
+    if(!res.ok)return null;
+    const html=await res.text();
+    const m=html.match(/<meta\\s+name=["']app-version["']\\s+content=["']([^"']+)["']/i)
+      || html.match(/<meta\\s+content=["']([^"']+)["']\\s+name=["']app-version["']/i);
+    return m?m[1]:null;
+  }catch(e){
+    console.warn('版本檢查失敗',e);
+    return null;
+  }
+}
+async function checkForAppUpdate(force=false){
+  if(updateInProgress)return;
+  const now=Date.now();
+  if(!force && now-lastVersionCheckAt<5*60*1000)return;
+  lastVersionCheckAt=now;
+
+  const remote=await fetchPublishedVersion();
+  if(!remote || compareVersions(remote,APP_VERSION)<=0)return;
+
+  updateInProgress=true;
+  showUpdateToast(`發現新版 V${remote}，正在更新…`);
+
+  try{
+    if('serviceWorker' in navigator){
+      const reg=await navigator.serviceWorker.getRegistration();
+      if(reg)await reg.update().catch(()=>{});
+    }
+  }catch(e){console.warn(e)}
+
+  setTimeout(()=>{
+    const base=location.pathname;
+    location.replace(base+'?v='+encodeURIComponent(remote)+'&updated='+Date.now());
+  },650);
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',async()=>{
+    try{
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.19',{updateViaCache:'none'});
+      await reg.update().catch(()=>{});
+    }catch(e){console.warn('Service Worker 註冊失敗',e)}
+    checkForAppUpdate(true);
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(updateInProgress)return;
+    checkForAppUpdate(true);
+  });
+}else{
+  window.addEventListener('load',()=>checkForAppUpdate(true));
+}
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')checkForAppUpdate(false);
+});
+window.addEventListener('focus',()=>checkForAppUpdate(false));
+
+init();
 
 // ===== V16 QR 批次借出 =====
 let batchToolIds=[];
@@ -4304,4 +4400,5 @@ Object.assign(window,{
   </div>
 </div>
 
+<div id="updateToast" class="update-toast">正在更新系統…</div>
 </body></html>
