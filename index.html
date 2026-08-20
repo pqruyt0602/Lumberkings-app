@@ -348,6 +348,50 @@
 .worker-role input{width:17px;height:17px;accent-color:var(--accent)}
 .bonus-tag{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;background:#fff0d8;color:#9b6500;font-size:10px;font-weight:900}
 .stats-bonus{font-size:11px;color:#9b6500;font-weight:800;margin-top:3px}
+
+/* ===== V17.6.2 管理視窗上移＋請假時數扣薪 ===== */
+#workMasterModal{
+  align-items:flex-start!important;
+  padding-top:20px!important;
+}
+#workMasterModal .work-sheet{
+  max-height:calc(100vh - 40px)!important;
+  border-radius:20px!important;
+  padding-bottom:calc(20px + env(safe-area-inset-bottom))!important;
+}
+.worker-leave-wrap{
+  margin-top:6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:var(--muted);
+}
+.worker-leave{
+  width:68px!important;
+  padding:6px 7px!important;
+  border:1px solid var(--line)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  font-size:12px!important;
+}
+.leave-tag{
+  display:inline-block;
+  margin-left:5px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:#f4e8e2;
+  color:#9d5b45;
+  font-size:10px;
+  font-weight:900;
+}
+.stats-deduction{
+  font-size:11px;
+  color:#9d5b45;
+  font-weight:800;
+  margin-top:3px;
+}
+
 </style>
 </head>
 <body>
@@ -593,7 +637,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6.1｜薪資隱私版
+// Lumberkings 木作設備中心 V17.6.2｜管理視窗上移＋請假時數扣薪
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2203,7 +2247,7 @@ async function loadWorkMaster(){
 async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
   // 一律使用傳入的 YYYY-MM-DD 查詢，避免手機時區造成日期偏移。
   const {data,error}=await db.from('work_logs')
-    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,created_at,updated_at')
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at')
     .eq('work_date',dateStr)
     .order('site_name')
     .order('employee_name');
@@ -2238,7 +2282,7 @@ function renderAttendance(dateStr){
       <strong>${esc(site)}｜${rows.length} 人</strong>
       ${rows.map(r=>`
         <div class="today-person">
-          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}</div>
+          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}${Number(r.leave_hours||0)>0?`<span class="leave-tag">請假 ${Number(r.leave_hours)}h</span>`:''}</div>
           <button class="today-edit" type="button" onclick="openWorkLogEdit(${Number(r.id)})">修改</button>
         </div>`).join('')}
     </div>`).join('');
@@ -2267,6 +2311,11 @@ async function openWorkLog(){
         <label class="worker-role">
           <input type="checkbox" class="worker-leader">
           案場負責人
+        </label>
+        <label class="worker-leave-wrap">
+          請假
+          <input class="worker-leave" type="number" min="0" max="8" step="0.5" value="0">
+          小時
         </label>
       </div>
       <select class="worker-day">
@@ -2306,6 +2355,7 @@ async function saveWorkLogs(){
     const rowEl=chk.closest('.worker-row');
     const day=rowEl.querySelector('.worker-day').value;
     const isLeader=!!rowEl.querySelector('.worker-leader')?.checked;
+    const leaveHours=Math.max(0,Math.min(8,Number(rowEl.querySelector('.worker-leave')?.value||0)));
     return {
       work_date:date,
       site_name:site.site_name,
@@ -2313,6 +2363,7 @@ async function saveWorkLogs(){
       recorded_by:userId,
       recorded_by_name:recorder,
       is_site_leader:isLeader,
+      leave_hours:leaveHours,
       note:`${day}工${note?'｜'+note:''}`
     };
   });
@@ -2320,7 +2371,7 @@ async function saveWorkLogs(){
   // 寫入後直接把資料取回。這樣不是只看「送出了幾人」，而是確認 Supabase 真正存進去的資料。
   const {data:savedRows,error}=await db.from('work_logs')
     .upsert(rows,{onConflict:'work_date,site_name,employee_name'})
-    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,created_at,updated_at');
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at');
   if(error){
     alert('記工失敗：'+error.message);
     return;
@@ -2588,6 +2639,7 @@ async function openWorkLogEdit(id){
   document.getElementById('editWorkUnits').value=parsed.units;
   document.getElementById('editWorkNote').value=parsed.note;
   document.getElementById('editWorkLeader').checked=!!row.is_site_leader;
+  document.getElementById('editWorkLeaveHours').value=Number(row.leave_hours||0);
 
   const deleteBtn=document.getElementById('deleteWorkLogBtn');
   if(deleteBtn)deleteBtn.style.display=isAdmin()?'block':'none';
@@ -2607,6 +2659,7 @@ async function saveWorkLogEdit(){
   const units=document.getElementById('editWorkUnits').value;
   const note=document.getElementById('editWorkNote').value.trim();
   const isLeader=!!document.getElementById('editWorkLeader')?.checked;
+  const leaveHours=Math.max(0,Math.min(8,Number(document.getElementById('editWorkLeaveHours')?.value||0)));
   if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
   if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
 
@@ -2615,6 +2668,7 @@ async function saveWorkLogEdit(){
     site_name,
     employee_name,
     is_site_leader:isLeader,
+    leave_hours:leaveHours,
     note:`${units}工${note?'｜'+note:''}`,
     updated_at:new Date().toISOString()
   };
@@ -2622,7 +2676,7 @@ async function saveWorkLogEdit(){
   const {data,error}=await db.from('work_logs')
     .update(payload)
     .eq('id',id)
-    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,created_at,updated_at')
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at')
     .maybeSingle();
 
   if(error){
@@ -2761,28 +2815,41 @@ async function loadWorkStats(){
     workers.forEach(w=>currentWageByName.set(w.worker_name,Number(w.daily_wage||0)));
   }
 
+  let totalLeaveDeduction=0;
   rows.forEach(r=>{
     const units=workUnitsFromNote(r.note);
     const snapshotWage=Number(r.daily_wage||0);
     const wage=snapshotWage>0?snapshotWage:Number(currentWageByName.get(r.employee_name)||0);
-    const baseCost=units*wage;
+    const grossBase=units*wage;
+    const leaveHours=Number(r.leave_hours||0);
+    const hourlyDeduction=Math.floor(wage/8);
+    const leaveDeduction=Number(r.leave_deduction ?? (hourlyDeduction*leaveHours));
+    const baseCost=Math.max(0,grossBase-leaveDeduction);
     const bonus=Number(r.role_bonus||0);
     const cost=baseCost+bonus;
+
     totalUnits+=units;
     totalBonus+=bonus;
+    totalLeaveDeduction+=leaveDeduction;
     totalCost+=cost;
 
-    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,baseCost:0,bonus:0,wage};
+    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,baseCost:0,grossBase:0,bonus:0,leaveDeduction:0,leaveHours:0,wage};
     workersMap[r.employee_name].units+=units;
+    workersMap[r.employee_name].grossBase+=grossBase;
     workersMap[r.employee_name].baseCost+=baseCost;
     workersMap[r.employee_name].bonus+=bonus;
+    workersMap[r.employee_name].leaveDeduction+=leaveDeduction;
+    workersMap[r.employee_name].leaveHours+=leaveHours;
     workersMap[r.employee_name].cost+=cost;
     if(wage)workersMap[r.employee_name].wage=wage;
 
-    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0,baseCost:0,bonus:0};
+    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0,baseCost:0,grossBase:0,bonus:0,leaveDeduction:0,leaveHours:0};
     sitesMap[r.site_name].units+=units;
+    sitesMap[r.site_name].grossBase+=grossBase;
     sitesMap[r.site_name].baseCost+=baseCost;
     sitesMap[r.site_name].bonus+=bonus;
+    sitesMap[r.site_name].leaveDeduction+=leaveDeduction;
+    sitesMap[r.site_name].leaveHours+=leaveHours;
     sitesMap[r.site_name].cost+=cost;
   });
 
@@ -2793,6 +2860,8 @@ async function loadWorkStats(){
   if(totalCostEl)totalCostEl.textContent=money(totalCost);
   const totalBonusEl=document.getElementById('statsTotalBonus');
   if(totalBonusEl)totalBonusEl.textContent=money(totalBonus);
+  const totalLeaveEl=document.getElementById('statsTotalLeaveDeduction');
+  if(totalLeaveEl)totalLeaveEl.textContent=money(totalLeaveDeduction);
 
   const maxWorker=Math.max(1,...Object.values(workersMap).map(x=>x.units));
   const maxSite=Math.max(1,...Object.values(sitesMap).map(x=>x.units));
@@ -2803,7 +2872,9 @@ async function loadWorkStats(){
       <div class="stats-row">
         <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
         <div class="stats-cost">人工 ${money(x.cost)}</div>
-        <div class="stats-sub">基本人工 ${money(x.baseCost)}｜日薪 ${money(x.wage)}</div>
+        <div class="stats-sub">應計基本人工 ${money(x.grossBase)}｜日薪 ${money(x.wage)}</div>
+        ${x.leaveDeduction?`<div class="stats-deduction">請假 ${Number(x.leaveHours)}h｜扣 ${money(x.leaveDeduction)}</div>`:''}
+        <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
         ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxWorker*100)}%"></i></div>
       </div>`).join('')
@@ -2815,7 +2886,9 @@ async function loadWorkStats(){
       <div class="stats-row">
         <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
         <div class="stats-cost">人工成本 ${money(x.cost)}</div>
-        <div class="stats-sub">基本人工 ${money(x.baseCost)}</div>
+        <div class="stats-sub">應計基本人工 ${money(x.grossBase)}</div>
+        ${x.leaveDeduction?`<div class="stats-deduction">請假扣薪 ${money(x.leaveDeduction)}</div>`:''}
+        <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
         ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxSite*100)}%"></i></div>
       </div>`).join('')
@@ -2895,6 +2968,12 @@ Object.assign(window,{
     </div>
 
     <div class="work-field">
+      <label>請假時數</label>
+      <input id="editWorkLeaveHours" type="number" min="0" max="8" step="0.5" value="0" placeholder="例如 2">
+      <div class="stats-sub">扣薪方式：日薪 ÷ 8，無條件捨去小數，再乘請假時數。</div>
+    </div>
+
+    <div class="work-field">
       <label>備註</label>
       <textarea id="editWorkNote" rows="2" placeholder="可留空"></textarea>
     </div>
@@ -2918,13 +2997,18 @@ Object.assign(window,{
       <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
     </div>
     <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
-    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪＋負責人加給；負責人 1工 +$300、0.5工 +$150。</div>
+    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪－請假扣薪＋負責人加給。請假每小時＝日薪 ÷ 8 後無條件捨去小數；例如 $3,500 ÷ 8＝437.5，每小時扣 $437。</div>
 
     <div class="stats-cards">
       <div class="stats-card"><b id="statsTotalWorkers">0</b><small>出勤人數</small></div>
       <div class="stats-card"><b id="statsTotalDays">0</b><small>總工數</small></div>
       <div class="stats-card"><b id="statsTotalSites">0</b><small>案場數</small></div>
-      <div class="stats-card stats-money-card"><small>人工成本合計（含負責人加給）</small><b id="statsTotalCost">$0</b><div class="stats-bonus">其中負責人加給 <span id="statsTotalBonus">$0</span></div></div>
+      <div class="stats-card stats-money-card">
+        <small>人工成本合計（扣請假、含負責人加給）</small>
+        <b id="statsTotalCost">$0</b>
+        <div class="stats-deduction">請假扣薪 <span id="statsTotalLeaveDeduction">$0</span></div>
+        <div class="stats-bonus">負責人加給 <span id="statsTotalBonus">$0</span></div>
+      </div>
     </div>
 
     <div class="stats-section-title">依人員統計</div>
