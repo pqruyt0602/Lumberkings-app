@@ -498,7 +498,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.2.1｜修正記工按鈕無反應
+// Lumberkings 木作設備中心 V17.2.2｜修正登入失效與記工按鈕
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2081,7 +2081,7 @@ function formatWorkDate(s){
   const [y,m,d]=s.split('-');
   return `${Number(m)}/${Number(d)}`;
 }
-async async function loadWorkMaster(){
+async function loadWorkMaster(){
   const [siteRes,workerRes]=await Promise.all([
     db.from('work_sites').select('*').eq('is_active',true).order('site_name'),
     db.from('workers').select('*').eq('is_active',true).order('worker_name')
