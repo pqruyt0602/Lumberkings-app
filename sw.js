@@ -1,76 +1,120 @@
-const CACHE='woodtool-github-v17';
-
-const ASSETS=[
-  './',
-  './index.html',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
-];
+// Lumberkings PWA service worker - network-first for app shell
+const CACHE_NAME='lumberkings-pwa-v2';
+const STATIC_ASSETS=['./manifest.webmanifest','./icons/icon-192.png'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE).then(cache=>cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(cache=>cache.addAll(STATIC_ASSETS).catch(()=>{}))
   );
 });
 
 self.addEventListener('activate',event=>{
-  event.waitUntil(
-    Promise.all([
-      caches.keys().then(keys=>
-        Promise.all(
-          keys
-            .filter(key=>key!==CACHE)
-            .map(key=>caches.delete(key))
-        )
-      ),
-      self.clients.claim()
-    ])
-  );
+  event.waitUntil((async()=>{
+    const names=await caches.keys();
+    await Promise.all(
+      names
+        .filter(n=>n!==CACHE_NAME)
+        .map(n=>caches.delete(n))
+    );
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET') return;
+  const req=event.request;
 
-  const request=event.request;
+  if(req.method!=='GET') return;
 
-  // HTML / 頁面導覽：優先抓最新版
-  if(
-    request.mode==='navigate' ||
-    request.destination==='document'
-  ){
+  const url=new URL(req.url);
+
+  // 版本檢查一定走網路，不吃快取
+  if(url.searchParams.has('__version_check')){
     event.respondWith(
-      fetch(request,{cache:'no-store'})
-        .then(response=>{
-          const copy=response.clone();
-
-          caches
-            .open(CACHE)
-            .then(cache=>cache.put('./index.html',copy));
-
-          return response;
-        })
-        .catch(()=>caches.match('./index.html'))
+      fetch(req,{cache:'no-store'})
     );
+    return;
+  }
+
+  // HTML 頁面：優先讀最新版網路
+  // 只有離線時才退回快取
+  if(
+    req.mode==='navigate' ||
+    req.destination==='document'
+  ){
+    event.respondWith((async()=>{
+      try{
+        const fresh=await fetch(req,{
+          cache:'no-store'
+        });
+
+        const cache=await caches.open(CACHE_NAME);
+
+        cache.put(
+          req,
+          fresh.clone()
+        ).catch(()=>{});
+
+        return fresh;
+
+      }catch(e){
+
+        const cached=await caches.match(
+          req,
+          {ignoreSearch:true}
+        );
+
+        if(cached) return cached;
+
+        return new Response(
+          '目前離線，請稍後再試。',
+          {
+            status:503,
+            headers:{
+              'Content-Type':'text/plain; charset=utf-8'
+            }
+          }
+        );
+      }
+    })());
 
     return;
   }
 
-  // 其他靜態資源：快取優先
-  event.respondWith(
-    caches.match(request).then(cached=>{
-      if(cached) return cached;
+  // 同網站的圖片、manifest 等靜態檔案
+  // 先使用快取，同時背景抓新版
+  if(url.origin===self.location.origin){
 
-      return fetch(request).then(response=>{
-        const copy=response.clone();
+    event.respondWith((async()=>{
 
-        caches
-          .open(CACHE)
-          .then(cache=>cache.put(request,copy));
+      const cached=await caches.match(
+        req,
+        {ignoreSearch:true}
+      );
 
-        return response;
-      });
-    })
-  );
+      const network=fetch(req)
+        .then(async fresh=>{
+
+          const cache=await caches.open(
+            CACHE_NAME
+          );
+
+          cache.put(
+            req,
+            fresh.clone()
+          ).catch(()=>{});
+
+          return fresh;
+
+        })
+        .catch(()=>null);
+
+      return (
+        cached ||
+        await network ||
+        new Response('',{status:504})
+      );
+
+    })());
+  }
 });
