@@ -519,11 +519,25 @@
   font-weight:900;
 }
 
+
+/* ===== V17.9.3 忘記密碼 ===== */
+#resetPasswordModal,#newPasswordModal{
+  position:fixed!important;inset:0!important;z-index:2147483647!important;
+  display:none;align-items:flex-start;justify-content:center;padding-top:20px;
+  background:rgba(0,0,0,.55)
+}
+#resetPasswordModal.show,#newPasswordModal.show{display:flex!important}
+#resetPasswordModal .work-sheet,#newPasswordModal .work-sheet{
+  width:min(430px,calc(100% - 20px));max-height:calc(100vh - 40px);
+  overflow:auto;background:var(--bg);border-radius:20px;padding:18px 16px 22px
+}
+
 </style>
 </head>
 <body>
 <div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button>
-      <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button><div id="loginErr" class="err"></div></div></div>
+      <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
+      <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
 <div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版</div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
@@ -766,9 +780,16 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.9｜帳號申請＋管理員審核
+// Lumberkings 木作設備中心 V17.9.3｜忘記密碼／重設密碼
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
+db.auth.onAuthStateChange((event,session)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    setTimeout(()=>{
+      document.getElementById('newPasswordModal')?.classList.add('show');
+    },0);
+  }
+});
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 function qrPayloadForTool(t){
@@ -3175,6 +3196,47 @@ async function loadWorkStats(){
 // V17.2.1：讓 HTML onclick 可以呼叫 module 內的案場記工函式
 
 
+
+function openResetPasswordModal(){
+  document.getElementById('resetPasswordModal')?.classList.add('show');
+}
+function closeResetPasswordModal(){
+  document.getElementById('resetPasswordModal')?.classList.remove('show');
+}
+function bindForgotPasswordButton(){
+  const btn=document.getElementById('forgotPasswordBtn');
+  if(!btn || btn.dataset.bound==='1')return;
+  btn.dataset.bound='1';
+  btn.addEventListener('click',openResetPasswordModal);
+}
+async function sendPasswordReset(){
+  const email=document.getElementById('resetPasswordEmail')?.value.trim().toLowerCase()||'';
+  if(!email)return alert('請輸入 Email');
+
+  const redirectTo=location.origin+location.pathname+'?v=17.9.3';
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error)return alert('寄送失敗：'+error.message);
+
+  closeResetPasswordModal();
+  alert('如果這個 Email 有帳號，系統會寄出重設密碼信。請到信箱點開連結。');
+}
+async function saveNewPassword(){
+  const p1=document.getElementById('newPassword1')?.value||'';
+  const p2=document.getElementById('newPassword2')?.value||'';
+  if(p1.length<6)return alert('新密碼至少需要 6 碼');
+  if(p1!==p2)return alert('兩次密碼不一致');
+
+  const {error}=await db.auth.updateUser({password:p1});
+  if(error)return alert('密碼修改失敗：'+error.message);
+
+  document.getElementById('newPasswordModal')?.classList.remove('show');
+  document.getElementById('newPassword1').value='';
+  document.getElementById('newPassword2').value='';
+  await db.auth.signOut();
+  alert('密碼已修改完成，請使用新密碼重新登入。');
+  location.href=location.origin+location.pathname+'?v=17.9.3';
+}
+
 function openRegisterModal(){
   document.getElementById('registerModal')?.classList.add('show');
 }
@@ -3292,8 +3354,13 @@ async function setUserRole(userId,role){
 
 setTimeout(bindRoleManagerButton,0);
 setTimeout(bindRegisterButton,0);
+setTimeout(bindForgotPasswordButton,0);
 
 Object.assign(window,{
+  openResetPasswordModal,
+  closeResetPasswordModal,
+  sendPasswordReset,
+  saveNewPassword,
   openRegisterModal,
   closeRegisterModal,
   submitRegistration,
@@ -3571,6 +3638,39 @@ Object.assign(window,{
     <div class="stats-sub" style="margin-top:10px">
       申請者不能自行選擇管理員或師傅頭；帳號核准與權限由管理員設定。
     </div>
+  </div>
+</div>
+
+
+<div id="resetPasswordModal">
+  <div class="work-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px">
+      <div><b style="font-size:19px">忘記密碼</b><br><small>輸入登入 Email，我們會寄重設連結給你</small></div>
+      <button class="mini" type="button" onclick="closeResetPasswordModal()">關閉</button>
+    </div>
+    <div class="work-field">
+      <label>Email</label>
+      <input id="resetPasswordEmail" type="email" autocomplete="email" placeholder="name@example.com">
+    </div>
+    <button class="primary" type="button" onclick="sendPasswordReset()" style="width:100%">寄送重設密碼信</button>
+  </div>
+</div>
+
+<div id="newPasswordModal">
+  <div class="work-sheet">
+    <div style="margin-bottom:14px">
+      <b style="font-size:19px">設定新密碼</b><br>
+      <small>請輸入新的登入密碼</small>
+    </div>
+    <div class="work-field">
+      <label>新密碼</label>
+      <input id="newPassword1" type="password" autocomplete="new-password" placeholder="至少 6 碼">
+    </div>
+    <div class="work-field">
+      <label>確認新密碼</label>
+      <input id="newPassword2" type="password" autocomplete="new-password" placeholder="再輸入一次">
+    </div>
+    <button class="primary" type="button" onclick="saveNewPassword()" style="width:100%">儲存新密碼</button>
   </div>
 </div>
 
