@@ -156,12 +156,33 @@
   .qrLabelCard{border:1px solid #999;border-radius:0;padding:4mm;page-break-inside:avoid}
 }
 
+
+.admin-notice{display:none;margin:12px 16px 0}
+.admin-notice.show{display:block}
+.notice-card{width:100%;border:1px solid #e2c2ba;background:#fff7f4;border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--ink);text-align:left}
+.notice-card b{font-size:14px}.notice-card span{font-size:12px;color:var(--muted)}
+.notice-count{min-width:28px;height:28px;border-radius:999px;background:var(--danger);color:#fff;display:grid;place-items:center;font-weight:900;padding:0 8px}
+.notice-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.notice-item{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px}
+.notice-item.unread{border-color:#e2b0a5;background:#fff9f7}
+.notice-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.notice-title{font-weight:900;font-size:14px}
+.notice-time{font-size:11px;color:var(--muted);white-space:nowrap}
+.notice-msg{font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-line;margin-top:6px}
+.notice-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:8px}
+
 </style>
 </head>
 <body>
 <div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="badge">雲端版</div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div><div class="section"><div class="grid">
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="badge">雲端版</div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="adminNoticeSection" class="admin-notice">
+  <button class="notice-card" type="button" onclick="openNotifications()">
+    <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
+    <div id="noticeCount" class="notice-count" style="display:none">0</div>
+  </button>
+</div><div class="section"><div class="grid">
 <div id="cardAll" class="card metric" onclick="setStatusFilter('全部')"><span>工具總數</span><strong id="mTotal">0</strong><span>點我查看全部</span></div>
 <div id="cardRepair" class="card metric" onclick="setStatusFilter('待維修')"><span>待維修</span><strong id="mRepair">0</strong><span>點我查看待處理</span></div>
 <div id="cardFixing" class="card metric" onclick="setStatusFilter('送修中')"><span>送修中</span><strong id="mFixing">0</strong><span>點我查看送修設備</span></div>
@@ -350,11 +371,26 @@
   </div>
 </div>
 
+
+<div id="notificationModal" class="modal">
+  <div class="modalbox">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div>
+        <h3 style="margin:0">🔔 管理員通知</h3>
+        <div class="meta">員工報修後會出現在這裡</div>
+      </div>
+      <button class="mini" onclick="closeNotifications()">關閉</button>
+    </div>
+    <div id="notificationList" class="notice-list"></div>
+    <button id="markAllReadBtn" class="btn secondary" onclick="markAllNotificationsRead()">全部標記已讀</button>
+  </div>
+</div>
+
 <script type="module">
-// Lumberkings 木作設備中心 V16.6.2｜首頁獨立 QR 工具標籤列印入口
+// Lumberkings 木作設備中心 V16.7｜管理員報修通知
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
-let tools=[],transactions=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 function qrPayloadForTool(t){
   // 掃碼借出/歸還目前接受 TR-001 這類工具代碼，QR 直接存工具代碼最穩定。
@@ -456,6 +492,127 @@ function bindToolCardClicks(){
   });
 }
 
+
+function isAdmin(){
+  return String(currentProfile?.role||'').toLowerCase()==='admin';
+}
+
+function formatNoticeTime(v){
+  if(!v)return '';
+  try{
+    return new Date(v).toLocaleString('zh-TW',{
+      year:'numeric',month:'2-digit',day:'2-digit',
+      hour:'2-digit',minute:'2-digit'
+    });
+  }catch(e){return String(v)}
+}
+
+async function loadNotifications(){
+  const section=$('adminNoticeSection');
+  if(!isAdmin()){
+    notifications=[];
+    if(section)section.classList.remove('show');
+    return true;
+  }
+
+  if(section)section.classList.add('show');
+
+  const {data,error}=await db
+    .from('notifications')
+    .select('*')
+    .order('created_at',{ascending:false})
+    .limit(100);
+
+  if(error){
+    console.warn('通知讀取失敗：',error);
+    if($('noticeHint'))$('noticeHint').textContent='通知讀取失敗';
+    return false;
+  }
+
+  notifications=data||[];
+  renderNotificationBadge();
+  if($('notificationModal')?.classList.contains('open'))renderNotificationList();
+  return true;
+}
+
+function renderNotificationBadge(){
+  if(!isAdmin())return;
+  const unread=notifications.filter(n=>!n.is_read).length;
+  const count=$('noticeCount');
+  const hint=$('noticeHint');
+  if(count){
+    count.textContent=unread;
+    count.style.display=unread?'grid':'none';
+  }
+  if(hint){
+    hint.textContent=unread?`有 ${unread} 筆未讀通知`:'目前沒有新通知';
+  }
+}
+
+window.openNotifications=async()=>{
+  if(!isAdmin())return;
+  await loadNotifications();
+  renderNotificationList();
+  $('notificationModal').classList.add('open');
+};
+
+window.closeNotifications=()=>{
+  $('notificationModal').classList.remove('open');
+};
+
+function renderNotificationList(){
+  const box=$('notificationList');
+  if(!box)return;
+  if(!notifications.length){
+    box.innerHTML='<div class="empty">目前沒有通知</div>';
+    $('markAllReadBtn').style.display='none';
+    return;
+  }
+
+  $('markAllReadBtn').style.display=notifications.some(n=>!n.is_read)?'block':'none';
+
+  box.innerHTML=notifications.map(n=>`
+    <div class="notice-item ${n.is_read?'':'unread'}">
+      <div class="notice-head">
+        <div class="notice-title">${esc(n.title||'通知')}</div>
+        <div class="notice-time">${esc(formatNoticeTime(n.created_at))}</div>
+      </div>
+      <div class="notice-msg">${esc(n.message||'')}</div>
+      <div class="notice-actions">
+        ${n.tool_id?`<button class="mini" onclick="openNoticeTool(${Number(n.tool_id)},${Number(n.id)})">查看工具</button>`:''}
+        ${n.is_read?'':'<button class="mini" onclick="markNotificationRead('+Number(n.id)+')">標記已讀</button>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+window.markNotificationRead=async id=>{
+  const {error}=await db.from('notifications').update({is_read:true}).eq('id',id);
+  if(error)return alert('標記已讀失敗：'+error.message);
+  const n=notifications.find(x=>Number(x.id)===Number(id));
+  if(n)n.is_read=true;
+  renderNotificationBadge();
+  renderNotificationList();
+};
+
+window.markAllNotificationsRead=async()=>{
+  const ids=notifications.filter(n=>!n.is_read).map(n=>n.id);
+  if(!ids.length)return;
+  const {error}=await db.from('notifications').update({is_read:true}).in('id',ids);
+  if(error)return alert('全部已讀失敗：'+error.message);
+  notifications.forEach(n=>n.is_read=true);
+  renderNotificationBadge();
+  renderNotificationList();
+};
+
+window.openNoticeTool=async(toolId,noticeId)=>{
+  if(noticeId)await markNotificationRead(noticeId);
+  closeNotifications();
+  const exists=tools.some(t=>Number(t.id)===Number(toolId));
+  if(exists)openDetail(toolId);
+  else alert('找不到這支工具');
+};
+
 async function loadTools(){
   const [{data:toolRows,error:toolErr},{data:repairRows,error:repairErr},{data:txRows,error:txErr}] = await Promise.all([
     db.from('tools').select('*').order('tool_code'),
@@ -481,7 +638,12 @@ async function loadTools(){
   renderHome();
   return true;
 }
-window.refreshAll=async()=>{if($('toolList'))$('toolList').innerHTML='<div class="loading">同步雲端資料中…</div>';return await loadTools()};
+window.refreshAll=async()=>{
+  if($('toolList'))$('toolList').innerHTML='<div class="loading">同步雲端資料中…</div>';
+  const ok=await loadTools();
+  await loadNotifications();
+  return ok;
+};
 window.setStatusFilter=s=>{borrowedOnly=false;statusFilter=s;renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
 window.setBorrowedFilter=()=>{borrowedOnly=true;statusFilter='全部';renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
 
@@ -1310,6 +1472,36 @@ window.saveRepair=async()=>{
     btn.disabled=false;
     btn.textContent='送出報修';
     return alert('報修紀錄已建立，但工具狀態更新失敗：'+toolError.message);
+  }
+
+  // V16.7：員工送出報修後，同步建立一筆給管理員看的通知。
+  const toolForNotice=tools.find(t=>Number(t.id)===Number(toolId));
+  const reporter=currentDisplayName()||'未指定';
+  const toolLabel=[
+    toolForNotice?.tool_code,
+    ((toolForNotice?.brand||'')+' '+(toolForNotice?.name||'')).trim()
+  ].filter(Boolean).join(' ');
+  const fault=$('rType').value;
+  const desc=$('rDesc').value.trim();
+
+  const noticePayload={
+    type:'repair',
+    title:'🔧 新工具報修｜'+(toolLabel||('工具 #'+toolId)),
+    message:[
+      '報修人：'+reporter,
+      '故障類型：'+fault,
+      desc?'故障描述：'+desc:null,
+      '狀態：'+status
+    ].filter(Boolean).join('\n'),
+    tool_id:toolId,
+    created_by:currentUser?.id||null,
+    is_read:false
+  };
+
+  const {error:noticeError}=await db.from('notifications').insert(noticePayload);
+  if(noticeError){
+    // 報修本身已成功，所以通知失敗只警告，不回滾維修紀錄。
+    console.warn('報修通知建立失敗：',noticeError);
   }
 
   selectedId=toolId;
