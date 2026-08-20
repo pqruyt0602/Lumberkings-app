@@ -152,6 +152,17 @@
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
 <div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"><option>釘槍</option><option>風車</option><option>電鋸</option><option>鋸台</option><option>修邊機</option><option>砂輪機</option><option>磨切機</option><option>雷射</option><option>砂紙機</option><option>線鋸機</option><option>電動</option><option>夾頭</option><option>電鑽</option><option>電風扇</option><option>其他</option></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
 
+<div id="editToolModal" class="modal"><div class="modalbox">
+<h3>編輯工具資料</h3>
+<div class="label">工具編號</div><input id="eToolCode" class="input" disabled>
+<div class="label">工具名稱</div><input id="eToolName" class="input">
+<div class="row"><div><div class="label">品牌</div><input id="eToolBrand" class="input"></div><div><div class="label">型號</div><input id="eToolModel" class="input"></div></div>
+<div class="label">分類</div><select id="eToolCat" class="select"><option>釘槍</option><option>風車</option><option>電鋸</option><option>鋸台</option><option>修邊機</option><option>砂輪機</option><option>磨切機</option><option>雷射</option><option>砂紙機</option><option>線鋸機</option><option>電動</option><option>夾頭</option><option>電鑽</option><option>電風扇</option><option>其他</option></select>
+<div class="row"><div><div class="label">購入價格</div><input id="eToolPrice" class="input" type="number" min="0"></div><div><div class="label">購入日期</div><input id="eToolDate" class="input" type="date"></div></div>
+<div class="label">目前位置</div><input id="eToolLoc" class="input">
+<div class="label">目前使用人</div><input id="eToolUser" class="input">
+<div class="modalactions"><button class="btn secondary" onclick="closeToolEdit()">取消</button><button id="saveToolEditBtn" class="btn" onclick="saveToolEdit()">儲存修改</button></div>
+</div></div>
 <div id="checkoutModal" class="modal"><div class="modalbox">
 <h3>借出工具</h3>
 <div class="label">借用人</div><input id="checkoutEmployee" class="input" placeholder="例如：王小明">
@@ -235,7 +246,7 @@
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
-// Lumberkings 木作設備中心 V13.1｜工具分類滑動修正版
+// Lumberkings 木作設備中心 V14｜新增工具資料編輯
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,statusFilter='全部',categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -413,7 +424,7 @@ window.openDetail=id=>{
   historyLimit=10;
   renderHistory();
 
-  let actions='';
+  let actions='<button class="btn secondary" onclick="openToolEdit('+t.id+')">✎ 編輯工具資料</button>';
   if(activeLoan){
     actions += `<button class="btn ok" onclick="openReturn(${t.id})">↩ 歸還工具</button>`;
   }else if((t.status||'正常')==='正常'){
@@ -433,6 +444,35 @@ window.openDetail=id=>{
 };
 
 
+
+window.openToolEdit=id=>{
+  const t=tools.find(x=>Number(x.id)===Number(id));
+  if(!t)return alert('找不到工具');
+  selectedId=t.id;
+  $('eToolCode').value=t.tool_code||'';
+  $('eToolName').value=t.name||'';
+  $('eToolBrand').value=t.brand||'';
+  $('eToolModel').value=t.model||'';
+  $('eToolCat').value=t.category||'其他';
+  $('eToolPrice').value=Number(t.purchase_price||0);
+  $('eToolDate').value=t.purchase_date||'';
+  $('eToolLoc').value=t.location||'';
+  $('eToolUser').value=t.current_user_name||'';
+  $('editToolModal').classList.add('open');
+};
+window.closeToolEdit=()=>$('editToolModal').classList.remove('open');
+window.saveToolEdit=async()=>{
+  const id=selectedId,t=tools.find(x=>Number(x.id)===Number(id));
+  if(!t)return alert('找不到工具');
+  const name=$('eToolName').value.trim();
+  if(!name)return alert('請輸入工具名稱');
+  const payload={name,brand:$('eToolBrand').value.trim()||null,model:$('eToolModel').value.trim()||null,category:$('eToolCat').value,purchase_price:Number($('eToolPrice').value||0),purchase_date:$('eToolDate').value||null,location:$('eToolLoc').value.trim()||null,current_user_name:$('eToolUser').value.trim()||null};
+  const btn=$('saveToolEditBtn');btn.disabled=true;btn.textContent='儲存中…';
+  const {error}=await db.from('tools').update(payload).eq('id',id);
+  btn.disabled=false;btn.textContent='儲存修改';
+  if(error)return alert('修改失敗：'+error.message);
+  closeToolEdit();await refreshAll();openDetail(id);alert('工具資料已更新');
+};
 
 window.setHistoryFilter=f=>{
   historyFilter=f;
