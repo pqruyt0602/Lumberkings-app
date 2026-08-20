@@ -445,6 +445,7 @@
       <span id="attendanceDateLabel" class="attendance-date"></span>
       <button id="workStatsBtn" class="workstats-btn" type="button" onclick="openWorkStats()">記工統計</button>
       <button id="attendanceManageBtn" class="attendance-manage" type="button" onclick="openWorkMasterManager()" style="display:none">人員／案場管理</button>
+        <button id="roleManageBtn" type="button" style="display:none" onclick="openRoleManager()">權限管理</button>
     </div>
   </div>
 
@@ -656,7 +657,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6.7｜重做日期導覽
+// Lumberkings 木作設備中心 V17.7｜三級權限管理
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -770,6 +771,16 @@ function bindToolCardClicks(){
 function isAdmin(){
   return String(currentProfile?.role||'').toLowerCase()==='admin';
 }
+function isForeman(){
+  return currentProfile?.role==='foreman';
+}
+function canManageAttendance(){
+  return isAdmin() || isForeman();
+}
+function roleLabel(role){
+  return role==='admin'?'管理員':role==='foreman'?'師傅頭':'一般員工';
+}
+
 
 function syncAdminNoticeVisibility(){
   const admin=isAdmin();
@@ -786,9 +797,11 @@ function syncAdminNoticeVisibility(){
   }
 
   const attendanceManageBtn=$('attendanceManageBtn');
-  if(attendanceManageBtn) attendanceManageBtn.style.display=admin?'inline-block':'none';
+  if(attendanceManageBtn) attendanceManageBtn.style.display=canManageAttendance()?'inline-block':'none';
   const workStatsBtn=$('workStatsBtn');
   if(workStatsBtn) workStatsBtn.style.display=admin?'inline-block':'none';
+  const roleManageBtn=$('roleManageBtn');
+  if(roleManageBtn) roleManageBtn.style.display=admin?'inline-block':'none';
 
   if(admin && $('noticeHint') && !notifications.length){
     $('noticeHint').textContent='正在讀取通知…';
@@ -2393,6 +2406,7 @@ function bindAttendanceDateNav(){
   }
 }
 async function openWorkLog(){
+  if(!canManageAttendance())return alert('只有管理員或師傅頭可以記工');
   await loadWorkMaster();
   if(!workSites.length){
     alert('目前沒有啟用中的案場，請先由管理員新增案場。');
@@ -2717,6 +2731,7 @@ function parseWorkNote(note=''){
 }
 
 async function openWorkLogEdit(id){
+  if(!canManageAttendance())return alert('只有管理員或師傅頭可以修改記工');
   const row=attendanceLogs.find(x=>Number(x.id)===Number(id));
   if(!row)return alert('找不到這筆記工資料');
 
@@ -2758,6 +2773,7 @@ function closeWorkLogEdit(){
 }
 
 async function saveWorkLogEdit(){
+  if(!canManageAttendance())return alert('只有管理員或師傅頭可以修改記工');
   const id=Number(document.getElementById('editWorkId').value);
   const work_date=document.getElementById('editWorkDate').value;
   const site_name=document.getElementById('editWorkSite').value;
@@ -2836,6 +2852,7 @@ async function saveWorkLogEdit(){
 }
 
 async function deleteWorkLog(){
+  if(!canManageAttendance())return alert('只有管理員或師傅頭可以刪除記工');
   if(!isAdmin())return alert('只有管理員可以刪除記工');
 
   const id=Number(document.getElementById('editWorkId').value);
@@ -3005,7 +3022,47 @@ async function loadWorkStats(){
 }
 
 // V17.2.1：讓 HTML onclick 可以呼叫 module 內的案場記工函式
+
+async function openRoleManager(){
+  if(!isAdmin())return alert('只有管理員可以管理權限');
+  const modal=document.getElementById('roleManagerModal');
+  modal?.classList.add('show');
+  await loadRoleManager();
+}
+function closeRoleManager(){
+  document.getElementById('roleManagerModal')?.classList.remove('show');
+}
+async function loadRoleManager(){
+  const box=document.getElementById('roleManagerList');
+  if(!box)return;
+  box.innerHTML='<div class="empty">載入中…</div>';
+  const {data,error}=await db.rpc('admin_get_user_roles');
+  if(error){box.innerHTML=`<div class="empty">讀取失敗：${esc(error.message)}</div>`;return;}
+  box.innerHTML=(data||[]).map(u=>`
+    <div class="master-row">
+      <div>
+        <b>${esc(u.display_name||u.email||'使用者')}</b>
+        <small>${esc(u.email||'')}｜目前：${roleLabel(u.role)}</small>
+      </div>
+      <select onchange="setUserRole('${esc(u.user_id)}',this.value)" ${u.user_id===currentProfile?.id?'disabled':''}>
+        <option value="employee" ${u.role==='employee'?'selected':''}>一般員工</option>
+        <option value="foreman" ${u.role==='foreman'?'selected':''}>師傅頭</option>
+        <option value="admin" ${u.role==='admin'?'selected':''}>管理員</option>
+      </select>
+    </div>`).join('')||'<div class="empty">目前沒有使用者</div>';
+}
+async function setUserRole(userId,role){
+  if(!isAdmin())return alert('只有管理員可以修改權限');
+  if(!['admin','foreman','employee'].includes(role))return;
+  const {error}=await db.rpc('admin_set_user_role',{p_user_id:userId,p_role:role});
+  if(error){alert('權限修改失敗：'+error.message);await loadRoleManager();return;}
+  await loadRoleManager();
+}
+
 Object.assign(window,{
+  openRoleManager,
+  closeRoleManager,
+  setUserRole,
   openWorkLog,
   closeWorkLog,
   saveWorkLogs,
@@ -3215,6 +3272,20 @@ Object.assign(window,{
       <textarea id="workNote" rows="2" placeholder="例如：天花板施工、櫃體安裝"></textarea>
     </div>
     <button class="work-submit" type="button" onclick="saveWorkLogs()">送出今日記工</button>
+  </div>
+</div>
+
+
+<div id="roleManagerModal" class="modal">
+  <div class="work-sheet">
+    <div class="work-sheet-head">
+      <div><b>使用者權限管理</b><small>只有管理員可設定</small></div>
+      <button type="button" onclick="closeRoleManager()">✕</button>
+    </div>
+    <div class="stats-sub" style="margin-bottom:10px">
+      管理員：全部權限｜師傅頭：記工、修改記工、工具與報修｜一般員工：工具、報修、查看案場總工數
+    </div>
+    <div id="roleManagerList"></div>
   </div>
 </div>
 
