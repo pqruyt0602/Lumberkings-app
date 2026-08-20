@@ -68,13 +68,40 @@
 .histhead b{font-size:13px}.histdate{font-size:11px;color:var(--muted);white-space:nowrap}
 .histitem p{font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.55}
 
+
+/* V12 工具履歷管理 */
+.historyfilters{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:0 16px 12px}
+.historyfilter{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 4px;font-size:12px;color:var(--muted)}
+.historyfilter.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.histitem{cursor:pointer}
+.histitem .histbody{display:none}
+.histitem.open .histbody{display:block}
+.histhead .histleft{display:flex;align-items:center;gap:5px}
+.histchev{font-size:10px;color:var(--muted);transition:.15s}
+.histitem.open .histchev{transform:rotate(90deg)}
+.historymore{padding:0 16px 16px}
+
 </style>
 </head>
 <body>
 <div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
 <div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="badge">雲端版</div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div><div class="section"><div class="grid"><div id="cardAll" class="card metric" onclick="setStatusFilter('全部')"><span>工具總數</span><strong id="mTotal">0</strong><span>點我查看全部</span></div><div id="cardRepair" class="card metric" onclick="setStatusFilter('待維修')"><span>待維修</span><strong id="mRepair">0</strong><span>點我查看待處理</span></div><div id="cardFixing" class="card metric" onclick="setStatusFilter('送修中')"><span>送修中</span><strong id="mFixing">0</strong><span>點我查看送修設備</span></div><div id="cardCost" class="card metric" onclick="setStatusFilter('全部')"><span>累積維修費</span><strong id="mCost">$0</strong><span>點我查看全部設備</span></div></div><div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div><div id="toolList"><div class="loading">載入中…</div></div></div></div>
-<div id="detail" class="screen"><div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div><div class="detailtop"><div class="hero" id="detailHero"></div></div><div id="detailActions" class="detailactions"></div><div class="section"><div class="title"><h2>工具履歷</h2></div></div><div id="historyTimeline" class="historywrap"></div><div class="section"><div class="title"><h2>借用紀錄</h2></div></div><div id="loanTimeline"></div><div class="section"><div class="title"><h2>維修紀錄</h2><a onclick="reportSelected()">＋報修</a></div></div><div class="timeline" id="repairTimeline"></div><div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div></div>
+<div id="detail" class="screen">
+<div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div>
+<div class="detailtop"><div class="hero" id="detailHero"></div></div>
+<div id="detailActions" class="detailactions"></div>
+<div class="section"><div class="title"><h2>工具履歷</h2><a onclick="reportSelected()">＋報修</a></div></div>
+<div class="historyfilters">
+  <button id="histFilterAll" class="historyfilter active" onclick="setHistoryFilter('全部')">全部</button>
+  <button id="histFilterLoan" class="historyfilter" onclick="setHistoryFilter('借出')">借出</button>
+  <button id="histFilterReturn" class="historyfilter" onclick="setHistoryFilter('歸還')">歸還</button>
+  <button id="histFilterRepair" class="historyfilter" onclick="setHistoryFilter('維修')">維修</button>
+</div>
+<div id="historyTimeline" class="historywrap"></div>
+<div id="historyMore" class="historymore"></div>
+<div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div>
+</div>
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
 <div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"><option>電動工具</option><option>氣動工具</option><option>量測工具</option><option>大型設備</option><option>手工具</option><option>其他</option></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
 
@@ -161,9 +188,10 @@
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
+// Lumberkings 木作設備中心 V12｜工具履歷管理版
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
-let tools=[],transactions=[],selectedId=null,currentUser=null,statusFilter='全部';const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],selectedId=null,currentUser=null,statusFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 async function init(){const {data:{session}}=await db.auth.getSession();session?enterApp(session.user):showLogin();db.auth.onAuthStateChange((_e,s)=>s?enterApp(s.user):showLogin())}
 function showLogin(){$('mainApp').style.display='none';$('loginScreen').style.display='flex'}
 async function enterApp(user){currentUser=user;$('loginScreen').style.display='none';$('mainApp').style.display='block';$('userLine').textContent='登入：'+(user.email||'');await refreshAll();openToolFromUrl()}
@@ -242,7 +270,7 @@ window.openDetail=id=>{
   const txs=transactions.filter(x=>Number(x.tool_id)===Number(t.id)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const activeLoan=txs.find(x=>x.action==='借出'&&!x.return_date);
 
-  // V11：整合「借出 / 歸還 / 維修」為單一工具履歷時間軸
+  // V12：整合「借出 / 歸還 / 維修」為單一可篩選工具履歷
   const historyEvents=[];
 
   txs.forEach(x=>{
@@ -260,7 +288,6 @@ window.openDetail=id=>{
         ].filter(Boolean)
       });
     }
-
     if(x.return_date){
       historyEvents.push({
         type:'return',
@@ -293,34 +320,10 @@ window.openDetail=id=>{
     });
   });
 
-  historyEvents.sort((a,b)=>new Date(b.time)-new Date(a.time));
-
-  $('historyTimeline').innerHTML=historyEvents.length
-    ? historyEvents.slice(0,30).map(e=>`
-      <div class="histitem ${e.type}">
-        <div class="histhead">
-          <b>${e.type==='loan'?'↗ ':e.type==='return'?'↩ ':'🛠 '}${esc(e.title)}</b>
-          <span class="histdate">${e.time?new Date(e.time).toLocaleString('zh-TW'):''}</span>
-        </div>
-        <p>${e.lines.map(esc).join('<br>')}</p>
-      </div>
-    `).join('')
-    : '<div class="empty">目前沒有工具履歷</div>';
-
-  $('loanTimeline').innerHTML=txs.length?txs.slice(0,10).map(x=>{
-    const isActive=x.action==='借出'&&!x.return_date;
-    const lines=[
-      x.employee_name?`借用人：${x.employee_name}`:null,
-      x.location?`工地／位置：${x.location}`:null,
-      x.checkout_date?`借出：${new Date(x.checkout_date).toLocaleString('zh-TW')}`:null,
-      x.expected_return_date?`預計歸還：${x.expected_return_date}`:null,
-      x.return_date?`歸還：${new Date(x.return_date).toLocaleString('zh-TW')}`:null,
-      x.condition_out?`借出狀況：${x.condition_out}`:null,
-      x.condition_return?`歸還狀況：${x.condition_return}`:null,
-      x.note?`備註：${x.note}`:null
-    ].filter(Boolean);
-    return `<div class="loanbox ${isActive?'loanactive':''}"><b>${isActive?'借出中':'已歸還'}｜${esc(x.employee_name||'未指定')}</b><p>${lines.map(esc).join('<br>')}</p></div>`;
-  }).join(''):'<div class="empty">目前沒有借用紀錄</div>';
+  currentHistoryEvents=historyEvents.sort((a,b)=>new Date(b.time)-new Date(a.time));
+  historyFilter='全部';
+  historyLimit=10;
+  renderHistory();
 
   let actions='';
   if(activeLoan){
@@ -341,6 +344,59 @@ window.openDetail=id=>{
   show('detail');
 };
 
+
+
+window.setHistoryFilter=f=>{
+  historyFilter=f;
+  historyLimit=10;
+  renderHistory();
+};
+
+window.toggleHistoryItem=el=>{
+  el.classList.toggle('open');
+};
+
+window.showMoreHistory=()=>{
+  historyLimit+=10;
+  renderHistory();
+};
+
+function renderHistory(){
+  const map={loan:'借出',return:'歸還',repair:'維修'};
+  const filtered=historyFilter==='全部'
+    ? currentHistoryEvents
+    : currentHistoryEvents.filter(e=>map[e.type]===historyFilter);
+
+  const btnMap={
+    '全部':'histFilterAll',
+    '借出':'histFilterLoan',
+    '歸還':'histFilterReturn',
+    '維修':'histFilterRepair'
+  };
+  Object.values(btnMap).forEach(id=>$(id)?.classList.remove('active'));
+  $(btnMap[historyFilter])?.classList.add('active');
+
+  const shown=filtered.slice(0,historyLimit);
+  $('historyTimeline').innerHTML=shown.length
+    ? shown.map(e=>`
+      <div class="histitem ${e.type}" onclick="toggleHistoryItem(this)">
+        <div class="histhead">
+          <div class="histleft">
+            <span class="histchev">▶</span>
+            <b>${e.type==='loan'?'↗ ':e.type==='return'?'↩ ':'🛠 '}${esc(e.title)}</b>
+          </div>
+          <span class="histdate">${e.time?new Date(e.time).toLocaleString('zh-TW'):''}</span>
+        </div>
+        <p class="histbody">${e.lines.map(esc).join('<br>')}</p>
+      </div>
+    `).join('')
+    : '<div class="empty">目前沒有「'+esc(historyFilter)+'」履歷</div>';
+
+  const remain=filtered.length-shown.length;
+  $('historyMore').innerHTML=remain>0
+    ? `<button class="btn secondary" style="margin-top:0" onclick="showMoreHistory()">顯示更多（還有 ${remain} 筆）</button>`
+    : '';
+}
 
 function activeLoanForTool(toolId){
   return transactions
