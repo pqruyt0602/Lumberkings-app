@@ -673,6 +673,35 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .btn.retire{background:#5f5147}
 .btn.permadelete{background:transparent;color:var(--danger);border:1px solid var(--danger)}
 
+
+/* ===== V17.15 工具分類排序 ===== */
+.category-order-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.category-move{
+  width:34px;
+  height:32px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--accent);
+  border-radius:9px;
+  font-size:15px;
+  font-weight:900;
+  padding:0;
+}
+.category-move:disabled{
+  opacity:.3;
+  cursor:not-allowed;
+}
+.category-order-hint{
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.5;
+}
+
 </style>
 </head>
 <body>
@@ -1375,26 +1404,80 @@ function renderCategoryManagerList(){
     counts[name]=(counts[name]||0)+1;
   });
 
-  const rows=toolCategories.map(c=>{
+  const ordered=[...toolCategories].sort((a,b)=>
+    Number(a.sort_order||0)-Number(b.sort_order||0)
+    || String(a.name||'').localeCompare(String(b.name||''))
+  );
+
+  const rows=ordered.map((c,index)=>{
     const count=counts[c.name]||0;
     const locked=c.name==='其他';
+    const first=index===0;
+    const last=index===ordered.length-1 || (ordered[index+1]?.name==='其他' && c.name!=='其他');
+    const isOther=c.name==='其他';
+
     return `
       <div class="category-manage-row">
         <div>
           <b>${esc(c.name)}</b>
           <small>${count} 支工具${locked?'｜系統保留分類':''}</small>
         </div>
-        <button class="category-delete" type="button"
-          ${locked?'disabled':''}
-          onclick="deleteToolCategory(${c.id===null?'null':Number(c.id)},'${String(c.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">
-          刪除
-        </button>
+        <div class="category-order-actions">
+          <button class="category-move" type="button"
+            ${first||isOther?'disabled':''}
+            onclick="moveToolCategory(${c.id===null?'null':Number(c.id)},-1)"
+            title="往前移">↑</button>
+          <button class="category-move" type="button"
+            ${last||isOther?'disabled':''}
+            onclick="moveToolCategory(${c.id===null?'null':Number(c.id)},1)"
+            title="往後移">↓</button>
+          <button class="category-delete" type="button"
+            ${locked?'disabled':''}
+            onclick="deleteToolCategory(${c.id===null?'null':Number(c.id)},'${String(c.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">
+            刪除
+          </button>
+        </div>
       </div>`;
   }).join('');
 
   box.innerHTML=rows||'<div class="empty">目前沒有分類</div>';
 }
 
+async function moveToolCategory(id,direction){
+  if(!isAdmin())return alert('只有管理員可以調整工具分類順序');
+  if(!id)return alert('請先執行 V17.13 之後的分類資料庫設定');
+
+  const ordered=[...toolCategories].sort((a,b)=>
+    Number(a.sort_order||0)-Number(b.sort_order||0)
+    || String(a.name||'').localeCompare(String(b.name||''))
+  );
+
+  const currentIndex=ordered.findIndex(c=>Number(c.id)===Number(id));
+  if(currentIndex<0)return;
+
+  let targetIndex=currentIndex+Number(direction||0);
+
+  // 「其他」固定放最後，不允許其他分類移到它後面。
+  if(targetIndex<0 || targetIndex>=ordered.length)return;
+  if(ordered[targetIndex]?.name==='其他')return;
+  if(ordered[currentIndex]?.name==='其他')return;
+
+  const current=ordered[currentIndex];
+  const target=ordered[targetIndex];
+
+  const currentSort=Number(current.sort_order||currentIndex+1);
+  const targetSort=Number(target.sort_order||targetIndex+1);
+
+  const {error}=await db.rpc('admin_swap_tool_category_order',{
+    p_first_id:Number(current.id),
+    p_second_id:Number(target.id)
+  });
+
+  if(error)return alert('調整分類順序失敗：'+error.message);
+
+  await loadToolCategories();
+  renderHome();
+}
 async function addToolCategory(){
   if(!isAdmin())return alert('只有管理員可以管理工具分類');
   const input=document.getElementById('newToolCategory');
@@ -3784,6 +3867,7 @@ Object.assign(window,{
   closeCategoryManager,
   addToolCategory,
   deleteToolCategory,
+  moveToolCategory,
   openResetPasswordModal,
   closeResetPasswordModal,
   sendPasswordReset,
@@ -4116,6 +4200,8 @@ Object.assign(window,{
       <input id="newToolCategory" type="text" maxlength="30" placeholder="例如：空壓機">
       <button type="button" onclick="addToolCategory()">＋新增</button>
     </div>
+
+    <div class="category-order-hint">用 ↑ ↓ 可以調整首頁分類順序；「其他」固定放最後。</div>
 
     <div id="categoryManageList" class="category-manage-list"></div>
   </div>
