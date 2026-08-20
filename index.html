@@ -128,6 +128,9 @@
   background:linear-gradient(90deg,rgba(244,242,237,0),rgba(244,242,237,.96) 55%);
 }
 
+
+.tool-card{cursor:pointer;touch-action:manipulation;position:relative;z-index:1}
+.tool-card:active{transform:scale(.995)}
 </style>
 </head>
 <body>
@@ -246,17 +249,39 @@
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
-// Lumberkings 木作設備中心 V14｜新增工具資料編輯
+// Lumberkings 木作設備中心 V14.1｜新增工具資料編輯
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,statusFilter='全部',categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 async function init(){const {data:{session}}=await db.auth.getSession();session?enterApp(session.user):showLogin();db.auth.onAuthStateChange((_e,s)=>s?enterApp(s.user):showLogin())}
 function showLogin(){$('mainApp').style.display='none';$('loginScreen').style.display='flex'}
-async function enterApp(user){currentUser=user;$('loginScreen').style.display='none';$('mainApp').style.display='block';$('userLine').textContent='登入：'+(user.email||'');await refreshAll();initCategoryScroll();openToolFromUrl()}
+async function enterApp(user){currentUser=user;$('loginScreen').style.display='none';$('mainApp').style.display='block';$('userLine').textContent='登入：'+(user.email||'');bindToolCardClicks();await refreshAll();initCategoryScroll();openToolFromUrl()}
 $('loginBtn').onclick=login;$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 async function login(){const email=$('loginEmail').value.trim(),password=$('loginPassword').value;$('loginErr').style.display='none';if(!email||!password){return loginErr('請輸入 Email 與密碼')}$('loginBtn').disabled=true;const {error}=await db.auth.signInWithPassword({email,password});$('loginBtn').disabled=false;if(error)loginErr('登入失敗：'+error.message)}
 function loginErr(m){$('loginErr').textContent=m;$('loginErr').style.display='block'}window.logout=()=>db.auth.signOut();
 window.show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)};
+function bindToolCardClicks(){
+  const list=$('toolList');
+  if(!list || list.dataset.bound==='1') return;
+  list.dataset.bound='1';
+
+  list.addEventListener('click',e=>{
+    const card=e.target.closest('.tool-card');
+    if(!card)return;
+    const id=Number(card.dataset.toolId);
+    if(id) openDetail(id);
+  });
+
+  list.addEventListener('keydown',e=>{
+    if(e.key!=='Enter' && e.key!==' ')return;
+    const card=e.target.closest('.tool-card');
+    if(!card)return;
+    e.preventDefault();
+    const id=Number(card.dataset.toolId);
+    if(id) openDetail(id);
+  });
+}
+
 async function loadTools(){
   const [{data:toolRows,error:toolErr},{data:repairRows,error:repairErr},{data:txRows,error:txErr}] = await Promise.all([
     db.from('tools').select('*').order('tool_code'),
@@ -325,7 +350,7 @@ window.setCategoryFilter=c=>{
 window.renderHome=()=>{const q=($('search')?.value||'').trim().toLowerCase();let f=tools.filter(t=>[t.tool_code,t.name,t.brand,t.model,t.location,t.current_user_name].join(' ').toLowerCase().includes(q));if(statusFilter!=='全部')f=f.filter(t=>t.status===statusFilter);if(categoryFilter!=='全部')f=f.filter(t=>(t.category||'其他')===categoryFilter);$('mTotal').textContent=tools.length;$('mRepair').textContent=tools.filter(t=>t.status==='待維修').length;$('mFixing').textContent=tools.filter(t=>t.status==='送修中').length;$('mCost').textContent=money(tools.flatMap(t=>t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0));['cardAll','cardRepair','cardFixing','cardCost'].forEach(id=>$(id)?.classList.remove('active'));$(statusFilter==='待維修'?'cardRepair':statusFilter==='送修中'?'cardFixing':'cardAll')?.classList.add('active');$('toolList').innerHTML=f.length?f.map(t=>{const cls=t.status==='待維修'?'red':t.status==='送修中'?'yellow':'green',icon=({
 '釘槍':'🔩','風車':'💨','電鋸':'🪚','鋸台':'🪚','修邊機':'⚙️','砂輪機':'⚙️','磨切機':'⚙️',
 '雷射':'📐','砂紙機':'🧰','線鋸機':'🪚','電動':'🔋','夾頭':'🔧','電鑽':'🛠️','電風扇':'💨','其他':'🧰'
-}[t.category]||'🧰');return `<div class="item" onclick="openDetail(${t.id})"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(t.tool_code+'・'+(t.model||'無型號')+'・'+(t.location||'未設定位置'))}</div></div><div class="status ${cls}">${esc(t.status||'正常')}</div></div>`}).join(''):`<div class="empty">${statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`};
+}[t.category]||'🧰');return `<div class="item tool-card" data-tool-id="${t.id}" role="button" tabindex="0"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(t.tool_code+'・'+(t.model||'無型號')+'・'+(t.location||'未設定位置'))}</div></div><div class="status ${cls}">${esc(t.status||'正常')}</div></div>`}).join(''):`<div class="empty">${statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`};
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
 window.saveTool=async()=>{const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
 window.openDetail=id=>{
