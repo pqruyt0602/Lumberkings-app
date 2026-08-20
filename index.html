@@ -1778,7 +1778,11 @@ window.openDetail=id=>{
     }else if(!t.is_retired && t.status==='待維修'){
       actions += `<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
     }else if(!t.is_retired && t.status==='送修中'){
-      actions += `<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
+      if(isAdmin()){
+        actions += `<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
+      }else{
+        actions += `<div class="retire-panel"><b>送修中</b><p>維修完成確認僅限管理員操作。</p></div>`;
+      }
     }
 
     actions += `<button class="btn secondary" onclick="showQr(${t.id})">▦ 顯示 QR Code</button>`;
@@ -2301,7 +2305,25 @@ function openToolFromUrl(){
   return true;
 }
 
-window.fillReportTools=()=>{$('rTool').innerHTML=tools.map(t=>`<option value="${t.id}">${esc(t.tool_code+'｜'+(t.brand||'')+' '+t.name)}</option>`).join('');if(selectedId&&tools.some(t=>t.id===selectedId))$('rTool').value=selectedId};window.quickReport=()=>{selectedId=null;show('report')};window.reportSelected=()=>show('report');window.backFromReport=()=>selectedId?openDetail(selectedId):show('home');
+window.fillReportTools=()=>{$('rTool').innerHTML=tools.map(t=>`<option value="${t.id}">${esc(t.tool_code+'｜'+(t.brand||'')+' '+t.name)}</option>`).join('');if(selectedId&&tools.some(t=>t.id===selectedId))$('rTool').value=selectedId};function applyRepairCompletionPermission(){
+  const admin=isAdmin();
+  for(const selectId of ['rStatus','eStatus']){
+    const el=$(selectId);
+    if(!el)continue;
+    const completed=[...el.options].find(o=>o.value==='已完成' || o.textContent==='已完成');
+    if(completed){
+      completed.disabled=!admin;
+      completed.hidden=!admin;
+    }
+    if(!admin && el.value==='已完成'){
+      el.value=selectId==='rStatus'?'待維修':'送修中';
+    }
+  }
+}
+
+window.quickReport=()=>{selectedId=null;applyRepairCompletionPermission();show('report')};
+window.reportSelected=()=>{applyRepairCompletionPermission();show('report')};
+window.backFromReport=()=>selectedId?openDetail(selectedId):show('home');
 window.startRepair=async toolId=>{
   const t=tools.find(x=>x.id===toolId);
   const active=effectiveRepairs(t?.repairs||[])
@@ -2336,6 +2358,7 @@ window.startRepair=async toolId=>{
 };
 
 window.completeRepair=async toolId=>{
+  if(!isAdmin())return alert('只有管理員可以確認維修完成');
   const t=tools.find(x=>x.id===toolId);
   const active=effectiveRepairs(t?.repairs||[])
     .filter(r=>r.status==='送修中')
@@ -2435,6 +2458,9 @@ window.editRepair=id=>{
   const found=findRepairById(id);
   if(!found)return alert('找不到這筆維修紀錄');
   const {r}=found;
+  if(r.status==='已完成' && !isAdmin()){
+    return alert('已完成的維修紀錄只有管理員可以修改');
+  }
   $('eRepairId').value=r.id;
   $('eType').value=r.fault_type||'其他';
   $('eDesc').value=r.description||'';
@@ -2445,6 +2471,7 @@ window.editRepair=id=>{
   $('eCost').value=Number(r.repair_cost||0);
   $('eStatus').value=r.status||'待維修';
   $('eCompletedDate').value=r.completed_date||'';
+  applyRepairCompletionPermission();
   $('repairEditModal').classList.add('open');
 };
 window.closeRepairEdit=()=>$('repairEditModal').classList.remove('open');
@@ -2471,6 +2498,9 @@ window.saveRepairEdit=async()=>{
   if(!found)return alert('找不到這筆維修紀錄');
   const {t}=found;
   const status=$('eStatus').value;
+  if(status==='已完成' && !isAdmin()){
+    return alert('只有管理員可以把維修狀態改成「已完成」');
+  }
   const cost=Number($('eCost').value||0);
   if(!Number.isFinite(cost)||cost<0)return alert('維修費用格式不正確');
 
@@ -2505,6 +2535,9 @@ window.deleteRepair=async id=>{
   const found=findRepairById(id);
   if(!found)return alert('找不到這筆維修紀錄');
   const {t,r}=found;
+  if(r.status==='已完成' && !isAdmin()){
+    return alert('已完成的維修紀錄只有管理員可以刪除');
+  }
   const label=(r.fault_type||'其他')+'｜'+(r.status||'');
   if(!confirm('確定刪除這筆維修紀錄？\n\n'+label+'\n\n刪除後無法復原。'))return;
   const {error}=await db.from('repairs').delete().eq('id',id);
@@ -2520,6 +2553,9 @@ window.saveRepair=async()=>{
   if(!toolId)return alert('目前沒有工具可報修');
 
   const status=$('rStatus').value;
+  if(status==='已完成' && !isAdmin()){
+    return alert('只有管理員可以建立「已完成」的維修紀錄');
+  }
 
   const existingTool=tools.find(t=>Number(t.id)===Number(toolId));
   const activeTicket=effectiveRepairs(existingTool?.repairs||[]).find(r=>r.status==='待維修'||r.status==='送修中');
