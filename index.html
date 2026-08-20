@@ -196,7 +196,6 @@
   <button type="button" onclick="openBatchReturn()" style="width:100%;margin-top:8px;padding:16px 14px;border:1px solid #8b6844;border-radius:16px;background:#fff;color:#6f5035;font-size:18px;font-weight:900;cursor:pointer">
     ↩ QR 批次歸還
   </button>
-<button class="bigReturnBtn" style="margin-top:10px" onclick="openAllQRLabels()">🏷 QR 工具標籤列印</button>
 </div>
 <div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
 <div id="detail" class="screen">
@@ -387,7 +386,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.7.1｜修正管理員通知入口顯示
+// Lumberkings 木作設備中心 V16.7.2｜維修履歷去重＋移除首頁QR標籤按鈕
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -814,7 +813,33 @@ window.openDetail=id=>{
       }
     });
 
+    // V16.7.2：舊版本若曾把同一次維修重複寫成「待維修＋已完成」兩筆，
+    // 履歷只顯示狀態較新的那一筆。新的維修流程仍然是 UPDATE 同一筆紀錄。
+    const repairRank={'待維修':1,'送修中':2,'已完成':3};
+    const repairMap=new Map();
+
     (t.repairs||[]).forEach(r=>{
+      const baseDate=String(r.repair_date||r.created_at||'').slice(0,10);
+      const key=[
+        baseDate,
+        String(r.fault_type||'').trim(),
+        String(r.description||'').trim()
+      ].join('|');
+
+      const oldRepair=repairMap.get(key);
+      if(
+        !oldRepair ||
+        (repairRank[r.status]||0)>(repairRank[oldRepair.status]||0) ||
+        (
+          (repairRank[r.status]||0)===(repairRank[oldRepair.status]||0) &&
+          new Date(r.updated_at||r.created_at||0)>new Date(oldRepair.updated_at||oldRepair.created_at||0)
+        )
+      ){
+        repairMap.set(key,r);
+      }
+    });
+
+    [...repairMap.values()].forEach(r=>{
       historyEvents.push({
         type:'repair',
         time:r.completed_date||r.sent_date||r.repair_date||r.created_at,
@@ -822,6 +847,7 @@ window.openDetail=id=>{
         lines:[
           r.fault_type?`故障：${r.fault_type}`:null,
           r.description?`描述：${r.description}`:null,
+          r.reported_by_name?`報修人：${r.reported_by_name}`:null,
           r.repair_vendor?`廠商：${r.repair_vendor}`:null,
           r.repair_content?`維修內容：${r.repair_content}`:null,
           `費用：${money(r.repair_cost)}`,
