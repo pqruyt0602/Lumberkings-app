@@ -155,6 +155,9 @@
   <button type="button" onclick="openBatchLoan()" style="width:100%;padding:16px 14px;border:0;border-radius:16px;background:#8b6844;color:white;font-size:18px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer">
     ▣ 掃 QR Code 批次借出
   </button>
+  <button type="button" onclick="openBatchReturn()" style="width:100%;margin-top:8px;padding:16px 14px;border:1px solid #8b6844;border-radius:16px;background:#fff;color:#6f5035;font-size:18px;font-weight:900;cursor:pointer">
+    ↩ QR 批次歸還
+  </button>
 </div>
 <div class="quick"><button onclick="openBatchLoan()">▣<br><span>掃碼借出</span></button><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
 <div id="detail" class="screen">
@@ -294,6 +297,38 @@
     <b>待借出工具 <span id="batchCount">0</span> 支</b>
     <div id="batchList" class="batch-list"></div>
     <button class="primary" style="width:100%" type="button" onclick="confirmBatchLoan()">確認借出全部</button>
+  </div>
+</div>
+
+
+<div id="batchReturnModal" class="modal" style="display:none">
+  <div class="modalbox">
+    <div class="modalhead"><b>QR 批次歸還</b><button class="x" onclick="closeBatchReturn()">×</button></div>
+
+    <div class="scan-box">
+      <b>掃描要歸還的工具 QR Code</b>
+      <div class="meta" style="margin:5px 0 10px">可連續掃描多支工具。系統只會加入目前「借出中」的工具。</div>
+      <video id="returnVideo" class="scan-video" playsinline></video>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="primary" type="button" onclick="startReturnCamera()">開啟相機掃描</button>
+        <button type="button" onclick="stopReturnCamera()">停止相機</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input id="returnCode" placeholder="掃碼或輸入工具代碼" onkeydown="if(event.key==='Enter'){event.preventDefault();addReturnCode()}">
+        <button type="button" onclick="addReturnCode()">加入</button>
+      </div>
+      <div id="returnMsg" class="meta" style="margin-top:8px"></div>
+    </div>
+
+    <b>待歸還工具 <span id="returnCount">0</span> 支</b>
+    <div id="returnList" class="batch-list"></div>
+
+    <div class="field">
+      <label>歸還後位置</label>
+      <input id="returnLocation" value="公司倉庫" placeholder="例如：公司倉庫">
+    </div>
+
+    <button class="primary" style="width:100%" type="button" onclick="confirmBatchReturn()">確認歸還全部</button>
   </div>
 </div>
 
@@ -1360,6 +1395,157 @@ window.confirmBatchLoan=async()=>{
   }catch(e){
     console.error(e);
     alert('批次借出失敗：'+(e?.message||e));
+  }
+};
+
+
+// ===== V16.3 QR 批次歸還 =====
+let returnToolIds=[];
+let returnStream=null;
+let returnScanTimer=null;
+
+window.openBatchReturn=()=>{
+  returnToolIds=[];
+  $('returnCode').value='';
+  $('returnMsg').textContent='';
+  $('returnLocation').value='公司倉庫';
+  renderReturnList();
+  $('batchReturnModal').style.display='flex';
+};
+
+window.closeBatchReturn=()=>{
+  stopReturnCamera();
+  $('batchReturnModal').style.display='none';
+};
+
+function getOpenLoan(toolId){
+  const matches=transactions
+    .filter(x=>Number(x.tool_id)===Number(toolId)&&x.action==='借出'&&!x.return_date)
+    .sort((a,b)=>Number(b.id||0)-Number(a.id||0));
+  return matches[0]||null;
+}
+
+window.addReturnCode=(raw)=>{
+  const code=String(raw??$('returnCode').value??'').trim();
+  if(!code)return;
+  const normalized=code.split('/').pop().split('?')[0].trim();
+  const t=tools.find(x=>
+    String(x.tool_code||'').toLowerCase()===normalized.toLowerCase() ||
+    String(x.id)===normalized
+  );
+  $('returnCode').value='';
+  if(!t){$('returnMsg').textContent='找不到工具：'+normalized;return}
+  if(returnToolIds.includes(Number(t.id))){$('returnMsg').textContent='這支工具已在歸還清單內';return}
+  const loan=getOpenLoan(t.id);
+  if(!loan){$('returnMsg').textContent=`${t.tool_code} ${t.name} 目前不是借出中`;return}
+  returnToolIds.push(Number(t.id));
+  $('returnMsg').textContent=`已加入：${t.tool_code} ${t.name}`;
+  renderReturnList();
+};
+
+window.removeReturnTool=id=>{
+  returnToolIds=returnToolIds.filter(x=>Number(x)!==Number(id));
+  renderReturnList();
+};
+
+function renderReturnList(){
+  $('returnCount').textContent=returnToolIds.length;
+  $('returnList').innerHTML=returnToolIds.length?returnToolIds.map(id=>{
+    const t=tools.find(x=>Number(x.id)===Number(id));
+    const loan=getOpenLoan(id);
+    if(!t||!loan)return '';
+    const who=loan.employee_name||'';
+    const where=loan.location||'';
+    return `<div class="batch-row"><div><b>${esc(t.tool_code+' '+t.name)}</b><small>${esc(who+(where?'・'+where:''))}</small></div><button class="batch-remove" onclick="removeReturnTool(${Number(t.id)})">移除</button></div>`;
+  }).join(''):'<div class="empty">尚未掃描工具</div>';
+}
+
+window.startReturnCamera=async()=>{
+  const video=$('returnVideo'),msg=$('returnMsg');
+  if(!('BarcodeDetector' in window)){
+    msg.textContent='這台瀏覽器目前不支援直接辨識 QR Code，可直接輸入工具代碼。';
+    return;
+  }
+  try{
+    stopReturnCamera();
+    returnStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    video.srcObject=returnStream;
+    video.style.display='block';
+    await video.play();
+    const detector=new BarcodeDetector({formats:['qr_code']});
+    let busy=false;
+    returnScanTimer=setInterval(async()=>{
+      if(busy||video.readyState<2)return;
+      busy=true;
+      try{
+        const codes=await detector.detect(video);
+        if(codes?.length){
+          addReturnCode(codes[0].rawValue);
+          if(navigator.vibrate)navigator.vibrate(80);
+          await new Promise(r=>setTimeout(r,700));
+        }
+      }catch(e){}
+      busy=false;
+    },450);
+    msg.textContent='相機已開啟，可連續掃描要歸還的工具';
+  }catch(e){
+    msg.textContent='無法開啟相機，請確認瀏覽器已允許相機權限。';
+  }
+};
+
+window.stopReturnCamera=()=>{
+  if(returnScanTimer){clearInterval(returnScanTimer);returnScanTimer=null}
+  if(returnStream){returnStream.getTracks().forEach(t=>t.stop());returnStream=null}
+  const v=$('returnVideo');
+  if(v){v.pause();v.srcObject=null;v.style.display='none'}
+};
+
+window.confirmBatchReturn=async()=>{
+  const loc=$('returnLocation').value.trim()||'公司倉庫';
+  if(!returnToolIds.length){alert('請先掃描至少一支借出中的工具');return}
+
+  try{
+    let done=0;
+    for(const id of returnToolIds){
+      const t=tools.find(x=>Number(x.id)===Number(id));
+      const loan=getOpenLoan(id);
+      if(!t||!loan)continue;
+
+      const returnedAt=new Date().toISOString();
+
+      // Close the original open loan transaction.
+      const {error:e1}=await db.from('tool_transactions')
+        .update({return_date:returnedAt})
+        .eq('id',loan.id);
+      if(e1)throw e1;
+
+      // Add a return history row so transaction history clearly records the return action.
+      const returnRow={
+        tool_id:t.id,
+        action:'歸還',
+        employee_name:(currentProfile?.display_name||currentUser?.email||''),
+        location:loc,
+        return_date:returnedAt
+      };
+      const {error:e2}=await db.from('tool_transactions').insert([returnRow]);
+      if(e2)throw e2;
+
+      // Synchronize tool display fields.
+      const {error:e3}=await db.from('tools')
+        .update({current_user_name:null,location:loc})
+        .eq('id',t.id);
+      if(e3)console.warn('tools 歸還位置同步失敗',t.id,e3);
+
+      done++;
+    }
+
+    alert(`已成功歸還 ${done} 支工具`);
+    closeBatchReturn();
+    await loadAll();
+    renderHome();
+  }catch(e){
+    console.error(e);
+    alert('批次歸還失敗：'+(e?.message||e));
   }
 };
 
