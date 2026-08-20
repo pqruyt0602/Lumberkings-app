@@ -354,122 +354,120 @@ window.renderHome=()=>{const q=($('search')?.value||'').trim().toLowerCase();let
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
 window.saveTool=async()=>{const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
 window.openDetail=id=>{
-  selectedId=id;
-  const t=tools.find(x=>x.id===id);
-  if(!t)return;
-
-  $('detailSub').textContent=t.tool_code+'・'+(t.category||'');
-  const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0);
-
-  $('detailHero').innerHTML=`
-    <h3>${esc((t.brand||'')+' '+t.name)}</h3>
-    <p>${esc(t.model||'無型號')}</p>
-    <div class="kv">
-      <div><span>目前狀態</span><b>${esc(t.status||'正常')}</b></div>
-      <div><span>目前位置</span><b>${esc(t.location||'未設定')}</b></div>
-      <div><span>目前使用人</span><b>${esc(t.current_user_name||'未指定')}</b></div>
-      <div><span>購入價格</span><b>${money(t.purchase_price)}</b></div>
-      <div><span>累積維修費</span><b>${money(cost)}</b></div>
-      <div><span>維修占比</span><b>${t.purchase_price?Math.round(cost/Number(t.purchase_price)*100):0}%</b></div>
-    </div>`;
-
-  // V14.2：V12 起已移除獨立 repairTimeline，避免點工具時因找不到元素而中斷
-  const rs=[...(t.repairs||[])].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  const repairTimelineEl=$('repairTimeline');
-  if(repairTimelineEl){
-    repairTimelineEl.innerHTML=rs.length ? rs.map(r=>{
-      const reportDate=r.repair_date || (r.created_at ? r.created_at.slice(0,10) : '');
-      const lines=[
-        `報修：${reportDate||'未填'}`,
-        r.sent_date ? `送修：${r.sent_date}` : null,
-        r.completed_date ? `完成：${r.completed_date}` : null,
-        r.repair_vendor ? `廠商：${r.repair_vendor}` : null,
-        r.repair_content ? `維修內容：${r.repair_content}` : null,
-        `費用：${money(r.repair_cost)}`,
-        r.description ? `故障：${r.description}` : null
-      ].filter(Boolean);
-      return `<div class="tl">
-        <div class="tlhead"><b>${esc((r.fault_type||'其他')+'｜'+r.status)}</b><div class="tlmenu"><button class="mini" onclick="event.stopPropagation();editRepair(${r.id})">編輯</button><button class="mini danger" onclick="event.stopPropagation();deleteRepair(${r.id})">刪除</button></div></div>
-        <p>${lines.map(esc).join('<br>')}</p>
-      </div>`;
-    }).join('') : '<div class="empty">目前沒有維修紀錄</div>';
+  selectedId=Number(id);
+  const t=tools.find(x=>Number(x.id)===Number(id));
+  if(!t){
+    alert('找不到工具資料');
+    return;
   }
 
-  const txs=transactions.filter(x=>Number(x.tool_id)===Number(t.id)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  const activeLoan=txs.find(x=>x.action==='借出'&&!x.return_date);
-
-  // V12：整合「借出 / 歸還 / 維修」為單一可篩選工具履歷
-  const historyEvents=[];
-
-  txs.forEach(x=>{
-    if(x.checkout_date||x.created_at){
-      historyEvents.push({
-        type:'loan',
-        time:x.checkout_date||x.created_at,
-        title:'借出工具',
-        lines:[
-          x.employee_name?`使用人：${x.employee_name}`:null,
-          x.location?`位置：${x.location}`:null,
-          x.expected_return_date?`預計歸還：${x.expected_return_date}`:null,
-          x.condition_out?`借出狀況：${x.condition_out}`:null,
-          x.note?`備註：${x.note}`:null
-        ].filter(Boolean)
-      });
-    }
-    if(x.return_date){
-      historyEvents.push({
-        type:'return',
-        time:x.return_date,
-        title:'歸還工具',
-        lines:[
-          x.employee_name?`使用人：${x.employee_name}`:null,
-          '歸還位置：公司倉庫',
-          x.condition_return?`歸還狀況：${x.condition_return}`:null,
-          x.note?`備註：${x.note}`:null
-        ].filter(Boolean)
-      });
-    }
-  });
-
-  (t.repairs||[]).forEach(r=>{
-    historyEvents.push({
-      type:'repair',
-      time:r.completed_date||r.sent_date||r.repair_date||r.created_at,
-      title:`維修｜${r.status||'未設定'}`,
-      lines:[
-        r.fault_type?`故障：${r.fault_type}`:null,
-        r.description?`描述：${r.description}`:null,
-        r.repair_vendor?`廠商：${r.repair_vendor}`:null,
-        r.repair_content?`維修內容：${r.repair_content}`:null,
-        `費用：${money(r.repair_cost)}`,
-        r.sent_date?`送修：${r.sent_date}`:null,
-        r.completed_date?`完成：${r.completed_date}`:null
-      ].filter(Boolean)
-    });
-  });
-
-  currentHistoryEvents=historyEvents.sort((a,b)=>new Date(b.time)-new Date(a.time));
-  historyFilter='全部';
-  historyLimit=10;
-  renderHistory();
-
-  let actions='<button class="btn secondary" onclick="openToolEdit('+t.id+')">✎ 編輯工具資料</button>';
-  if(activeLoan){
-    actions += `<button class="btn ok" onclick="openReturn(${t.id})">↩ 歸還工具</button>`;
-  }else if((t.status||'正常')==='正常'){
-    actions += `<button class="btn" onclick="openCheckout(${t.id})">⇢ 借出工具</button>`;
-  }
-  if((t.status||'正常')==='正常'){
-    actions+=`<button class="btn secondary" onclick="reportSelected()">建立報修單</button>`;
-  }else if(t.status==='待維修'){
-    actions+=`<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
-  }else if(t.status==='送修中'){
-    actions+=`<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
-  }
-  actions += `<button class="btn secondary" onclick="showQr(${t.id})">▦ 顯示 QR Code</button>`;
-  actions += `<button class="btn secondary" onclick="showLabel(${t.id})">▣ QR 標籤列印</button>`;
-  $('detailActions').innerHTML=actions;
+  // V14.3：先切進詳細頁，再載入內容；就算某個次要區塊出錯，也不會卡在首頁
   show('detail');
+
+  try{
+    $('detailSub').textContent=(t.tool_code||'')+'・'+(t.category||'');
+    const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0);
+
+    $('detailHero').innerHTML=`
+      <h3>${esc(((t.brand||'')+' '+(t.name||'')).trim())}</h3>
+      <p>${esc(t.model||'無型號')}</p>
+      <div class="kv">
+        <div><span>目前狀態</span><b>${esc(t.status||'正常')}</b></div>
+        <div><span>目前位置</span><b>${esc(t.location||'未設定')}</b></div>
+        <div><span>目前使用人</span><b>${esc(t.current_user_name||'未指定')}</b></div>
+        <div><span>購入價格</span><b>${money(t.purchase_price)}</b></div>
+        <div><span>累積維修費</span><b>${money(cost)}</b></div>
+        <div><span>維修占比</span><b>${t.purchase_price?Math.round(cost/Number(t.purchase_price)*100):0}%</b></div>
+      </div>`;
+
+    const txs=transactions
+      .filter(x=>Number(x.tool_id)===Number(t.id))
+      .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+
+    const activeLoan=txs.find(x=>x.action==='借出'&&!x.return_date);
+
+    const historyEvents=[];
+
+    txs.forEach(x=>{
+      if(x.checkout_date||x.created_at){
+        historyEvents.push({
+          type:'loan',
+          time:x.checkout_date||x.created_at,
+          title:'借出工具',
+          lines:[
+            x.employee_name?`使用人：${x.employee_name}`:null,
+            x.location?`位置：${x.location}`:null,
+            x.expected_return_date?`預計歸還：${x.expected_return_date}`:null,
+            x.condition_out?`借出狀況：${x.condition_out}`:null,
+            x.note?`備註：${x.note}`:null
+          ].filter(Boolean)
+        });
+      }
+
+      if(x.return_date){
+        historyEvents.push({
+          type:'return',
+          time:x.return_date,
+          title:'歸還工具',
+          lines:[
+            x.employee_name?`使用人：${x.employee_name}`:null,
+            '歸還位置：公司倉庫',
+            x.condition_return?`歸還狀況：${x.condition_return}`:null,
+            x.note?`備註：${x.note}`:null
+          ].filter(Boolean)
+        });
+      }
+    });
+
+    (t.repairs||[]).forEach(r=>{
+      historyEvents.push({
+        type:'repair',
+        time:r.completed_date||r.sent_date||r.repair_date||r.created_at,
+        title:`維修｜${r.status||'未設定'}`,
+        lines:[
+          r.fault_type?`故障：${r.fault_type}`:null,
+          r.description?`描述：${r.description}`:null,
+          r.repair_vendor?`廠商：${r.repair_vendor}`:null,
+          r.repair_content?`維修內容：${r.repair_content}`:null,
+          `費用：${money(r.repair_cost)}`,
+          r.sent_date?`送修：${r.sent_date}`:null,
+          r.completed_date?`完成：${r.completed_date}`:null
+        ].filter(Boolean)
+      });
+    });
+
+    currentHistoryEvents=historyEvents.sort((a,b)=>new Date(b.time||0)-new Date(a.time||0));
+    historyFilter='全部';
+    historyLimit=10;
+
+    if($('historyTimeline')) renderHistory();
+
+    let actions='<button class="btn secondary" onclick="openToolEdit('+t.id+')">✎ 編輯工具資料</button>';
+
+    if(activeLoan){
+      actions += `<button class="btn ok" onclick="openReturn(${t.id})">↩ 歸還工具</button>`;
+    }else if((t.status||'正常')==='正常'){
+      actions += `<button class="btn" onclick="openCheckout(${t.id})">⇢ 借出工具</button>`;
+    }
+
+    if((t.status||'正常')==='正常'){
+      actions += `<button class="btn secondary" onclick="reportSelected()">建立報修單</button>`;
+    }else if(t.status==='待維修'){
+      actions += `<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
+    }else if(t.status==='送修中'){
+      actions += `<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
+    }
+
+    actions += `<button class="btn secondary" onclick="showQr(${t.id})">▦ 顯示 QR Code</button>`;
+    actions += `<button class="btn secondary" onclick="showLabel(${t.id})">▣ QR 標籤列印</button>`;
+
+    $('detailActions').innerHTML=actions;
+
+  }catch(err){
+    console.error('openDetail error:',err);
+    $('detailHero').innerHTML='<h3>工具資料載入異常</h3><p>'+esc(err?.message||String(err))+'</p>';
+    if($('detailActions')) $('detailActions').innerHTML='<button class="btn secondary" onclick="show(\'home\')">返回首頁</button>';
+  }
 };
 
 
