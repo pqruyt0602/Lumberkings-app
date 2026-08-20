@@ -411,6 +411,31 @@
   font-weight:900;
 }
 
+
+/* ===== V17.7.2 權限管理視窗重做 ===== */
+#roleManagerModal{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483646!important;
+  display:none;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  padding-top:20px!important;
+  background:rgba(0,0,0,.55)!important;
+}
+#roleManagerModal.show{display:flex!important}
+#roleManagerModal .work-sheet{
+  width:min(430px,calc(100% - 20px));
+  max-height:calc(100vh - 40px);
+  overflow:auto;
+  background:var(--bg);
+  border-radius:20px;
+  padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+  position:relative;
+  z-index:2147483647!important;
+}
+#roleManageBtn{cursor:pointer;position:relative;z-index:2}
+
 </style>
 </head>
 <body>
@@ -445,7 +470,7 @@
       <span id="attendanceDateLabel" class="attendance-date"></span>
       <button id="workStatsBtn" class="workstats-btn" type="button" onclick="openWorkStats()">記工統計</button>
       <button id="attendanceManageBtn" class="attendance-manage" type="button" onclick="openWorkMasterManager()" style="display:none">人員／案場管理</button>
-        <button id="roleManageBtn" type="button" style="display:none" onclick="openRoleManager()">權限管理</button>
+        <button id="roleManageBtn" type="button" style="display:none">權限管理</button>
     </div>
   </div>
 
@@ -657,7 +682,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.7.1｜修正權限管理按鈕
+// Lumberkings 木作設備中心 V17.7.2｜重做權限管理視窗
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -737,6 +762,7 @@ async function enterApp(user){
   startNotificationPolling();
   initCategoryScroll();
   bindAttendanceDateNav();
+  bindRoleManagerButton();
   attendanceDateKey=localDateISO(new Date());
   attendanceViewDate=localDateFromISO(attendanceDateKey);
   openToolFromUrl();
@@ -3025,12 +3051,31 @@ async function loadWorkStats(){
 
 async function openRoleManager(){
   if(!isAdmin())return alert('只有管理員可以管理權限');
+
   const modal=document.getElementById('roleManagerModal');
-  modal?.classList.add('open');
+  if(!modal)return alert('找不到權限管理視窗，請重新整理頁面');
+
+  // 搬到 body 最後，避開任何 stacking context。
+  document.body.appendChild(modal);
+  modal.classList.add('show');
+
+  const box=document.getElementById('roleManagerList');
+  if(box)box.innerHTML='<div class="empty">載入中…</div>';
+
   await loadRoleManager();
 }
 function closeRoleManager(){
-  document.getElementById('roleManagerModal')?.classList.remove('open');
+  document.getElementById('roleManagerModal')?.classList.remove('show');
+}
+function bindRoleManagerButton(){
+  const btn=document.getElementById('roleManageBtn');
+  if(!btn || btn.dataset.bound==='1')return;
+  btn.dataset.bound='1';
+  btn.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    openRoleManager();
+  });
 }
 async function loadRoleManager(){
   const box=document.getElementById('roleManagerList');
@@ -3058,6 +3103,8 @@ async function setUserRole(userId,role){
   if(error){alert('權限修改失敗：'+error.message);await loadRoleManager();return;}
   await loadRoleManager();
 }
+
+setTimeout(bindRoleManagerButton,0);
 
 Object.assign(window,{
   openRoleManager,
@@ -3276,8 +3323,8 @@ Object.assign(window,{
 </div>
 
 
-<div id="roleManagerModal" class="modal">
-  <div class="modalbox">
+<div id="roleManagerModal" class="work-modal">
+  <div class="work-sheet">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
       <div><b style="display:block;font-size:18px">使用者權限管理</b><small>只有管理員可設定</small></div>
       <button class="mini" type="button" onclick="closeRoleManager()">關閉</button>
