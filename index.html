@@ -463,7 +463,7 @@
 
   <div class="attendance-nav">
     <button type="button" onclick="changeAttendanceDate(-1)">‹ 前一天</button>
-    <button type="button" onclick="attendanceViewDate=new Date();loadAttendance()">今天</button>
+    <button type="button" onclick="goAttendanceToday()">今天</button>
     <button type="button" onclick="changeAttendanceDate(1)">後一天 ›</button>
   </div>
 </div>
@@ -656,7 +656,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6.4｜修正案場累積總工數載入
+// Lumberkings 木作設備中心 V17.6.6｜修正前一天／今天／後一天切換
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2232,11 +2232,17 @@ window.confirmBatchReturn=async()=>{
 // ===== V17 案場記工 =====
 let workSites=[], workers=[], attendanceLogs=[], siteTotals={};
 let attendanceViewDate=new Date();
+let attendanceLoadSeq=0;
 
 function localDateISO(d=new Date()){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
+function localDateFromISO(dateStr){
+  const [y,m,d]=String(dateStr||'').split('-').map(Number);
+  return new Date(y,m-1,d,12,0,0,0);
+}
+
 function formatWorkDate(s){
   const [y,m,d]=s.split('-');
   return `${Number(m)}/${Number(d)}`;
@@ -2283,23 +2289,34 @@ async function loadWorkMaster(){
   await loadSiteTotals();
 }
 async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
-  // 先抓案場「累積總工數」，再渲染今日出勤。
-  // V17.6.3 首頁啟動時 loadAttendance 會先於 loadWorkMaster，
-  // 因此 siteTotals 尚未載入，畫面才會全部顯示 0 工。
+  const targetDate=String(dateStr);
+  const requestSeq=++attendanceLoadSeq;
+
+  // 日期狀態永遠跟目前正在讀取的日期同步，並固定在本地中午，
+  // 避免 Date 物件在切換日期時產生時區偏移。
+  attendanceViewDate=localDateFromISO(targetDate);
+
   await loadSiteTotals();
 
-  // 一律使用傳入的 YYYY-MM-DD 查詢，避免手機時區造成日期偏移。
   const {data,error}=await db.from('work_logs')
     .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at')
-    .eq('work_date',dateStr)
+    .eq('work_date',targetDate)
     .order('site_name')
     .order('employee_name');
+
+  // 如果使用者已經按到別的日期，丟棄這個較舊的查詢結果，
+  // 避免慢一拍的上一個請求把目前畫面蓋掉。
+  if(requestSeq!==attendanceLoadSeq){
+    return {ok:false,stale:true,rows:[]};
+  }
+
   if(error){
     console.warn('記工讀取失敗',error);
     return {ok:false,rows:[]};
   }
+
   attendanceLogs=Array.isArray(data)?data:[];
-  renderAttendance(dateStr);
+  renderAttendance(targetDate);
   return {ok:true,rows:attendanceLogs};
 }
 function renderAttendance(dateStr){
@@ -2311,7 +2328,7 @@ function renderAttendance(dateStr){
   label.textContent=formatWorkDate(dateStr);
   count.textContent=`${attendanceLogs.length} 人`;
   if(!attendanceLogs.length){
-    summary.textContent='今天尚未記工';
+    summary.textContent=dateStr===localDateISO(new Date())?'今天尚未記工':'這天尚未記工';
     groups.innerHTML='';
     return;
   }
@@ -2331,8 +2348,13 @@ function renderAttendance(dateStr){
     </div>`).join('');
 }
 function changeAttendanceDate(delta){
-  attendanceViewDate.setDate(attendanceViewDate.getDate()+delta);
-  loadAttendance();
+  const base=localDateFromISO(localDateISO(attendanceViewDate));
+  base.setDate(base.getDate()+Number(delta||0));
+  return loadAttendance(localDateISO(base));
+}
+
+function goAttendanceToday(){
+  return loadAttendance(localDateISO(new Date()));
 }
 async function openWorkLog(){
   await loadWorkMaster();
@@ -2425,7 +2447,7 @@ async function saveWorkLogs(){
   }
 
   closeWorkLog();
-  attendanceViewDate=new Date(date+'T12:00:00');
+  attendanceViewDate=localDateFromISO(date);
 
   // 先用資料庫實際回傳的資料立即更新畫面，再重新查詢整天資料。
   // 即使網路快取/同步稍慢，畫面也不會再出現「記工完成但 0 人」。
@@ -2736,7 +2758,7 @@ async function saveWorkLogEdit(){
 
   closeWorkLogEdit();
 
-  attendanceViewDate=new Date(work_date+'T12:00:00');
+  attendanceViewDate=localDateFromISO(work_date);
 
   // 先用 UPDATE 實際回傳的資料直接更新畫面，避免重新查詢時仍看到舊快取資料。
   attendanceLogs=attendanceLogs
@@ -2950,6 +2972,7 @@ Object.assign(window,{
   closeWorkLog,
   saveWorkLogs,
   changeAttendanceDate,
+  goAttendanceToday,
   openWorkMasterManager,
   closeWorkMasterManager,
   renderWorkMasterManager,
