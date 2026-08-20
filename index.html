@@ -179,33 +179,63 @@
 .notifybell.has-unread .notifydot{display:flex}
 
 
+
 /* ===== V17 案場記工 ===== */
-.attendance-card{margin:14px 20px;padding:18px;border:1px solid #e6ded4;border-radius:18px;background:#fff}
-.attendance-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.attendance-title h3{margin:0;font-size:18px}
-.attendance-big{font-size:34px;font-weight:900;margin:8px 0 2px}
-.attendance-sub{font-size:13px;color:#7c7c82}
-.attendance-btn{width:100%;margin-top:12px;padding:15px;border:0;border-radius:15px;background:#9a7347;color:#fff;font-size:17px;font-weight:900}
+.attendance-section{padding-top:8px;padding-bottom:8px}
+.attendance-head{margin-top:10px}
+.attendance-date{font-size:12px;color:var(--muted)}
+.attendance-overview{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px
+}
+.attendance-label{font-size:12px;color:var(--muted)}
+.attendance-number{font-size:30px;font-weight:900;line-height:1.1;margin-top:5px}
+.attendance-number small{font-size:14px;font-weight:700}
+.attendance-summary{font-size:12px;color:var(--muted);margin-top:5px}
+.attendance-main-btn{
+  flex:0 0 auto;
+  min-width:104px;
+  padding:13px 14px;
+  border:0;
+  border-radius:13px;
+  background:var(--accent);
+  color:#fff;
+  font-weight:900
+}
+.attendance-groups{display:grid;gap:8px;margin-top:9px}
+.today-group{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.today-group strong{display:block;font-size:13px;margin-bottom:6px}
+.today-person{font-size:12px;color:var(--muted);line-height:1.6}
+.attendance-nav{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:9px}
+.attendance-nav button{
+  padding:10px 4px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#fff;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:700
+}
 .work-modal{position:fixed;inset:0;background:#0008;z-index:9999;display:none;align-items:flex-end;justify-content:center}
 .work-modal.show{display:flex}
-.work-sheet{width:min(560px,100%);max-height:92vh;overflow:auto;background:#f8f5ef;border-radius:24px 24px 0 0;padding:20px 18px 30px}
+.work-sheet{width:min(430px,100%);max-height:92vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}
 .work-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.work-head h2{margin:0}
-.work-close{border:0;background:transparent;font-size:28px}
-.work-field{margin-top:14px}
-.work-field label{display:block;font-size:13px;color:#6f6f75;margin-bottom:6px}
-.work-field input,.work-field select,.work-field textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8d0c7;border-radius:12px;background:#fff;font-size:16px}
-.worker-list{display:grid;gap:8px;margin-top:10px}
-.worker-row{display:grid;grid-template-columns:34px 1fr 92px;align-items:center;gap:8px;background:#fff;border:1px solid #e6ded4;border-radius:14px;padding:10px}
-.worker-row input[type=checkbox]{width:22px;height:22px}
-.worker-row select{padding:8px;border:1px solid #ddd2c5;border-radius:10px;background:#fff}
-.work-submit{width:100%;margin-top:16px;padding:15px;border:0;border-radius:14px;background:#3f7d58;color:#fff;font-size:17px;font-weight:900}
-.today-groups{margin-top:12px;display:grid;gap:10px}
-.today-group{background:#fff;border:1px solid #e6ded4;border-radius:14px;padding:12px}
-.today-group strong{display:block;margin-bottom:5px}
-.today-person{font-size:14px;color:#666;margin-top:4px}
-.work-toolbar{display:flex;gap:8px;margin-top:12px}
-.work-toolbar button{flex:1;padding:10px;border:1px solid #9a7347;border-radius:12px;background:#fff;color:#7d592f;font-weight:800}
+.work-head h2{margin:0;font-size:18px}
+.work-close{border:0;background:transparent;font-size:26px}
+.work-field{margin-top:13px}
+.work-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.work-field input,.work-field select,.work-field textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.worker-list{display:grid;gap:7px;margin-top:8px}
+.worker-row{display:grid;grid-template-columns:30px 1fr 82px;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px}
+.worker-row input[type=checkbox]{width:20px;height:20px}
+.worker-row select{padding:8px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.work-submit{width:100%;margin-top:15px;padding:13px;border:0;border-radius:13px;background:var(--ok);color:#fff;font-weight:900}
 
 </style>
 </head>
@@ -233,7 +263,31 @@
     ↩ QR 批次歸還
   </button>
 </div>
-<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
+<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
+<div id="attendanceSection" class="section attendance-section">
+  <div class="title attendance-head">
+    <h2>👷 今日出勤</h2>
+    <span id="attendanceDateLabel" class="attendance-date"></span>
+  </div>
+
+  <div class="attendance-overview">
+    <div>
+      <div class="attendance-label">今日上班</div>
+      <div id="attendanceCount" class="attendance-number">0 <small>人</small></div>
+      <div id="attendanceSummary" class="attendance-summary">今天尚未記工</div>
+    </div>
+    <button class="attendance-main-btn" type="button" onclick="openWorkLog()">＋ 記工</button>
+  </div>
+
+  <div id="attendanceGroups" class="attendance-groups"></div>
+
+  <div class="attendance-nav">
+    <button type="button" onclick="changeAttendanceDate(-1)">‹ 前一天</button>
+    <button type="button" onclick="attendanceViewDate=new Date();loadAttendance()">今天</button>
+    <button type="button" onclick="changeAttendanceDate(1)">後一天 ›</button>
+  </div>
+</div>
+</div>
 <div id="detail" class="screen">
 <div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div>
 <div class="detailtop"><div class="hero" id="detailHero"></div></div>
@@ -422,7 +476,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.0｜案場記工
+// Lumberkings 木作設備中心 V17.1｜案場記工版面重整
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2109,20 +2163,6 @@ async function saveWorkLogs(){
 
 </script>
 
-<section id="attendanceSection" class="attendance-card">
-  <div class="attendance-title">
-    <h3>👷 今日出勤</h3>
-    <span id="attendanceDateLabel" class="attendance-sub"></span>
-  </div>
-  <div id="attendanceCount" class="attendance-big">0 人</div>
-  <div id="attendanceSummary" class="attendance-sub">今天尚未記工</div>
-  <button class="attendance-btn" type="button" onclick="openWorkLog()">＋ 案場記工</button>
-  <div class="work-toolbar">
-    <button type="button" onclick="changeAttendanceDate(-1)">← 前一天</button>
-    <button type="button" onclick="changeAttendanceDate(1)">後一天 →</button>
-  </div>
-  <div id="attendanceGroups" class="today-groups"></div>
-</section>
 
 
 <div id="workLogModal" class="work-modal">
