@@ -462,9 +462,9 @@
   <div id="attendanceGroups" class="attendance-groups"></div>
 
   <div class="attendance-nav">
-    <button type="button" onclick="changeAttendanceDate(-1)">‹ 前一天</button>
-    <button type="button" onclick="goAttendanceToday()">今天</button>
-    <button type="button" onclick="changeAttendanceDate(1)">後一天 ›</button>
+    <button id="attendancePrevBtn" type="button">‹ 前一天</button>
+    <button id="attendanceTodayBtn" type="button">今天</button>
+    <button id="attendanceNextBtn" type="button">後一天 ›</button>
   </div>
 </div>
 </div>
@@ -656,7 +656,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6.6｜修正前一天／今天／後一天切換
+// Lumberkings 木作設備中心 V17.6.7｜重做日期導覽
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -735,6 +735,9 @@ async function enterApp(user){
   await refreshAll();
   startNotificationPolling();
   initCategoryScroll();
+  bindAttendanceDateNav();
+  attendanceDateKey=localDateISO(new Date());
+  attendanceViewDate=localDateFromISO(attendanceDateKey);
   openToolFromUrl();
 }
 $('loginBtn').onclick=login;$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
@@ -2232,6 +2235,7 @@ window.confirmBatchReturn=async()=>{
 // ===== V17 案場記工 =====
 let workSites=[], workers=[], attendanceLogs=[], siteTotals={};
 let attendanceViewDate=new Date();
+let attendanceDateKey=localDateISO(new Date());
 let attendanceLoadSeq=0;
 
 function localDateISO(d=new Date()){
@@ -2294,7 +2298,12 @@ async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
 
   // 日期狀態永遠跟目前正在讀取的日期同步，並固定在本地中午，
   // 避免 Date 物件在切換日期時產生時區偏移。
+  attendanceDateKey=targetDate;
   attendanceViewDate=localDateFromISO(targetDate);
+
+  // 按鈕一按就先更新日期標題，避免查詢稍慢時看起來像「沒反應」。
+  const dateLabel=document.getElementById('attendanceDateLabel');
+  if(dateLabel)dateLabel.textContent=formatWorkDate(targetDate);
 
   await loadSiteTotals();
 
@@ -2312,6 +2321,10 @@ async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
 
   if(error){
     console.warn('記工讀取失敗',error);
+    attendanceLogs=[];
+    renderAttendance(targetDate);
+    const summary=document.getElementById('attendanceSummary');
+    if(summary)summary.textContent='這天資料讀取失敗，請重新整理';
     return {ok:false,rows:[]};
   }
 
@@ -2348,13 +2361,36 @@ function renderAttendance(dateStr){
     </div>`).join('');
 }
 function changeAttendanceDate(delta){
-  const base=localDateFromISO(localDateISO(attendanceViewDate));
+  const base=localDateFromISO(attendanceDateKey);
   base.setDate(base.getDate()+Number(delta||0));
-  return loadAttendance(localDateISO(base));
+  const nextKey=localDateISO(base);
+  return loadAttendance(nextKey);
 }
 
 function goAttendanceToday(){
-  return loadAttendance(localDateISO(new Date()));
+  const todayKey=localDateISO(new Date());
+  attendanceDateKey=todayKey;
+  attendanceViewDate=localDateFromISO(todayKey);
+  return loadAttendance(todayKey);
+}
+
+function bindAttendanceDateNav(){
+  const prev=document.getElementById('attendancePrevBtn');
+  const todayBtn=document.getElementById('attendanceTodayBtn');
+  const next=document.getElementById('attendanceNextBtn');
+
+  if(prev && !prev.dataset.bound){
+    prev.dataset.bound='1';
+    prev.addEventListener('click',()=>changeAttendanceDate(-1));
+  }
+  if(todayBtn && !todayBtn.dataset.bound){
+    todayBtn.dataset.bound='1';
+    todayBtn.addEventListener('click',()=>goAttendanceToday());
+  }
+  if(next && !next.dataset.bound){
+    next.dataset.bound='1';
+    next.addEventListener('click',()=>changeAttendanceDate(1));
+  }
 }
 async function openWorkLog(){
   await loadWorkMaster();
@@ -2366,7 +2402,7 @@ async function openWorkLog(){
     alert('目前沒有師傅名單，請先由管理員新增師傅。');
     return;
   }
-  document.getElementById('workDate').value=localDateISO(attendanceViewDate);
+  document.getElementById('workDate').value=attendanceDateKey;
   document.getElementById('workSite').innerHTML=workSites.map(s=>`<option value="${s.id}">${esc(s.site_name)}</option>`).join('');
   document.getElementById('workerList').innerHTML=workers.map(w=>`
     <div class="worker-row">
@@ -2447,6 +2483,7 @@ async function saveWorkLogs(){
   }
 
   closeWorkLog();
+  attendanceDateKey=date;
   attendanceViewDate=localDateFromISO(date);
 
   // 先用資料庫實際回傳的資料立即更新畫面，再重新查詢整天資料。
@@ -2758,6 +2795,7 @@ async function saveWorkLogEdit(){
 
   closeWorkLogEdit();
 
+  attendanceDateKey=work_date;
   attendanceViewDate=localDateFromISO(work_date);
 
   // 先用 UPDATE 實際回傳的資料直接更新畫面，避免重新查詢時仍看到舊快取資料。
