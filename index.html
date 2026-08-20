@@ -649,6 +649,30 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 .category-delete:disabled{opacity:.45;cursor:not-allowed}
 
+
+/* ===== V17.14 工具報廢／永久刪除 ===== */
+.retired-chip{
+  display:inline-block;
+  margin-left:6px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#3b3d41;
+  color:#d7d9dc;
+  font-size:10px;
+  font-weight:900;
+}
+.retire-panel{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--card);
+}
+.retire-panel b{font-size:13px}
+.retire-panel p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.btn.retire{background:#5f5147}
+.btn.permadelete{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+
 </style>
 </head>
 <body>
@@ -668,6 +692,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div id="cardFixing" class="card metric" onclick="setStatusFilter('送修中')"><span>送修中</span><strong id="mFixing">0</strong><span>點我查看送修設備</span></div>
 <div id="cardCost" class="card metric" onclick="setStatusFilter('全部')"><span>累積維修費</span><strong id="mCost">$0</strong><span>點我查看全部設備</span></div>
 <div id="cardBorrowed" class="card metric borrowed" onclick="setBorrowedFilter()"><span>借出中</span><strong id="mBorrowed">0</strong><span>點我只看目前借出的工具</span></div>
+<div id="cardRetired" class="card metric borrowed" onclick="setRetiredFilter()"><span>已報廢</span><strong id="mRetired">0</strong><span>點我查看已報廢工具</span></div>
 </div>
 <div style="margin:14px 0 10px">
   <button type="button" onclick="openBatchLoan()" style="width:100%;padding:16px 14px;border:0;border-radius:16px;background:#8b6844;color:white;font-size:18px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer">
@@ -907,7 +932,7 @@ db.auth.onAuthStateChange((event,session)=>{
     },0);
   }
 });
-let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[],toolVisibleLimit=20,lastToolFilterKey='',toolCategories=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,retiredOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[],toolVisibleLimit=20,lastToolFilterKey='',toolCategories=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 function qrPayloadForTool(t){
   // 掃碼借出/歸還目前接受 TR-001 這類工具代碼，QR 直接存工具代碼最穩定。
@@ -1259,9 +1284,11 @@ window.refreshAll=async()=>{
   await loadAttendance();
   return ok;
 };
-window.setStatusFilter=s=>{borrowedOnly=false;statusFilter=s;renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
-window.setBorrowedFilter=()=>{borrowedOnly=true;statusFilter='全部';renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
+window.setStatusFilter=s=>{borrowedOnly=false;retiredOnly=false;statusFilter=s;renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
+window.setBorrowedFilter=()=>{borrowedOnly=true;retiredOnly=false;statusFilter='全部';renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
 
+
+window.setRetiredFilter=()=>{borrowedOnly=false;retiredOnly=true;statusFilter='全部';categoryFilter='全部';renderCategoryUI();renderHome();window.scrollTo({top:document.querySelector('.title')?.offsetTop||0,behavior:'smooth'})};
 
 const DEFAULT_TOOL_CATEGORIES=['釘槍','風車','電鋸','鋸台','修邊機','砂輪機','磨切機','雷射','砂紙機','線鋸機','電動','夾頭','電鑽','電風扇','其他'];
 
@@ -1464,11 +1491,16 @@ window.renderHome=()=>{
   });
 
   let f=tools.filter(t=>[t.tool_code,t.name,t.brand,t.model,t.location,t.current_user_name].join(' ').toLowerCase().includes(q));
-  if(statusFilter!=='全部')f=f.filter(t=>t.status===statusFilter);
-  if(borrowedOnly)f=f.filter(t=>activeLoans.has(Number(t.id)));
-  if(categoryFilter!=='全部')f=f.filter(t=>(t.category||'其他')===categoryFilter);
+  if(retiredOnly){
+    f=f.filter(t=>!!t.is_retired);
+  }else{
+    f=f.filter(t=>!t.is_retired);
+    if(statusFilter!=='全部')f=f.filter(t=>t.status===statusFilter);
+    if(borrowedOnly)f=f.filter(t=>activeLoans.has(Number(t.id)));
+    if(categoryFilter!=='全部')f=f.filter(t=>(t.category||'其他')===categoryFilter);
+  }
 
-  const toolFilterKey=[q,statusFilter,borrowedOnly?'1':'0',categoryFilter].join('|');
+  const toolFilterKey=[q,statusFilter,borrowedOnly?'1':'0',retiredOnly?'1':'0',categoryFilter].join('|');
   if(toolFilterKey!==lastToolFilterKey){
     toolVisibleLimit=20;
     lastToolFilterKey=toolFilterKey;
@@ -1477,9 +1509,11 @@ window.renderHome=()=>{
   const visibleTools=f.slice(0,toolVisibleLimit);
   if($('toolListCount')) $('toolListCount').textContent=`共 ${totalFilteredTools} 項`;
 
-  $('mTotal').textContent=tools.length;
-  $('mRepair').textContent=tools.filter(t=>t.status==='待維修').length;
-  $('mFixing').textContent=tools.filter(t=>t.status==='送修中').length;
+  const activeTools=tools.filter(t=>!t.is_retired);
+  $('mTotal').textContent=activeTools.length;
+  if($('mRetired'))$('mRetired').textContent=tools.filter(t=>!!t.is_retired).length;
+  $('mRepair').textContent=activeTools.filter(t=>t.status==='待維修').length;
+  $('mFixing').textContent=activeTools.filter(t=>t.status==='送修中').length;
   $('mBorrowed').textContent=activeLoans.size;
   $('mCost').textContent=money(tools.flatMap(t=>t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0));
 
@@ -1507,7 +1541,7 @@ window.renderHome=()=>{
     }
 
     return `<div class="item tool-card" data-tool-id="${t.id}" role="button" tabindex="0"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(metaParts.join('・'))}</div></div><div class="status ${cls}">${esc(displayStatus)}</div></div>`;
-  }).join('') + (totalFilteredTools>visibleTools.length?`<div class="load-more-wrap"><button class="load-more-btn" type="button" onclick="loadMoreTools()">載入更多</button><div class="load-more-meta">目前顯示 ${visibleTools.length} / ${totalFilteredTools} 項</div></div>`:(totalFilteredTools?`<div class="load-more-meta" style="text-align:center;padding:12px 0 2px">已顯示全部 ${totalFilteredTools} 項</div>`:'')):`<div class="empty">${borrowedOnly?'目前沒有借出中的工具':statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`;
+  }).join('') + (totalFilteredTools>visibleTools.length?`<div class="load-more-wrap"><button class="load-more-btn" type="button" onclick="loadMoreTools()">載入更多</button><div class="load-more-meta">目前顯示 ${visibleTools.length} / ${totalFilteredTools} 項</div></div>`:(totalFilteredTools?`<div class="load-more-meta" style="text-align:center;padding:12px 0 2px">已顯示全部 ${totalFilteredTools} 項</div>`:'')):`<div class="empty">${retiredOnly?'目前沒有已報廢工具':borrowedOnly?'目前沒有借出中的工具':statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`;
 };
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
 window.saveTool=async()=>{const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
@@ -1523,7 +1557,7 @@ window.openDetail=id=>{
   show('detail');
 
   try{
-    $('detailSub').textContent=(t.tool_code||'')+'・'+(t.category||'');
+    $('detailSub').innerHTML=esc((t.tool_code||'')+'・'+(t.category||''))+(t.is_retired?'<span class="retired-chip">已報廢</span>':'');
     const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0);
 
     $('detailHero').innerHTML=`
@@ -1627,24 +1661,37 @@ window.openDetail=id=>{
 
     if($('historyTimeline')) renderHistory();
 
-    let actions='<button class="btn secondary" onclick="openToolEdit('+t.id+')">✎ 編輯工具資料</button>';
+    let actions='';
+    if(!t.is_retired){
+      actions+='<button class="btn secondary" onclick="openToolEdit('+t.id+')">✎ 編輯工具資料</button>';
+    }
 
-    if(activeLoan){
+    if(!t.is_retired && activeLoan){
       actions += `<button class="btn ok" onclick="openReturn(${t.id})">↩ 歸還工具</button>`;
-    }else if((t.status||'正常')==='正常'){
+    }else if(!t.is_retired && (t.status||'正常')==='正常'){
       actions += `<button class="btn" onclick="openCheckout(${t.id})">⇢ 借出工具</button>`;
     }
 
-    if((t.status||'正常')==='正常'){
+    if(!t.is_retired && (t.status||'正常')==='正常'){
       actions += `<button class="btn secondary" onclick="reportSelected()">建立報修單</button>`;
-    }else if(t.status==='待維修'){
+    }else if(!t.is_retired && t.status==='待維修'){
       actions += `<button class="btn" onclick="startRepair(${t.id})">確認送修／開始維修</button>`;
-    }else if(t.status==='送修中'){
+    }else if(!t.is_retired && t.status==='送修中'){
       actions += `<button class="btn ok" onclick="completeRepair(${t.id})">✓ 維修完成</button>`;
     }
 
     actions += `<button class="btn secondary" onclick="showQr(${t.id})">▦ 顯示 QR Code</button>`;
     actions += `<button class="btn secondary" onclick="showLabel(${t.id})">▣ QR 標籤列印</button>`;
+
+    if(isAdmin()){
+      if(t.is_retired){
+        actions += `<div class="retire-panel"><b>已報廢</b><p>${esc(t.retired_reason||'未填原因')}${t.retired_at?'｜'+new Date(t.retired_at).toLocaleDateString('zh-TW'):''}</p></div>`;
+        actions += `<button class="btn secondary" onclick="restoreRetiredTool(${t.id})">↺ 恢復使用</button>`;
+      }else{
+        actions += `<button class="btn retire" onclick="openRetireTool(${t.id})">⛔ 報廢工具</button>`;
+      }
+      actions += `<button class="btn permadelete" onclick="permanentlyDeleteTool(${t.id})">永久刪除工具</button>`;
+    }
 
     $('detailActions').innerHTML=actions;
 
@@ -1656,6 +1703,79 @@ window.openDetail=id=>{
 };
 
 
+
+
+window.openRetireTool=id=>{
+  if(!isAdmin())return alert('只有管理員可以報廢工具');
+  const t=tools.find(x=>Number(x.id)===Number(id));
+  if(!t)return alert('找不到工具');
+  if(activeLoanForTool(t.id))return alert('這支工具目前仍在借出中，請先歸還後再報廢。');
+  selectedId=t.id;
+  $('retireToolSummary').textContent=`${t.tool_code||''}｜${t.name||''}`;
+  $('retireReason').value='損壞不修';
+  $('retireNote').value='';
+  $('retireToolModal').classList.add('open');
+};
+window.closeRetireTool=()=>$('retireToolModal')?.classList.remove('open');
+
+window.confirmRetireTool=async()=>{
+  if(!isAdmin())return alert('只有管理員可以報廢工具');
+  const id=Number(selectedId);
+  const reason=$('retireReason')?.value||'其他';
+  const note=$('retireNote')?.value.trim()||'';
+  const {error}=await db.rpc('admin_retire_tool',{
+    p_tool_id:id,
+    p_reason:reason+(note?'｜'+note:'')
+  });
+  if(error)return alert('報廢失敗：'+error.message);
+  closeRetireTool();
+  await refreshAll();
+  show('home');
+  alert('工具已報廢，歷史借還與維修紀錄會保留。');
+};
+
+window.restoreRetiredTool=async id=>{
+  if(!isAdmin())return alert('只有管理員可以恢復工具');
+  if(!confirm('確定要把這支工具恢復為使用中？'))return;
+  const {error}=await db.rpc('admin_restore_tool',{p_tool_id:Number(id)});
+  if(error)return alert('恢復失敗：'+error.message);
+  await refreshAll();
+  openDetail(Number(id));
+};
+
+window.permanentlyDeleteTool=async id=>{
+  if(!isAdmin())return alert('只有管理員可以永久刪除工具');
+  const t=tools.find(x=>Number(x.id)===Number(id));
+  if(!t)return alert('找不到工具');
+
+  const repairCount=(t.repairs||[]).length;
+  const txCount=transactions.filter(x=>Number(x.tool_id)===Number(id)).length;
+
+  if(repairCount>0 || txCount>0){
+    return alert(
+      `這支工具已有歷史紀錄，不能永久刪除。\n`+
+      `借還紀錄：${txCount} 筆\n維修紀錄：${repairCount} 筆\n\n`+
+      `請使用「報廢工具」，歷史資料會保留。`
+    );
+  }
+
+  const typed=prompt(
+    `永久刪除後無法復原。\n\n${t.tool_code||''}｜${t.name||''}\n\n若確定要刪除，請輸入工具編號：${t.tool_code}`
+  );
+  if(typed===null)return;
+  if(String(typed).trim()!==String(t.tool_code||'').trim()){
+    return alert('工具編號輸入不正確，已取消刪除。');
+  }
+
+  const {data,error}=await db.rpc('admin_delete_unused_tool',{p_tool_id:Number(id)});
+  if(error)return alert('永久刪除失敗：'+error.message);
+  if(data!==true)return alert('永久刪除沒有成功');
+
+  selectedId=null;
+  await refreshAll();
+  show('home');
+  alert('工具已永久刪除。');
+};
 
 window.openToolEdit=id=>{
   const t=tools.find(x=>Number(x.id)===Number(id));
@@ -3998,6 +4118,27 @@ Object.assign(window,{
     </div>
 
     <div id="categoryManageList" class="category-manage-list"></div>
+  </div>
+</div>
+
+
+<div id="retireToolModal" class="modal">
+  <div class="modalbox">
+    <h3>報廢工具</h3>
+    <p id="retireToolSummary" class="meta"></p>
+    <div class="label">報廢原因</div>
+    <select id="retireReason" class="select">
+      <option>損壞不修</option>
+      <option>設備淘汰</option>
+      <option>遺失</option>
+      <option>其他</option>
+    </select>
+    <div class="label">備註</div>
+    <textarea id="retireNote" class="textarea" placeholder="可留空"></textarea>
+    <div class="modalactions">
+      <button class="btn secondary" type="button" onclick="closeRetireTool()">取消</button>
+      <button class="btn retire" type="button" onclick="confirmRetireTool()">確認報廢</button>
+    </div>
   </div>
 </div>
 
