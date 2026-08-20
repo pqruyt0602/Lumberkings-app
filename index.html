@@ -731,7 +731,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     ↩ QR 批次歸還
   </button>
 </div>
-<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單 <span id="toolListCount" class="tool-list-count"></span></h2><div style="display:flex;gap:10px;align-items:center"><button id="categoryManageBtn" class="category-manage-btn" type="button" style="display:none" onclick="openCategoryManager()">分類管理</button><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
+<div class="quick"><div id="quickAddTool" class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單 <span id="toolListCount" class="tool-list-count"></span></h2><div style="display:flex;gap:10px;align-items:center"><button id="categoryManageBtn" class="category-manage-btn" type="button" style="display:none" onclick="openCategoryManager()">分類管理</button><a onclick="openAllQRLabels()">▣ 全部 QR 標籤</a><a id="listAddTool" onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div>
 <div id="attendanceSection" class="section attendance-section">
   <div class="title attendance-head">
     <h2>👷 今日出勤</h2>
@@ -1046,7 +1046,8 @@ async function enterApp(user){
 $('loginBtn').onclick=login;$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 async function login(){const email=$('loginEmail').value.trim(),password=$('loginPassword').value;$('loginErr').style.display='none';if(!email||!password){return loginErr('請輸入 Email 與密碼')}$('loginBtn').disabled=true;const {error}=await db.auth.signInWithPassword({email,password});$('loginBtn').disabled=false;if(error)loginErr('登入失敗：'+error.message)}
 function loginErr(m){$('loginErr').textContent=m;$('loginErr').style.display='block'}window.logout=()=>{stopNotificationPolling();return db.auth.signOut()};
-window.show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)};
+window.show=id=>{
+  if(id==='add' && !isAdmin()) return alert('只有管理員可以新增工具');document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)};
 function bindToolCardClicks(){
   const list=$('toolList');
   if(!list || list.dataset.bound==='1') return;
@@ -1576,6 +1577,10 @@ window.loadMoreTools=()=>{
   renderHome();
 };
 window.renderHome=()=>{
+  const adminCanAddTool=!!isAdmin();
+  if($('quickAddTool')) $('quickAddTool').style.display=adminCanAddTool?'':'none';
+  if($('listAddTool')) $('listAddTool').style.display=adminCanAddTool?'':'none';
+
   const q=($('search')?.value||'').trim().toLowerCase();
   const activeLoans=new Map();
   transactions.forEach(x=>{
@@ -1640,7 +1645,7 @@ window.renderHome=()=>{
   }).join('') + (totalFilteredTools>visibleTools.length?`<div class="load-more-wrap"><button class="load-more-btn" type="button" onclick="loadMoreTools()">載入更多</button><div class="load-more-meta">目前顯示 ${visibleTools.length} / ${totalFilteredTools} 項</div></div>`:(totalFilteredTools?`<div class="load-more-meta" style="text-align:center;padding:12px 0 2px">已顯示全部 ${totalFilteredTools} 項</div>`:'')):`<div class="empty">${retiredOnly?'目前沒有已報廢工具':borrowedOnly?'目前沒有借出中的工具':statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`;
 };
 function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
-window.saveTool=async()=>{const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
+window.saveTool=async()=>{if(!isAdmin())return alert('只有管理員可以新增工具');const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
 window.openDetail=id=>{
   selectedId=Number(id);
   const t=tools.find(x=>Number(x.id)===Number(id));
