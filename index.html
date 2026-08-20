@@ -300,6 +300,20 @@
 .work-edit-actions button{margin:0}
 .work-delete{background:#fff!important;color:var(--danger)!important;border:1px solid #e4b7af!important}
 
+
+/* ===== V17.5 人工成本管理 ===== */
+.wage-input{width:100%;padding:11px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.worker-add-grid{display:grid;grid-template-columns:1fr 110px;gap:8px;margin:10px 0 8px}
+.worker-add-grid input,.worker-add-grid select{min-width:0;padding:11px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.worker-wage-row{display:grid;grid-template-columns:1fr 130px;gap:8px;margin-bottom:8px}
+.worker-wage-row input{min-width:0;padding:11px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.master-row-actions{display:flex;gap:6px;align-items:center}
+.master-row .wage-edit{color:var(--accent)}
+.stats-money-card{grid-column:1/-1;text-align:left;padding:13px 14px}
+.stats-money-card b{font-size:24px}
+.stats-cost{font-size:12px;color:var(--ok);font-weight:800;margin-top:4px}
+.stats-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
 </style>
 </head>
 <body>
@@ -545,7 +559,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.4.2｜修正記工刪除｜修正記工後今日出勤同步
+// Lumberkings 木作設備中心 V17.5｜人工成本管理｜日薪設定｜個人/案場成本統計
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2242,6 +2256,7 @@ async function saveWorkLogs(){
       employee_name:worker.worker_name,
       recorded_by:userId,
       recorded_by_name:recorder,
+      daily_wage:Number(worker.daily_wage||0),
       note:`${day}工${note?'｜'+note:''}`
     };
   });
@@ -2317,8 +2332,11 @@ function renderWorkMasterManager(tab=workMasterTab){
   if(workerList){
     workerList.innerHTML=workers.length?workers.map(w=>`
       <div class="master-row">
-        <div><b>${esc(w.worker_name)}</b><small>${esc(w.worker_type||'師傅')}</small></div>
-        <button type="button" onclick="disableWorker(${Number(w.id)})">停用</button>
+        <div><b>${esc(w.worker_name)}</b><small>${esc(w.worker_type||'師傅')}｜日薪 ${money(w.daily_wage||0)}</small></div>
+        <div class="master-row-actions">
+          <button class="wage-edit" type="button" onclick="editWorkerWage(${Number(w.id)})">薪資</button>
+          <button type="button" onclick="disableWorker(${Number(w.id)})">停用</button>
+        </div>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的人員</div>';
   }
 }
@@ -2335,10 +2353,28 @@ async function addWorkSite(){
 async function addWorker(){
   const name=(document.getElementById('newWorkerName')?.value||'').trim();
   const type=(document.getElementById('newWorkerType')?.value||'師傅').trim();
+  const wage=Number(document.getElementById('newWorkerWage')?.value||0);
   if(!name)return alert('請輸入人員姓名');
-  const {error}=await db.from('workers').insert({worker_name:name,worker_type:type,is_active:true});
+  if(wage<0)return alert('日薪不能小於 0');
+  const {error}=await db.from('workers').insert({worker_name:name,worker_type:type,daily_wage:wage,is_active:true});
   if(error)return alert('新增人員失敗：'+error.message);
   document.getElementById('newWorkerName').value='';
+  document.getElementById('newWorkerWage').value='';
+  await loadWorkMaster();
+  renderWorkMasterManager('workers');
+}
+
+async function editWorkerWage(id){
+  if(!isAdmin())return alert('只有管理員可以修改日薪');
+  const worker=workers.find(w=>Number(w.id)===Number(id));
+  if(!worker)return alert('找不到這位人員');
+  const raw=prompt(`設定 ${worker.worker_name} 的日薪`, String(Number(worker.daily_wage||0)));
+  if(raw===null)return;
+  const wage=Number(raw);
+  if(!Number.isFinite(wage)||wage<0)return alert('請輸入正確的日薪金額');
+  const {data,error}=await db.from('workers').update({daily_wage:wage}).eq('id',id).select('*').maybeSingle();
+  if(error)return alert('修改日薪失敗：'+error.message);
+  if(!data)return alert('日薪沒有更新，請確認 workers 的 UPDATE 權限');
   await loadWorkMaster();
   renderWorkMasterManager('workers');
 }
@@ -2420,10 +2456,12 @@ async function saveWorkLogEdit(){
   if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
   if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
 
+  const selectedWorker=workers.find(w=>w.worker_name===employee_name);
   const payload={
     work_date,
     site_name,
     employee_name,
+    daily_wage:Number(selectedWorker?.daily_wage||0),
     note:`${units}工${note?'｜'+note:''}`,
     updated_at:new Date().toISOString()
   };
@@ -2552,44 +2590,59 @@ async function loadWorkStats(){
   if(start>end)return alert('開始日期不能晚於結束日期');
 
   const {data,error}=await db.from('work_logs')
-    .select('work_date,site_name,employee_name,note')
+    .select('work_date,site_name,employee_name,note,daily_wage')
     .gte('work_date',start).lte('work_date',end)
     .order('work_date',{ascending:true});
   if(error)return alert('統計讀取失敗：'+error.message);
 
   const rows=data||[];
   const workersMap={}, sitesMap={};
-  let totalUnits=0;
+  let totalUnits=0,totalCost=0;
 
   rows.forEach(r=>{
     const units=workUnitsFromNote(r.note);
+    const wage=Number(r.daily_wage||0);
+    const cost=units*wage;
     totalUnits+=units;
-    workersMap[r.employee_name]=(workersMap[r.employee_name]||0)+units;
-    sitesMap[r.site_name]=(sitesMap[r.site_name]||0)+units;
+    totalCost+=cost;
+
+    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,wage};
+    workersMap[r.employee_name].units+=units;
+    workersMap[r.employee_name].cost+=cost;
+    if(wage)workersMap[r.employee_name].wage=wage;
+
+    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0};
+    sitesMap[r.site_name].units+=units;
+    sitesMap[r.site_name].cost+=cost;
   });
 
   document.getElementById('statsTotalWorkers').textContent=Object.keys(workersMap).length;
   document.getElementById('statsTotalDays').textContent=Number(totalUnits.toFixed(1));
   document.getElementById('statsTotalSites').textContent=Object.keys(sitesMap).length;
+  const totalCostEl=document.getElementById('statsTotalCost');
+  if(totalCostEl)totalCostEl.textContent=money(totalCost);
 
-  const maxWorker=Math.max(1,...Object.values(workersMap));
-  const maxSite=Math.max(1,...Object.values(sitesMap));
+  const maxWorker=Math.max(1,...Object.values(workersMap).map(x=>x.units));
+  const maxSite=Math.max(1,...Object.values(sitesMap).map(x=>x.units));
 
   const workerList=document.getElementById('statsWorkerList');
   workerList.innerHTML=Object.keys(workersMap).length
-    ? Object.entries(workersMap).sort((a,b)=>b[1]-a[1]).map(([name,units])=>`
+    ? Object.entries(workersMap).sort((a,b)=>b[1].cost-a[1].cost).map(([name,x])=>`
       <div class="stats-row">
-        <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(units.toFixed(1))} 工</span></div>
-        <div class="stats-bar"><i style="width:${Math.max(3,units/maxWorker*100)}%"></i></div>
+        <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
+        <div class="stats-cost">人工 ${money(x.cost)}</div>
+        <div class="stats-sub">目前記錄日薪 ${money(x.wage)}</div>
+        <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxWorker*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有記工資料</div>';
 
   const siteList=document.getElementById('statsSiteList');
   siteList.innerHTML=Object.keys(sitesMap).length
-    ? Object.entries(sitesMap).sort((a,b)=>b[1]-a[1]).map(([name,units])=>`
+    ? Object.entries(sitesMap).sort((a,b)=>b[1].cost-a[1].cost).map(([name,x])=>`
       <div class="stats-row">
-        <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(units.toFixed(1))} 工</span></div>
-        <div class="stats-bar"><i style="width:${Math.max(3,units/maxSite*100)}%"></i></div>
+        <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
+        <div class="stats-cost">人工成本 ${money(x.cost)}</div>
+        <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxSite*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有案場資料</div>';
 }
@@ -2605,6 +2658,7 @@ Object.assign(window,{
   renderWorkMasterManager,
   addWorkSite,
   addWorker,
+  editWorkerWage,
   disableWorkSite,
   disableWorker,
   openWorkStats,
@@ -2679,11 +2733,13 @@ Object.assign(window,{
       <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
     </div>
     <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
+    <div class="stats-sub" style="margin-top:8px">人工成本＝每筆記工工數 × 當次記錄日薪；0.5 工自動以半薪計算。</div>
 
     <div class="stats-cards">
       <div class="stats-card"><b id="statsTotalWorkers">0</b><small>出勤人數</small></div>
       <div class="stats-card"><b id="statsTotalDays">0</b><small>總工數</small></div>
       <div class="stats-card"><b id="statsTotalSites">0</b><small>案場數</small></div>
+      <div class="stats-card stats-money-card"><small>人工成本合計</small><b id="statsTotalCost">$0</b></div>
     </div>
 
     <div class="stats-section-title">依人員統計</div>
@@ -2714,7 +2770,7 @@ Object.assign(window,{
     </div>
 
     <div id="masterWorkersPane" style="display:none">
-      <div class="master-add">
+      <div class="worker-add-grid">
         <input id="newWorkerName" placeholder="人員姓名">
         <select id="newWorkerType">
           <option>師傅</option>
@@ -2723,7 +2779,10 @@ Object.assign(window,{
           <option>臨時工</option>
         </select>
       </div>
-      <button class="work-submit" style="margin-top:0;margin-bottom:12px" type="button" onclick="addWorker()">＋ 新增人員</button>
+      <div class="worker-wage-row">
+        <input id="newWorkerWage" type="number" min="0" step="100" placeholder="日薪，例如 4000">
+        <button class="work-submit" style="margin:0" type="button" onclick="addWorker()">＋ 新增人員</button>
+      </div>
       <div id="masterWorkerList" class="master-list"></div>
     </div>
   </div>
