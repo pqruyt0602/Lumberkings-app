@@ -386,7 +386,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.7.2｜維修履歷去重＋移除首頁QR標籤按鈕
+// Lumberkings 木作設備中心 V16.7.3｜修正舊重複維修單判斷
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -1312,9 +1312,9 @@ function openToolFromUrl(){
 window.fillReportTools=()=>{$('rTool').innerHTML=tools.map(t=>`<option value="${t.id}">${esc(t.tool_code+'｜'+(t.brand||'')+' '+t.name)}</option>`).join('');if(selectedId&&tools.some(t=>t.id===selectedId))$('rTool').value=selectedId};window.quickReport=()=>{selectedId=null;show('report')};window.reportSelected=()=>show('report');window.backFromReport=()=>selectedId?openDetail(selectedId):show('home');
 window.startRepair=async toolId=>{
   const t=tools.find(x=>x.id===toolId);
-  const active=[...(t?.repairs||[])]
+  const active=effectiveRepairs(t?.repairs||[])
     .filter(r=>r.status==='待維修')
-    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    .sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
   const r=active[0];
 
   if(!r)return alert('找不到待維修的維修單');
@@ -1345,9 +1345,9 @@ window.startRepair=async toolId=>{
 
 window.completeRepair=async toolId=>{
   const t=tools.find(x=>x.id===toolId);
-  const active=[...(t?.repairs||[])]
+  const active=effectiveRepairs(t?.repairs||[])
     .filter(r=>r.status==='送修中')
-    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    .sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
   const r=active[0];
 
   if(!r)return alert('找不到送修中的維修單');
@@ -1383,6 +1383,38 @@ window.completeRepair=async toolId=>{
 };
 
 
+
+function repairLogicalKey(r){
+  return [
+    String(r.repair_date||r.created_at||'').slice(0,10),
+    String(r.fault_type||'').trim(),
+    String(r.description||'').trim()
+  ].join('|');
+}
+
+function effectiveRepairs(list=[]){
+  const rank={'待維修':1,'送修中':2,'已完成':3};
+  const map=new Map();
+
+  list.forEach(r=>{
+    const key=repairLogicalKey(r);
+    const old=map.get(key);
+
+    if(
+      !old ||
+      (rank[r.status]||0)>(rank[old.status]||0) ||
+      (
+        (rank[r.status]||0)===(rank[old.status]||0) &&
+        new Date(r.updated_at||r.created_at||0)>new Date(old.updated_at||old.created_at||0)
+      )
+    ){
+      map.set(key,r);
+    }
+  });
+
+  return [...map.values()];
+}
+
 function findRepairById(id){
   for(const t of tools){
     const r=(t.repairs||[]).find(x=>Number(x.id)===Number(id));
@@ -1409,9 +1441,15 @@ window.editRepair=id=>{
 window.closeRepairEdit=()=>$('repairEditModal').classList.remove('open');
 
 async function syncToolStatusFromRepairs(toolId){
-  const {data,error}=await db.from('repairs').select('status,created_at').eq('tool_id',toolId).order('created_at',{ascending:false});
+  const {data,error}=await db.from('repairs')
+    .select('id,status,repair_date,fault_type,description,created_at,updated_at')
+    .eq('tool_id',toolId)
+    .order('created_at',{ascending:false});
   if(error)throw error;
-  const active=(data||[]).find(r=>r.status==='送修中'||r.status==='待維修');
+
+  const active=effectiveRepairs(data||[])
+    .find(r=>r.status==='送修中'||r.status==='待維修');
+
   const status=active?.status||'正常';
   const {error:te}=await db.from('tools').update({status}).eq('id',toolId);
   if(te)throw te;
@@ -1429,7 +1467,7 @@ window.saveRepairEdit=async()=>{
 
   // 防止同一工具出現兩張同時進行中的維修單
   if(status==='待維修'||status==='送修中'){
-    const conflict=(t.repairs||[]).find(r=>Number(r.id)!==id&&(r.status==='待維修'||r.status==='送修中'));
+    const conflict=effectiveRepairs(t.repairs||[]).find(r=>Number(r.id)!==id&&(r.status==='待維修'||r.status==='送修中'));
     if(conflict)return alert('這台工具已有另一張進行中的維修單（'+conflict.status+'），不能把這筆改成進行中。');
   }
 
@@ -1475,7 +1513,7 @@ window.saveRepair=async()=>{
   const status=$('rStatus').value;
 
   const existingTool=tools.find(t=>t.id===toolId);
-  const activeTicket=(existingTool?.repairs||[]).find(r=>r.status==='待維修'||r.status==='送修中');
+  const activeTicket=effectiveRepairs(existingTool?.repairs||[]).find(r=>r.status==='待維修'||r.status==='送修中');
   if(activeTicket){
     alert('這台工具目前已有進行中的維修單（'+activeTicket.status+'），請先完成原本的維修單。');
     selectedId=toolId;
