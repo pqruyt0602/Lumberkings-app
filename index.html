@@ -1343,13 +1343,13 @@ window.confirmBatchLoan=async()=>{
   }));
 
   try{
-    const {error}=await sb.from('tool_transactions').insert(rows);
+    const {error}=await db.from('tool_transactions').insert(rows);
     if(error)throw error;
 
     // Keep tools' current display fields synchronized when these columns exist.
     for(const t of selected){
       const patch={current_user_name:employee,location:loc};
-      const {error:upErr}=await sb.from('tools').update(patch).eq('id',t.id);
+      const {error:upErr}=await db.from('tools').update(patch).eq('id',t.id);
       if(upErr)console.warn('tools 同步更新失敗',t.id,upErr);
     }
 
