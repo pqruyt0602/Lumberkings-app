@@ -159,7 +159,7 @@
     ↩ QR 批次歸還
   </button>
 </div>
-<div class="quick"><button onclick="openBatchLoan()">▣<br><span>掃碼借出</span></button><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
+<div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
 <div id="detail" class="screen">
 <div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div>
 <div class="detailtop"><div class="hero" id="detailHero"></div></div>
@@ -333,7 +333,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16｜QR 批次借出
+// Lumberkings 木作設備中心 V16.4｜QR 批次借出＋批次歸還
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -1390,8 +1390,7 @@ window.confirmBatchLoan=async()=>{
 
     alert(`已成功借出 ${rows.length} 支工具`);
     closeBatchLoan();
-    await loadAll();
-    renderHome();
+    await refreshAll();
   }catch(e){
     console.error(e);
     alert('批次借出失敗：'+(e?.message||e));
@@ -1541,8 +1540,7 @@ window.confirmBatchReturn=async()=>{
 
     alert(`已成功歸還 ${done} 支工具`);
     closeBatchReturn();
-    await loadAll();
-    renderHome();
+    await refreshAll();
   }catch(e){
     console.error(e);
     alert('批次歸還失敗：'+(e?.message||e));
