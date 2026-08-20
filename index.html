@@ -471,6 +471,13 @@
   margin-top:3px;
 }
 
+
+/* ===== V17.8.2 加班選項制 ===== */
+.worker-overtime{
+  width:104px!important;
+  padding:7px 8px!important;
+}
+
 </style>
 </head>
 <body>
@@ -717,7 +724,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.8.1｜修正重複人員新增
+// Lumberkings 木作設備中心 V17.8.3｜修正加班半天與1天算法
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2429,7 +2436,7 @@ function renderAttendance(dateStr){
       <strong>${esc(site)}｜${rows.length} 人 <span class="site-total-chip">累積 ${Number(siteTotals[site]||0).toFixed(1).replace(/\.0$/,'')} 工</span></strong>
       ${rows.map(r=>`
         <div class="today-person">
-          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}${Number(r.leave_hours||0)>0?`<span class="leave-tag">請假 ${Number(r.leave_hours)}h</span>`:''}${Number(r.overtime_hours||0)>0?`<span class="overtime-tag">加班 ${Number(r.overtime_hours)}h</span>`:''}</div>
+          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}${Number(r.leave_hours||0)>0?`<span class="leave-tag">請假 ${Number(r.leave_hours)}h</span>`:''}${Number(r.overtime_hours||0)>0?`<span class="overtime-tag">加班 ${overtimeLabel(r.overtime_hours)}</span>`:''}</div>
           <button class="today-edit" type="button" onclick="openWorkLogEdit(${Number(r.id)})">修改</button>
         </div>`).join('')}
     </div>`).join('');
@@ -2495,8 +2502,12 @@ async function openWorkLog(){
         </label>
         <label class="worker-overtime-wrap">
           加班
-          <input class="worker-overtime" type="number" min="0" max="8" step="0.5" value="0">
-          小時
+          <select class="worker-overtime">
+            <option value="0">無</option>
+            <option value="1">1 小時</option>
+            <option value="2">半天</option>
+            <option value="4">1 天</option>
+          </select>
         </label>
       </div>
       <select class="worker-day">
@@ -2971,6 +2982,15 @@ async function deleteWorkLog(){
 function firstDayOfMonth(d=new Date()){
   return localDateISO(new Date(d.getFullYear(),d.getMonth(),1));
 }
+
+function overtimeLabel(hours){
+  const h=Number(hours||0);
+  if(h===1)return '1小時';
+  if(h===2)return '半天';
+  if(h===4)return '1天';
+  return h>0?`${h}小時`:'';
+}
+
 function workUnitsFromNote(note=''){
   const m=String(note||'').match(/^([0-9.]+)工/);
   const n=m?Number(m[1]):1;
@@ -3024,7 +3044,11 @@ async function loadWorkStats(){
     const baseCost=Math.max(0,grossBase-leaveDeduction);
     const bonus=Number(r.role_bonus||0);
     const overtimeHours=Number(r.overtime_hours||0);
-    const overtimePay=Number(r.overtime_pay ?? ((wage/5)*overtimeHours));
+    const overtimePay=Number(r.overtime_pay ?? (
+      overtimeHours===1 ? wage/5 :
+      overtimeHours===2 ? wage/2 :
+      overtimeHours===4 ? wage : 0
+    ));
     const cost=baseCost+bonus+overtimePay;
 
     totalUnits+=units;
@@ -3085,7 +3109,7 @@ async function loadWorkStats(){
         ${x.leaveDeduction?`<div class="stats-deduction">請假 ${Number(x.leaveHours)}h｜扣 ${money(x.leaveDeduction)}</div>`:''}
         <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
         ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
-        ${x.overtimeHours?`<div class="stats-overtime">加班 ${Number(x.overtimeHours)}h｜加班費 ${money(x.overtimePay)}</div>`:''}
+        ${x.overtimeHours?`<div class="stats-overtime">加班 ${overtimeLabel(x.overtimeHours)}｜加班費 ${money(x.overtimePay)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxWorker*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有記工資料</div>';
@@ -3100,7 +3124,7 @@ async function loadWorkStats(){
         ${x.leaveDeduction?`<div class="stats-deduction">請假扣薪 ${money(x.leaveDeduction)}</div>`:''}
         <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
         ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
-        ${x.overtimeHours?`<div class="stats-overtime">加班 ${Number(x.overtimeHours)}h｜加班費 ${money(x.overtimePay)}</div>`:''}
+        ${x.overtimeHours?`<div class="stats-overtime">加班 ${overtimeLabel(x.overtimeHours)}｜加班費 ${money(x.overtimePay)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxSite*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有案場資料</div>';
@@ -3247,9 +3271,14 @@ Object.assign(window,{
     </div>
 
     <div class="work-field">
-      <label>加班時數</label>
-      <input id="editWorkOvertimeHours" type="number" min="0" max="8" step="0.5" value="0" placeholder="例如 2">
-      <div class="stats-sub">加班時薪＝日薪 ÷ 5；例如日薪 $3,500，加班 2 小時＝$1,400。</div>
+      <label>加班</label>
+      <select id="editWorkOvertimeHours">
+        <option value="0">無</option>
+        <option value="1">1 小時</option>
+        <option value="2">半天</option>
+        <option value="4">1 天</option>
+      </select>
+      <div class="stats-sub">算法：1小時＝日薪÷5；半天＝日薪÷2；1天＝1天日薪。</div>
     </div>
 
     <div class="work-field">
@@ -3276,7 +3305,7 @@ Object.assign(window,{
       <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
     </div>
     <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
-    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪－請假扣薪＋負責人加給＋加班費。加班時薪＝日薪 ÷ 5；例如日薪 $3,500，加班 2 小時＝$1,400。</div>
+    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪－請假扣薪＋負責人加給＋加班費。加班只選 1小時／半天／1天；1小時＝日薪÷5、半天＝日薪÷2、1天＝1天日薪。</div>
 
     <div class="stats-cards">
       <div class="stats-card"><b id="statsTotalWorkers">0</b><small>出勤人數</small></div>
@@ -3287,7 +3316,7 @@ Object.assign(window,{
         <b id="statsTotalCost">$0</b>
         <div class="stats-deduction">請假扣薪 <span id="statsTotalLeaveDeduction">$0</span></div>
         <div class="stats-bonus">負責人加給 <span id="statsTotalBonus">$0</span></div>
-        <div class="stats-overtime">加班 <span id="statsTotalOvertimeHours">0</span>h｜加班費 <span id="statsTotalOvertimePay">$0</span></div>
+        <div class="stats-overtime">加班合計 <span id="statsTotalOvertimeHours">0</span> 小時｜加班費 <span id="statsTotalOvertimePay">$0</span></div>
       </div>
     </div>
 
