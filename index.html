@@ -387,7 +387,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.7｜管理員報修通知
+// Lumberkings 木作設備中心 V16.7.1｜修正管理員通知入口顯示
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -461,6 +461,7 @@ async function enterApp(user){
   await loadCurrentProfile();
   const name=currentDisplayName();
   $('userLine').textContent='登入：'+name+(currentProfile?.role?'｜'+currentRoleLabel():'');
+  syncAdminNoticeVisibility();
   bindToolCardClicks();
   await refreshAll();
   initCategoryScroll();
@@ -497,6 +498,17 @@ function isAdmin(){
   return String(currentProfile?.role||'').toLowerCase()==='admin';
 }
 
+function syncAdminNoticeVisibility(){
+  const section=$('adminNoticeSection');
+  if(!section)return;
+  const admin=isAdmin();
+  section.classList.toggle('show',admin);
+  section.style.display=admin?'block':'none';
+  if(admin && $('noticeHint') && !notifications.length){
+    $('noticeHint').textContent='正在讀取通知…';
+  }
+}
+
 function formatNoticeTime(v){
   if(!v)return '';
   try{
@@ -509,6 +521,7 @@ function formatNoticeTime(v){
 
 async function loadNotifications(){
   const section=$('adminNoticeSection');
+  syncAdminNoticeVisibility();
   if(!isAdmin()){
     notifications=[];
     if(section)section.classList.remove('show');
@@ -525,7 +538,8 @@ async function loadNotifications(){
 
   if(error){
     console.warn('通知讀取失敗：',error);
-    if($('noticeHint'))$('noticeHint').textContent='通知讀取失敗';
+    if(section)section.style.display='block';
+    if($('noticeHint'))$('noticeHint').textContent='通知讀取失敗：'+(error.message||'請檢查權限');
     return false;
   }
 
