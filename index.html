@@ -14,7 +14,31 @@
 <style>
 :root{--bg:#f4f2ed;--card:#fff;--ink:#1f2328;--muted:#7a7f87;--line:#e7e2d9;--accent:#7a5c3e;--danger:#b24a3a;--ok:#527a5b;--warn:#b57a22}*{box-sizing:border-box}html,body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:430px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:92px}.top{padding:calc(20px + env(safe-area-inset-top)) 18px 14px;background:linear-gradient(180deg,#262321,#37312c);color:#fff}.brand{display:flex;justify-content:space-between;align-items:center}.brand h1{font-size:20px;margin:0;font-weight:800}.badge{font-size:12px;background:#ffffff18;padding:6px 9px;border-radius:999px}.subtitle{margin-top:6px;color:#d6d1cb;font-size:13px}.userline{font-size:11px;color:#d6d1cb;margin-top:5px}.search{margin-top:14px;background:#fff;border-radius:13px;padding:11px 12px}.search input{border:0;outline:0;width:100%}.section{padding:14px 16px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}.metric{cursor:pointer;transition:.15s}.metric:active{transform:scale(.98)}.metric.active{outline:2px solid var(--accent);outline-offset:-2px}.metric strong{font-size:26px;display:block;margin-top:6px}.metric span{font-size:12px;color:var(--muted)}.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;font-size:12px}.q b{display:block;font-size:19px;margin-bottom:5px}.title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}.title h2{font-size:16px;margin:0}.title a{font-size:12px;color:var(--accent)}.item{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:9px}.icon{width:48px;height:48px;border-radius:13px;background:#eee7df;display:grid;place-items:center;font-size:24px}.itemmain{flex:1}.itemmain b{font-size:14px}.meta{font-size:12px;color:var(--muted);margin-top:4px}.status{font-size:11px;padding:5px 8px;border-radius:999px;white-space:nowrap}.red{background:#fae7e3;color:var(--danger)}.green{background:#e6f1e8;color:var(--ok)}.yellow{background:#fbf0da;color:var(--warn)}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(430px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:white;border-top:1px solid var(--line);padding:8px 4px calc(10px + env(safe-area-inset-bottom));z-index:10}.nav div{text-align:center;font-size:10px;color:var(--muted)}.nav b{display:block;font-size:20px;margin-bottom:2px}.screen{display:none}.screen.active{display:block}.header{padding:calc(18px + env(safe-area-inset-top)) 16px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.header h2{margin:0;font-size:18px}.header p{margin:5px 0 0;color:var(--muted);font-size:12px}.form{padding:14px 16px}.label{font-size:12px;color:var(--muted);margin:12px 0 6px}.input,.select,.textarea{width:100%;padding:12px;border:1px solid var(--line);background:#fff;border-radius:12px}.textarea{min-height:88px}.btn{width:100%;padding:13px;border:0;border-radius:13px;background:var(--accent);color:#fff;font-weight:700;margin-top:16px}.btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}.btn.ok{background:var(--ok)}.detailactions{padding:0 16px 4px}.detailactions .btn{margin-top:8px}.detailtop{padding:16px}.hero{background:#2f2b27;color:white;border-radius:18px;padding:18px}.hero h3{margin:0 0 6px}.hero p{margin:3px 0;color:#ded8d2;font-size:12px}.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.kv div{background:#ffffff0d;padding:10px;border-radius:10px}.kv b{display:block;font-size:15px}.kv span{font-size:10px;color:#d9d1ca}.timeline{padding:0 16px 16px}.tl{border-left:2px solid #d8c6af;padding:0 0 16px 14px;margin-left:7px;position:relative}.tl:before{content:"";position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;background:var(--accent)}.tl b{font-size:13px}.tl p{font-size:12px;color:var(--muted);margin:4px 0}.empty,.loading{padding:20px;color:var(--muted);text-align:center;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.install{margin:14px 16px 0;padding:12px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:12px;color:var(--muted)}.loginwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,#262321,#3a332d)}.loginbox{width:100%;max-width:390px;background:#fff;border-radius:20px;padding:22px}.loginbox h1{margin:0 0 6px;font-size:23px}.loginbox p{margin:0 0 18px;color:var(--muted);font-size:13px}.err{display:none;margin-top:12px;padding:10px;border-radius:10px;background:#fae7e3;color:var(--danger);font-size:12px}
 .tlhead{display:flex;align-items:center;justify-content:space-between;gap:8px}.tlmenu{display:flex;gap:6px}.mini{border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 8px;font-size:11px;color:var(--accent)}.mini.danger{color:var(--danger)}.modal{position:fixed;inset:0;background:#0008;z-index:50;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modalbox{width:min(430px,100%);max-height:90vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}.modalbox h3{margin:0 0 8px}.modalactions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.modalactions .btn{margin-top:10px}
-.qrbox{text-align:center}.qrimg{width:230px;height:230px;max-width:80vw;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;margin:12px auto;display:block}.qrurl{font-size:11px;color:var(--muted);word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:left}.labelpreview{width:320px;max-width:100%;margin:14px auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;color:#111}.labelbrand{font-size:13px;font-weight:900;letter-spacing:.5px}.labelcode{font-size:24px;font-weight:900;margin-top:5px}.labelname{font-size:17px;font-weight:800;margin:2px 0 10px}.labelpreview img{width:190px;height:190px;display:block;margin:0 auto}.labelhint{font-size:12px;margin-top:8px;color:#444}.printonly{display:none}@media print{body *{visibility:hidden!important}#labelPrintArea,#labelPrintArea *{visibility:visible!important}#labelPrintArea{position:absolute;left:0;top:0;width:100%;margin:0;border:0;padding:8mm;box-shadow:none}.noprint{display:none!important}.printonly{display:block}}
+.qrbox{text-align:center}.qrimg{width:230px;height:230px;max-width:80vw;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;margin:12px auto;display:block}.qrurl{font-size:11px;color:var(--muted);word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:left}
+.label-size-title{font-size:13px;font-weight:800;margin:14px 0 8px}
+.label-size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.label-size-btn{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;color:var(--ink)}
+.label-size-btn b{display:block;font-size:14px}.label-size-btn span{display:block;margin-top:3px;font-size:11px;color:var(--muted)}
+.label-size-btn.active{border:2px solid var(--accent);color:var(--accent);background:#faf7f2}
+.custom-size{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.custom-size input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px}
+.label-size-info{text-align:center;font-size:12px;color:var(--muted);margin:12px 0 5px}
+.labelpreview-wrap{width:100%;overflow:auto;padding:12px 0}
+.labelpreview{position:relative;margin:auto;background:#fff;border:1px solid #ddd;color:#111;overflow:hidden;border-radius:6px;box-shadow:0 3px 10px #0001}
+.labelbrand{position:absolute;left:0;top:0;right:0;height:22%;background:#171717;color:#fff;display:flex;align-items:center;padding-left:4%;font-weight:900;letter-spacing:.2px;white-space:nowrap;overflow:hidden}
+.labelcontent{position:absolute;left:5%;top:28%;width:55%;bottom:5%;overflow:hidden}
+.labelcode{font-weight:900;line-height:1;white-space:nowrap}.labelname{font-weight:800;line-height:1.1;margin-top:5%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.labelmodel{margin-top:5%;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.labelhint{position:absolute;left:5%;bottom:5%;background:var(--accent);color:white;border-radius:4px;padding:2% 4%;font-weight:700;white-space:nowrap}
+.labelpreview img{position:absolute;right:4%;top:29%;width:35%;height:auto;aspect-ratio:1/1}
+.printonly{display:none}
+@media print{
+  @page{margin:0}
+  body *{visibility:hidden!important}
+  #labelPrintArea,#labelPrintArea *{visibility:visible!important}
+  #labelPrintArea{position:absolute!important;left:0!important;top:0!important;margin:0!important;box-shadow:none!important;border:0!important}
+  .noprint{display:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -24,7 +48,41 @@
 <div id="detail" class="screen"><div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div><div class="detailtop"><div class="hero" id="detailHero"></div></div><div id="detailActions" class="detailactions"></div><div class="section"><div class="title"><h2>維修紀錄</h2><a onclick="reportSelected()">＋報修</a></div></div><div class="timeline" id="repairTimeline"></div><div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div></div>
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
 <div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"><option>電動工具</option><option>氣動工具</option><option>量測工具</option><option>大型設備</option><option>手工具</option><option>其他</option></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
-<div id="qrModal" class="modal"><div class="modalbox qrbox"><h3>工具 QR Code</h3><p id="qrTitle" class="meta"></p><img id="qrImage" class="qrimg" alt="工具 QR Code"><div id="qrUrl" class="qrurl"></div><button class="btn secondary" onclick="closeQr()">關閉</button></div></div><div id="labelModal" class="modal"><div class="modalbox"><h3>QR 工具標籤</h3><div id="labelPrintArea" class="labelpreview"><div class="labelbrand">LUMBERKINGS｜木作設備中心</div><div id="labelCode" class="labelcode"></div><div id="labelName" class="labelname"></div><img id="labelQr" alt="QR Code"><div class="labelhint">掃碼查看工具資料／報修</div></div><div class="modalactions noprint"><button class="btn" onclick="printToolLabel()">列印標籤</button><button class="btn secondary" onclick="closeLabel()">關閉</button></div></div></div><div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
+<div id="qrModal" class="modal"><div class="modalbox qrbox"><h3>工具 QR Code</h3><p id="qrTitle" class="meta"></p><img id="qrImage" class="qrimg" alt="工具 QR Code"><div id="qrUrl" class="qrurl"></div><button class="btn secondary" onclick="closeQr()">關閉</button></div></div><div id="labelModal" class="modal"><div class="modalbox">
+<h3>QR 工具標籤列印</h3>
+<p class="meta">選擇標籤尺寸後即可預覽與列印</p>
+<div class="noprint">
+  <div class="label-size-title">選擇標籤尺寸</div>
+  <div class="label-size-grid">
+    <button id="sizeSmall" class="label-size-btn" onclick="setLabelSize(40,25)"><b>小型</b><span>40 × 25 mm</span></button>
+    <button id="sizeMedium" class="label-size-btn" onclick="setLabelSize(50,40)"><b>中型</b><span>50 × 40 mm</span></button>
+    <button id="sizeLarge" class="label-size-btn" onclick="setLabelSize(60,50)"><b>大型</b><span>60 × 50 mm</span></button>
+  </div>
+  <div class="label-size-title">自訂尺寸（mm）</div>
+  <div class="custom-size">
+    <input id="customLabelWidth" type="number" min="25" max="100" placeholder="寬度">
+    <input id="customLabelHeight" type="number" min="15" max="100" placeholder="高度">
+  </div>
+  <button class="btn secondary" style="margin-top:8px" onclick="applyCustomLabelSize()">套用自訂尺寸</button>
+</div>
+<div id="labelSizeInfo" class="label-size-info">實際列印尺寸：40 × 25 mm</div>
+<div class="labelpreview-wrap">
+  <div id="labelPrintArea" class="labelpreview">
+    <div class="labelbrand">LUMBERKINGS｜木作設備中心</div>
+    <div class="labelcontent">
+      <div id="labelCode" class="labelcode"></div>
+      <div id="labelName" class="labelname"></div>
+      <div id="labelModel" class="labelmodel"></div>
+    </div>
+    <img id="labelQr" alt="QR Code">
+    <div class="labelhint">掃碼查看 / 報修</div>
+  </div>
+</div>
+<div class="modalactions noprint">
+  <button class="btn secondary" onclick="closeLabel()">關閉</button>
+  <button id="printLabelBtn" class="btn" onclick="printToolLabel()">列印 40 × 25 mm</button>
+</div>
+</div></div><div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
@@ -129,17 +187,123 @@ window.showQr=id=>{
   $('qrModal').classList.add('open');
 };
 window.closeQr=()=>$('qrModal').classList.remove('open');
+
+let currentLabelWidth=40,currentLabelHeight=25;
+
+function updateLabelPreview(){
+  const area=$('labelPrintArea');
+  const scale=6;
+  area.style.width=(currentLabelWidth*scale)+'px';
+  area.style.height=(currentLabelHeight*scale)+'px';
+
+  const h=currentLabelHeight;
+  document.querySelector('#labelPrintArea .labelbrand').style.fontSize=Math.max(7,Math.min(13,h*0.38))+'px';
+  $('labelCode').style.fontSize=Math.max(12,Math.min(24,h*0.72))+'px';
+  $('labelName').style.fontSize=Math.max(9,Math.min(17,h*0.50))+'px';
+  $('labelModel').style.fontSize=Math.max(7,Math.min(12,h*0.32))+'px';
+  document.querySelector('#labelPrintArea .labelhint').style.fontSize=Math.max(6,Math.min(10,h*0.28))+'px';
+
+  $('labelSizeInfo').textContent='實際列印尺寸：'+currentLabelWidth+' × '+currentLabelHeight+' mm';
+  $('printLabelBtn').textContent='列印 '+currentLabelWidth+' × '+currentLabelHeight+' mm';
+  $('customLabelWidth').value=currentLabelWidth;
+  $('customLabelHeight').value=currentLabelHeight;
+
+  document.querySelectorAll('.label-size-btn').forEach(x=>x.classList.remove('active'));
+  if(currentLabelWidth===40&&currentLabelHeight===25)$('sizeSmall').classList.add('active');
+  if(currentLabelWidth===50&&currentLabelHeight===40)$('sizeMedium').classList.add('active');
+  if(currentLabelWidth===60&&currentLabelHeight===50)$('sizeLarge').classList.add('active');
+
+  localStorage.setItem('woodtool-label-size',JSON.stringify({width:currentLabelWidth,height:currentLabelHeight}));
+}
+
+window.setLabelSize=(w,h)=>{
+  currentLabelWidth=Number(w);
+  currentLabelHeight=Number(h);
+  updateLabelPreview();
+};
+
+window.applyCustomLabelSize=()=>{
+  const w=Number($('customLabelWidth').value);
+  const h=Number($('customLabelHeight').value);
+  if(!Number.isFinite(w)||!Number.isFinite(h))return alert('請輸入正確的標籤尺寸');
+  if(w<25||w>100)return alert('寬度請設定在 25～100 mm');
+  if(h<15||h>100)return alert('高度請設定在 15～100 mm');
+  currentLabelWidth=w;
+  currentLabelHeight=h;
+  updateLabelPreview();
+};
+
 window.showLabel=id=>{
   const t=tools.find(x=>x.id===id);
   if(!t)return alert('找不到工具');
   const url=toolShareUrl(t);
-  $('labelCode').textContent=t.tool_code;
-  $('labelName').textContent=((t.brand||'')+' '+t.name).trim();
-  $('labelQr').src='https://quickchart.io/qr?size=300&text='+encodeURIComponent(url);
+
+  $('labelCode').textContent=t.tool_code||'';
+  $('labelName').textContent=((t.brand||'')+' '+(t.name||'')).trim();
+  $('labelModel').textContent=t.model?'型號：'+t.model:'';
+  $('labelQr').src='https://quickchart.io/qr?size=500&margin=1&text='+encodeURIComponent(url);
+
+  try{
+    const saved=JSON.parse(localStorage.getItem('woodtool-label-size'));
+    if(saved&&saved.width&&saved.height){
+      currentLabelWidth=Number(saved.width);
+      currentLabelHeight=Number(saved.height);
+    }else{
+      currentLabelWidth=40;
+      currentLabelHeight=25;
+    }
+  }catch(e){
+    currentLabelWidth=40;
+    currentLabelHeight=25;
+  }
+
+  updateLabelPreview();
   $('labelModal').classList.add('open');
 };
+
 window.closeLabel=()=>$('labelModal').classList.remove('open');
-window.printToolLabel=()=>window.print();
+
+window.printToolLabel=()=>{
+  const area=$('labelPrintArea');
+  const oldWidth=area.style.width;
+  const oldHeight=area.style.height;
+
+  area.style.width=currentLabelWidth+'mm';
+  area.style.height=currentLabelHeight+'mm';
+
+  let printStyle=document.getElementById('dynamicPrintStyle');
+  if(!printStyle){
+    printStyle=document.createElement('style');
+    printStyle.id='dynamicPrintStyle';
+    document.head.appendChild(printStyle);
+  }
+
+  printStyle.textContent=`
+    @media print{
+      @page{size:${currentLabelWidth}mm ${currentLabelHeight}mm;margin:0}
+      html,body{
+        width:${currentLabelWidth}mm !important;
+        height:${currentLabelHeight}mm !important;
+        margin:0 !important;
+        padding:0 !important;
+      }
+      #labelPrintArea{
+        width:${currentLabelWidth}mm !important;
+        height:${currentLabelHeight}mm !important;
+        border-radius:0 !important;
+      }
+    }
+  `;
+
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      area.style.width=oldWidth;
+      area.style.height=oldHeight;
+    },300);
+  },100);
+};
+
 
 function openToolFromUrl(){
   const code=new URL(window.location.href).searchParams.get('tool');
