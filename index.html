@@ -276,6 +276,30 @@
 .work-success{display:none;margin-top:9px;padding:10px 12px;border-radius:11px;background:#e8f2ea;color:var(--ok);font-size:12px;font-weight:800}
 .work-success.show{display:block}
 
+
+/* ===== V17.4 記工修改 ===== */
+.today-person{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:5px 0;
+}
+.today-person-info{min-width:0;flex:1}
+.today-edit{
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--accent);
+  border-radius:9px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:800;
+}
+.work-edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.work-edit-actions button{margin:0}
+.work-delete{background:#fff!important;color:var(--danger)!important;border:1px solid #e4b7af!important}
+
 </style>
 </head>
 <body>
@@ -521,7 +545,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.3.2｜修正記工後今日出勤同步
+// Lumberkings 木作設備中心 V17.4｜記工可修改｜修正記工後今日出勤同步
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2150,7 +2174,11 @@ function renderAttendance(dateStr){
   groups.innerHTML=Object.entries(map).map(([site,rows])=>`
     <div class="today-group">
       <strong>${esc(site)}｜${rows.length} 人</strong>
-      ${rows.map(r=>`<div class="today-person">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}</div>`).join('')}
+      ${rows.map(r=>`
+        <div class="today-person">
+          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}</div>
+          <button class="today-edit" type="button" onclick="openWorkLogEdit(${Number(r.id)})">修改</button>
+        </div>`).join('')}
     </div>`).join('');
 }
 function changeAttendanceDate(delta){
@@ -2331,6 +2359,112 @@ async function disableWorker(id){
 
 
 
+
+// ===== V17.4 記工修改 =====
+function parseWorkNote(note=''){
+  const raw=String(note||'');
+  const m=raw.match(/^([0-9.]+)工(?:｜(.*))?$/);
+  return {
+    units:m?String(m[1]):'1',
+    note:m?(m[2]||''):raw
+  };
+}
+
+async function openWorkLogEdit(id){
+  const row=attendanceLogs.find(x=>Number(x.id)===Number(id));
+  if(!row)return alert('找不到這筆記工資料');
+
+  await loadWorkMaster();
+
+  document.getElementById('editWorkId').value=row.id;
+  document.getElementById('editWorkDate').value=row.work_date||'';
+
+  const siteSelect=document.getElementById('editWorkSite');
+  const siteNames=[...new Set([
+    row.site_name,
+    ...workSites.map(s=>s.site_name)
+  ].filter(Boolean))];
+  siteSelect.innerHTML=siteNames.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  siteSelect.value=row.site_name||'';
+
+  const workerSelect=document.getElementById('editWorkWorker');
+  const workerNames=[...new Set([
+    row.employee_name,
+    ...workers.map(w=>w.worker_name)
+  ].filter(Boolean))];
+  workerSelect.innerHTML=workerNames.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('');
+  workerSelect.value=row.employee_name||'';
+
+  const parsed=parseWorkNote(row.note);
+  document.getElementById('editWorkUnits').value=parsed.units;
+  document.getElementById('editWorkNote').value=parsed.note;
+
+  const deleteBtn=document.getElementById('deleteWorkLogBtn');
+  if(deleteBtn)deleteBtn.style.display=isAdmin()?'block':'none';
+
+  document.getElementById('workLogEditModal')?.classList.add('show');
+}
+
+function closeWorkLogEdit(){
+  document.getElementById('workLogEditModal')?.classList.remove('show');
+}
+
+async function saveWorkLogEdit(){
+  const id=Number(document.getElementById('editWorkId').value);
+  const work_date=document.getElementById('editWorkDate').value;
+  const site_name=document.getElementById('editWorkSite').value;
+  const employee_name=document.getElementById('editWorkWorker').value;
+  const units=document.getElementById('editWorkUnits').value;
+  const note=document.getElementById('editWorkNote').value.trim();
+
+  if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
+  if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
+
+  const payload={
+    work_date,
+    site_name,
+    employee_name,
+    note:`${units}工${note?'｜'+note:''}`,
+    updated_at:new Date().toISOString()
+  };
+
+  const {data,error}=await db.from('work_logs')
+    .update(payload)
+    .eq('id',id)
+    .select('*')
+    .maybeSingle();
+
+  if(error){
+    if(String(error.message||'').toLowerCase().includes('duplicate')){
+      return alert('修改失敗：這位人員在同一天、同一案場已經有記工紀錄。');
+    }
+    return alert('修改記工失敗：'+error.message);
+  }
+  if(!data)return alert('修改沒有成功，請確認 work_logs 的 UPDATE 權限。');
+
+  closeWorkLogEdit();
+
+  attendanceViewDate=new Date(work_date+'T12:00:00');
+  await loadAttendance(work_date);
+  showWorkSuccess(`記工已修改｜${employee_name}｜${units}工`);
+  document.getElementById('attendanceSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function deleteWorkLog(){
+  if(!isAdmin())return alert('只有管理員可以刪除記工');
+  const id=Number(document.getElementById('editWorkId').value);
+  const row=attendanceLogs.find(x=>Number(x.id)===id);
+  if(!id||!row)return alert('找不到這筆記工');
+  if(!confirm(`確定刪除「${row.employee_name}｜${row.site_name}」這筆記工？`))return;
+
+  const {error}=await db.from('work_logs').delete().eq('id',id);
+  if(error)return alert('刪除記工失敗：'+error.message);
+
+  closeWorkLogEdit();
+  await loadAttendance(row.work_date);
+  showWorkSuccess(`已刪除記工｜${row.employee_name}`);
+}
+
 // ===== V17.3 記工統計 =====
 function firstDayOfMonth(d=new Date()){
   return localDateISO(new Date(d.getFullYear(),d.getMonth(),1));
@@ -2415,7 +2549,11 @@ Object.assign(window,{
   disableWorker,
   openWorkStats,
   closeWorkStats,
-  loadWorkStats
+  loadWorkStats,
+  openWorkLogEdit,
+  closeWorkLogEdit,
+  saveWorkLogEdit,
+  deleteWorkLog
 });
 
 </script>
@@ -2423,6 +2561,51 @@ Object.assign(window,{
 
 
 
+
+
+<div id="workLogEditModal" class="work-modal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <h2>✏️ 修改記工</h2>
+      <button class="work-close" type="button" onclick="closeWorkLogEdit()">×</button>
+    </div>
+
+    <input id="editWorkId" type="hidden">
+
+    <div class="work-field">
+      <label>日期</label>
+      <input id="editWorkDate" type="date">
+    </div>
+
+    <div class="work-field">
+      <label>案場</label>
+      <select id="editWorkSite"></select>
+    </div>
+
+    <div class="work-field">
+      <label>人員</label>
+      <select id="editWorkWorker"></select>
+    </div>
+
+    <div class="work-field">
+      <label>工數</label>
+      <select id="editWorkUnits">
+        <option value="1">1 工</option>
+        <option value="0.5">0.5 工</option>
+      </select>
+    </div>
+
+    <div class="work-field">
+      <label>備註</label>
+      <textarea id="editWorkNote" rows="2" placeholder="可留空"></textarea>
+    </div>
+
+    <div class="work-edit-actions">
+      <button id="deleteWorkLogBtn" class="work-submit work-delete" type="button" onclick="deleteWorkLog()">刪除這筆</button>
+      <button class="work-submit" type="button" onclick="saveWorkLogEdit()">儲存修改</button>
+    </div>
+  </div>
+</div>
 
 <div id="workStatsModal" class="work-modal">
   <div class="work-sheet">
