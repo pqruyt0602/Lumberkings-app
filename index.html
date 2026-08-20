@@ -657,7 +657,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.7｜三級權限管理
+// Lumberkings 木作設備中心 V17.7.1｜修正權限管理按鈕
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -3026,11 +3026,11 @@ async function loadWorkStats(){
 async function openRoleManager(){
   if(!isAdmin())return alert('只有管理員可以管理權限');
   const modal=document.getElementById('roleManagerModal');
-  modal?.classList.add('show');
+  modal?.classList.add('open');
   await loadRoleManager();
 }
 function closeRoleManager(){
-  document.getElementById('roleManagerModal')?.classList.remove('show');
+  document.getElementById('roleManagerModal')?.classList.remove('open');
 }
 async function loadRoleManager(){
   const box=document.getElementById('roleManagerList');
@@ -3277,10 +3277,10 @@ Object.assign(window,{
 
 
 <div id="roleManagerModal" class="modal">
-  <div class="work-sheet">
-    <div class="work-sheet-head">
-      <div><b>使用者權限管理</b><small>只有管理員可設定</small></div>
-      <button type="button" onclick="closeRoleManager()">✕</button>
+  <div class="modalbox">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+      <div><b style="display:block;font-size:18px">使用者權限管理</b><small>只有管理員可設定</small></div>
+      <button class="mini" type="button" onclick="closeRoleManager()">關閉</button>
     </div>
     <div class="stats-sub" style="margin-bottom:10px">
       管理員：全部權限｜師傅頭：記工、修改記工、工具與報修｜一般員工：工具、報修、查看案場總工數
