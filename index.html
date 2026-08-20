@@ -171,12 +171,19 @@
 .notice-msg{font-size:12px;line-height:1.6;color:var(--muted);white-space:pre-line;margin-top:6px}
 .notice-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:8px}
 
+
+.brandright{display:flex;align-items:center;gap:8px}
+.notifybell{display:none;position:relative;border:0;background:#ffffff18;color:#fff;width:38px;height:38px;border-radius:999px;font-size:20px;align-items:center;justify-content:center;padding:0}
+.notifybell.show{display:flex}
+.notifydot{position:absolute;right:-3px;top:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#d9534f;color:#fff;font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center;border:2px solid #2f2b27}
+.notifybell.has-unread .notifydot{display:flex}
+
 </style>
 </head>
 <body>
 <div id="loginScreen" class="loginwrap"><div class="loginbox"><h1>木作設備中心</h1><p>Lumberkings 雲端設備管理</p><div class="label">Email</div><input id="loginEmail" class="input" type="email" placeholder="登入 Email"><div class="label">密碼</div><input id="loginPassword" class="input" type="password" placeholder="密碼"><button class="btn" id="loginBtn">登入</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="badge">雲端版</div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版</div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -386,10 +393,10 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.7.5｜工具狀態以維修單同步判斷
+// Lumberkings 木作設備中心 V16.8｜管理員報修通知中心
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
-let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 
 function qrPayloadForTool(t){
   // 掃碼借出/歸還目前接受 TR-001 這類工具代碼，QR 直接存工具代碼最穩定。
@@ -463,12 +470,13 @@ async function enterApp(user){
   syncAdminNoticeVisibility();
   bindToolCardClicks();
   await refreshAll();
+  startNotificationPolling();
   initCategoryScroll();
   openToolFromUrl();
 }
 $('loginBtn').onclick=login;$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 async function login(){const email=$('loginEmail').value.trim(),password=$('loginPassword').value;$('loginErr').style.display='none';if(!email||!password){return loginErr('請輸入 Email 與密碼')}$('loginBtn').disabled=true;const {error}=await db.auth.signInWithPassword({email,password});$('loginBtn').disabled=false;if(error)loginErr('登入失敗：'+error.message)}
-function loginErr(m){$('loginErr').textContent=m;$('loginErr').style.display='block'}window.logout=()=>db.auth.signOut();
+function loginErr(m){$('loginErr').textContent=m;$('loginErr').style.display='block'}window.logout=()=>{stopNotificationPolling();return db.auth.signOut()};
 window.show=id=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');if(id==='home')renderHome();if(id==='report')fillReportTools();window.scrollTo(0,0)};
 function bindToolCardClicks(){
   const list=$('toolList');
@@ -498,11 +506,19 @@ function isAdmin(){
 }
 
 function syncAdminNoticeVisibility(){
-  const section=$('adminNoticeSection');
-  if(!section)return;
   const admin=isAdmin();
-  section.classList.toggle('show',admin);
-  section.style.display=admin?'block':'none';
+  const section=$('adminNoticeSection');
+  const bell=$('headerNotifyBell');
+
+  if(section){
+    section.classList.toggle('show',admin);
+    section.style.display=admin?'block':'none';
+  }
+
+  if(bell){
+    bell.classList.toggle('show',admin);
+  }
+
   if(admin && $('noticeHint') && !notifications.length){
     $('noticeHint').textContent='正在讀取通知…';
   }
@@ -516,6 +532,22 @@ function formatNoticeTime(v){
       hour:'2-digit',minute:'2-digit'
     });
   }catch(e){return String(v)}
+}
+
+
+function startNotificationPolling(){
+  stopNotificationPolling();
+  if(!isAdmin())return;
+  notificationPollTimer=setInterval(()=>{
+    if(document.visibilityState==='visible') loadNotifications();
+  },30000);
+}
+
+function stopNotificationPolling(){
+  if(notificationPollTimer){
+    clearInterval(notificationPollTimer);
+    notificationPollTimer=null;
+  }
 }
 
 async function loadNotifications(){
@@ -551,6 +583,7 @@ async function loadNotifications(){
 function renderNotificationBadge(){
   if(!isAdmin())return;
   const unread=notifications.filter(n=>!n.is_read).length;
+
   const count=$('noticeCount');
   const hint=$('noticeHint');
   if(count){
@@ -559,6 +592,15 @@ function renderNotificationBadge(){
   }
   if(hint){
     hint.textContent=unread?`有 ${unread} 筆未讀通知`:'目前沒有新通知';
+  }
+
+  const bell=$('headerNotifyBell');
+  const bellCount=$('headerNotifyCount');
+  if(bell){
+    bell.classList.toggle('has-unread',unread>0);
+  }
+  if(bellCount){
+    bellCount.textContent=unread>99?'99+':String(unread);
   }
 }
 
@@ -1610,6 +1652,8 @@ window.saveRepair=async()=>{
   if(noticeError){
     // 報修本身已成功，所以通知失敗只警告，不回滾維修紀錄。
     console.warn('報修通知建立失敗：',noticeError);
+  }else if(isAdmin()){
+    await loadNotifications();
   }
 
   selectedId=toolId;
