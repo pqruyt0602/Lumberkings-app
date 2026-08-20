@@ -545,7 +545,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.4.1｜修正修改後畫面不同步｜修正記工後今日出勤同步
+// Lumberkings 木作設備中心 V17.4.2｜修正記工刪除｜修正記工後今日出勤同步
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2484,16 +2484,44 @@ async function saveWorkLogEdit(){
 
 async function deleteWorkLog(){
   if(!isAdmin())return alert('只有管理員可以刪除記工');
+
   const id=Number(document.getElementById('editWorkId').value);
   const row=attendanceLogs.find(x=>Number(x.id)===id);
   if(!id||!row)return alert('找不到這筆記工');
+
   if(!confirm(`確定刪除「${row.employee_name}｜${row.site_name}」這筆記工？`))return;
 
-  const {error}=await db.from('work_logs').delete().eq('id',id);
-  if(error)return alert('刪除記工失敗：'+error.message);
+  // 必須要求 Supabase 回傳真正被刪除的 row。
+  // RLS 擋住 DELETE 時，有時不會丟 error，只會回傳 0 rows。
+  const {data,error}=await db
+    .from('work_logs')
+    .delete()
+    .eq('id',id)
+    .select('id,work_date,site_name,employee_name');
 
+  if(error){
+    return alert('刪除記工失敗：'+error.message);
+  }
+
+  if(!data || data.length===0){
+    return alert(
+      '刪除沒有成功。\n\n' +
+      '資料庫沒有真的刪掉這筆記工，通常是 Supabase 的 DELETE 權限（RLS）擋住。\n' +
+      '目前畫面不會再把你修改成 0.5 工的資料覆蓋回去。'
+    );
+  }
+
+  // 確認資料庫真的刪除後，才從畫面移除。
+  attendanceLogs=attendanceLogs.filter(x=>Number(x.id)!==id);
   closeWorkLogEdit();
-  await loadAttendance(row.work_date);
+  renderAttendance(row.work_date);
+
+  // 再向資料庫確認一次；若查詢失敗也不把舊資料硬塞回畫面。
+  const result=await loadAttendance(row.work_date);
+  if(result?.ok===false){
+    console.warn('刪除後重新讀取記工失敗');
+  }
+
   showWorkSuccess(`已刪除記工｜${row.employee_name}`);
 }
 
