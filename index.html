@@ -498,7 +498,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.2｜人員＋案場管理＋記工整合
+// Lumberkings 木作設備中心 V17.2.1｜修正記工按鈕無反應
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2081,7 +2081,7 @@ function formatWorkDate(s){
   const [y,m,d]=s.split('-');
   return `${Number(m)}/${Number(d)}`;
 }
-async function loadWorkMaster(){
+async async function loadWorkMaster(){
   const [siteRes,workerRes]=await Promise.all([
     db.from('work_sites').select('*').eq('is_active',true).order('site_name'),
     db.from('workers').select('*').eq('is_active',true).order('worker_name')
@@ -2117,8 +2117,8 @@ function renderAttendance(dateStr){
   summary.textContent=`${Object.keys(map).length} 個案場`;
   groups.innerHTML=Object.entries(map).map(([site,rows])=>`
     <div class="today-group">
-      <strong>${escapeHtml(site)}｜${rows.length} 人</strong>
-      ${rows.map(r=>`<div class="today-person">${escapeHtml(r.employee_name)}${r.note?'・'+escapeHtml(r.note):''}</div>`).join('')}
+      <strong>${esc(site)}｜${rows.length} 人</strong>
+      ${rows.map(r=>`<div class="today-person">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}</div>`).join('')}
     </div>`).join('');
 }
 function changeAttendanceDate(delta){
@@ -2136,11 +2136,11 @@ async function openWorkLog(){
     return;
   }
   document.getElementById('workDate').value=localDateISO(attendanceViewDate);
-  document.getElementById('workSite').innerHTML=workSites.map(s=>`<option value="${s.id}">${escapeHtml(s.site_name)}</option>`).join('');
+  document.getElementById('workSite').innerHTML=workSites.map(s=>`<option value="${s.id}">${esc(s.site_name)}</option>`).join('');
   document.getElementById('workerList').innerHTML=workers.map(w=>`
     <label class="worker-row">
       <input type="checkbox" class="worker-check" value="${w.id}">
-      <span><strong>${escapeHtml(w.worker_name)}</strong><br><small>${escapeHtml(w.worker_type||'')}</small></span>
+      <span><strong>${esc(w.worker_name)}</strong><br><small>${esc(w.worker_type||'')}</small></span>
       <select class="worker-day">
         <option value="1">1 工</option>
         <option value="0.5">0.5 工</option>
@@ -2213,7 +2213,7 @@ function renderWorkMasterManager(tab=workMasterTab){
   if(siteList){
     siteList.innerHTML=workSites.length?workSites.map(s=>`
       <div class="master-row">
-        <div><b>${escapeHtml(s.site_name)}</b><small>啟用中案場</small></div>
+        <div><b>${esc(s.site_name)}</b><small>啟用中案場</small></div>
         <button type="button" onclick="disableWorkSite(${Number(s.id)})">停用</button>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的案場</div>';
   }
@@ -2222,7 +2222,7 @@ function renderWorkMasterManager(tab=workMasterTab){
   if(workerList){
     workerList.innerHTML=workers.length?workers.map(w=>`
       <div class="master-row">
-        <div><b>${escapeHtml(w.worker_name)}</b><small>${escapeHtml(w.worker_type||'師傅')}</small></div>
+        <div><b>${esc(w.worker_name)}</b><small>${esc(w.worker_type||'師傅')}</small></div>
         <button type="button" onclick="disableWorker(${Number(w.id)})">停用</button>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的人員</div>';
   }
@@ -2261,6 +2261,22 @@ async function disableWorker(id){
   await loadWorkMaster();
   renderWorkMasterManager('workers');
 }
+
+
+// V17.2.1：讓 HTML onclick 可以呼叫 module 內的案場記工函式
+Object.assign(window,{
+  openWorkLog,
+  closeWorkLog,
+  saveWorkLogs,
+  changeAttendanceDate,
+  openWorkMasterManager,
+  closeWorkMasterManager,
+  renderWorkMasterManager,
+  addWorkSite,
+  addWorker,
+  disableWorkSite,
+  disableWorker
+});
 
 </script>
 
