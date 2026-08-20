@@ -178,6 +178,35 @@
 .notifydot{position:absolute;right:-3px;top:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#d9534f;color:#fff;font-size:11px;font-weight:900;display:none;align-items:center;justify-content:center;border:2px solid #2f2b27}
 .notifybell.has-unread .notifydot{display:flex}
 
+
+/* ===== V17 案場記工 ===== */
+.attendance-card{margin:14px 20px;padding:18px;border:1px solid #e6ded4;border-radius:18px;background:#fff}
+.attendance-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.attendance-title h3{margin:0;font-size:18px}
+.attendance-big{font-size:34px;font-weight:900;margin:8px 0 2px}
+.attendance-sub{font-size:13px;color:#7c7c82}
+.attendance-btn{width:100%;margin-top:12px;padding:15px;border:0;border-radius:15px;background:#9a7347;color:#fff;font-size:17px;font-weight:900}
+.work-modal{position:fixed;inset:0;background:#0008;z-index:9999;display:none;align-items:flex-end;justify-content:center}
+.work-modal.show{display:flex}
+.work-sheet{width:min(560px,100%);max-height:92vh;overflow:auto;background:#f8f5ef;border-radius:24px 24px 0 0;padding:20px 18px 30px}
+.work-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.work-head h2{margin:0}
+.work-close{border:0;background:transparent;font-size:28px}
+.work-field{margin-top:14px}
+.work-field label{display:block;font-size:13px;color:#6f6f75;margin-bottom:6px}
+.work-field input,.work-field select,.work-field textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8d0c7;border-radius:12px;background:#fff;font-size:16px}
+.worker-list{display:grid;gap:8px;margin-top:10px}
+.worker-row{display:grid;grid-template-columns:34px 1fr 92px;align-items:center;gap:8px;background:#fff;border:1px solid #e6ded4;border-radius:14px;padding:10px}
+.worker-row input[type=checkbox]{width:22px;height:22px}
+.worker-row select{padding:8px;border:1px solid #ddd2c5;border-radius:10px;background:#fff}
+.work-submit{width:100%;margin-top:16px;padding:15px;border:0;border-radius:14px;background:#3f7d58;color:#fff;font-size:17px;font-weight:900}
+.today-groups{margin-top:12px;display:grid;gap:10px}
+.today-group{background:#fff;border:1px solid #e6ded4;border-radius:14px;padding:12px}
+.today-group strong{display:block;margin-bottom:5px}
+.today-person{font-size:14px;color:#666;margin-top:4px}
+.work-toolbar{display:flex;gap:8px;margin-top:12px}
+.work-toolbar button{flex:1;padding:10px;border:1px solid #9a7347;border-radius:12px;background:#fff;color:#7d592f;font-weight:800}
+
 </style>
 </head>
 <body>
@@ -393,7 +422,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.8｜管理員報修通知中心
+// Lumberkings 木作設備中心 V17.0｜案場記工
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -607,6 +636,7 @@ function renderNotificationBadge(){
 window.openNotifications=async()=>{
   if(!isAdmin())return;
   await loadNotifications();
+  await loadAttendance();
   renderNotificationList();
   $('notificationModal').classList.add('open');
 };
@@ -1958,5 +1988,167 @@ window.confirmBatchReturn=async()=>{
   }
 };
 
+
+// ===== V17 案場記工 =====
+let workSites=[], workers=[], attendanceLogs=[];
+let attendanceViewDate=new Date();
+
+function localDateISO(d=new Date()){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function formatWorkDate(s){
+  const [y,m,d]=s.split('-');
+  return `${Number(m)}/${Number(d)}`;
+}
+async function loadWorkMaster(){
+  const [siteRes,workerRes]=await Promise.all([
+    db.from('work_sites').select('*').eq('is_active',true).order('site_name'),
+    db.from('workers').select('*').eq('is_active',true).order('worker_name')
+  ]);
+  if(siteRes.error) console.warn('案場讀取失敗',siteRes.error);
+  if(workerRes.error) console.warn('師傅名單讀取失敗',workerRes.error);
+  workSites=siteRes.data||[];
+  workers=workerRes.data||[];
+}
+async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
+  const {data,error}=await db.from('work_logs').select('*').eq('work_date',dateStr).order('site_name');
+  if(error){console.warn('記工讀取失敗',error);return;}
+  attendanceLogs=data||[];
+  renderAttendance(dateStr);
+}
+function renderAttendance(dateStr){
+  const label=document.getElementById('attendanceDateLabel');
+  const count=document.getElementById('attendanceCount');
+  const summary=document.getElementById('attendanceSummary');
+  const groups=document.getElementById('attendanceGroups');
+  if(!label||!count||!summary||!groups)return;
+  label.textContent=formatWorkDate(dateStr);
+  count.textContent=`${attendanceLogs.length} 人`;
+  if(!attendanceLogs.length){
+    summary.textContent='今天尚未記工';
+    groups.innerHTML='';
+    return;
+  }
+  const map={};
+  attendanceLogs.forEach(x=>{
+    (map[x.site_name]??=[]).push(x);
+  });
+  summary.textContent=`${Object.keys(map).length} 個案場`;
+  groups.innerHTML=Object.entries(map).map(([site,rows])=>`
+    <div class="today-group">
+      <strong>${escapeHtml(site)}｜${rows.length} 人</strong>
+      ${rows.map(r=>`<div class="today-person">${escapeHtml(r.employee_name)}${r.note?'・'+escapeHtml(r.note):''}</div>`).join('')}
+    </div>`).join('');
+}
+function changeAttendanceDate(delta){
+  attendanceViewDate.setDate(attendanceViewDate.getDate()+delta);
+  loadAttendance();
+}
+async function openWorkLog(){
+  await loadWorkMaster();
+  if(!workSites.length){
+    alert('目前沒有啟用中的案場，請先由管理員新增案場。');
+    return;
+  }
+  if(!workers.length){
+    alert('目前沒有師傅名單，請先由管理員新增師傅。');
+    return;
+  }
+  document.getElementById('workDate').value=localDateISO();
+  document.getElementById('workSite').innerHTML=workSites.map(s=>`<option value="${s.id}">${escapeHtml(s.site_name)}</option>`).join('');
+  document.getElementById('workerList').innerHTML=workers.map(w=>`
+    <label class="worker-row">
+      <input type="checkbox" class="worker-check" value="${w.id}">
+      <span><strong>${escapeHtml(w.worker_name)}</strong><br><small>${escapeHtml(w.worker_type||'')}</small></span>
+      <select class="worker-day">
+        <option value="1">1 工</option>
+        <option value="0.5">0.5 工</option>
+      </select>
+    </label>`).join('');
+  document.getElementById('workNote').value='';
+  document.getElementById('workLogModal').classList.add('show');
+}
+function closeWorkLog(){
+  document.getElementById('workLogModal')?.classList.remove('show');
+}
+async function saveWorkLogs(){
+  const date=document.getElementById('workDate').value;
+  const siteId=Number(document.getElementById('workSite').value);
+  const site=workSites.find(x=>Number(x.id)===siteId);
+  const note=document.getElementById('workNote').value.trim();
+  const selected=[...document.querySelectorAll('.worker-check:checked')];
+  if(!date||!site){alert('請選擇日期與案場');return;}
+  if(!selected.length){alert('請至少勾選一位師傅');return;}
+
+  const userId=currentUser?.id||null;
+  const recorder=currentProfile?.display_name||currentUser?.email||'';
+  const rows=selected.map(chk=>{
+    const worker=workers.find(w=>Number(w.id)===Number(chk.value));
+    const day=chk.closest('.worker-row').querySelector('.worker-day').value;
+    return {
+      work_date:date,
+      site_name:site.site_name,
+      employee_name:worker.worker_name,
+      recorded_by:userId,
+      recorded_by_name:recorder,
+      note:`${day}工${note?'｜'+note:''}`
+    };
+  });
+
+  const {error}=await db.from('work_logs').upsert(rows,{onConflict:'work_date,site_name,employee_name'});
+  if(error){
+    alert('記工失敗：'+error.message);
+    return;
+  }
+  closeWorkLog();
+  attendanceViewDate=new Date(date+'T12:00:00');
+  await loadAttendance(date);
+  alert(`記工完成，共 ${rows.length} 人`);
+}
+
 </script>
+
+<section id="attendanceSection" class="attendance-card">
+  <div class="attendance-title">
+    <h3>👷 今日出勤</h3>
+    <span id="attendanceDateLabel" class="attendance-sub"></span>
+  </div>
+  <div id="attendanceCount" class="attendance-big">0 人</div>
+  <div id="attendanceSummary" class="attendance-sub">今天尚未記工</div>
+  <button class="attendance-btn" type="button" onclick="openWorkLog()">＋ 案場記工</button>
+  <div class="work-toolbar">
+    <button type="button" onclick="changeAttendanceDate(-1)">← 前一天</button>
+    <button type="button" onclick="changeAttendanceDate(1)">後一天 →</button>
+  </div>
+  <div id="attendanceGroups" class="today-groups"></div>
+</section>
+
+
+<div id="workLogModal" class="work-modal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <h2>👷 案場記工</h2>
+      <button class="work-close" type="button" onclick="closeWorkLog()">×</button>
+    </div>
+    <div class="work-field">
+      <label>日期</label>
+      <input id="workDate" type="date">
+    </div>
+    <div class="work-field">
+      <label>案場</label>
+      <select id="workSite"></select>
+    </div>
+    <div class="work-field">
+      <label>今天上班的人</label>
+      <div id="workerList" class="worker-list"></div>
+    </div>
+    <div class="work-field">
+      <label>備註</label>
+      <textarea id="workNote" rows="2" placeholder="例如：天花板施工、櫃體安裝"></textarea>
+    </div>
+    <button class="work-submit" type="button" onclick="saveWorkLogs()">送出今日記工</button>
+  </div>
+</div>
+
 </body></html>
