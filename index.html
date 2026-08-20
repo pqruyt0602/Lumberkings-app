@@ -314,6 +314,10 @@
 .stats-cost{font-size:12px;color:var(--ok);font-weight:800;margin-top:4px}
 .stats-sub{font-size:11px;color:var(--muted);margin-top:3px}
 
+
+/* ===== V17.5.1 日薪修改 ===== */
+.wage-current{margin:8px 0 2px;font-size:12px;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -559,7 +563,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.5｜人工成本管理｜日薪設定｜個人/案場成本統計
+// Lumberkings 木作設備中心 V17.5.1｜修正日薪修改
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2364,19 +2368,65 @@ async function addWorker(){
   renderWorkMasterManager('workers');
 }
 
-async function editWorkerWage(id){
+function editWorkerWage(id){
   if(!isAdmin())return alert('只有管理員可以修改日薪');
   const worker=workers.find(w=>Number(w.id)===Number(id));
   if(!worker)return alert('找不到這位人員');
-  const raw=prompt(`設定 ${worker.worker_name} 的日薪`, String(Number(worker.daily_wage||0)));
-  if(raw===null)return;
-  const wage=Number(raw);
+
+  document.getElementById('wageWorkerId').value=worker.id;
+  document.getElementById('wageWorkerName').textContent=worker.worker_name;
+  document.getElementById('wageCurrent').textContent=`目前日薪：${money(worker.daily_wage||0)}`;
+  document.getElementById('wageInput').value=Number(worker.daily_wage||0);
+  document.getElementById('wageModal')?.classList.add('show');
+  setTimeout(()=>document.getElementById('wageInput')?.focus(),80);
+}
+
+function closeWageModal(){
+  document.getElementById('wageModal')?.classList.remove('show');
+}
+
+async function saveWorkerWage(){
+  if(!isAdmin())return alert('只有管理員可以修改日薪');
+
+  const id=Number(document.getElementById('wageWorkerId').value);
+  const wage=Number(document.getElementById('wageInput').value);
+
+  if(!id)return alert('找不到人員資料');
   if(!Number.isFinite(wage)||wage<0)return alert('請輸入正確的日薪金額');
-  const {data,error}=await db.from('workers').update({daily_wage:wage}).eq('id',id).select('*').maybeSingle();
-  if(error)return alert('修改日薪失敗：'+error.message);
-  if(!data)return alert('日薪沒有更新，請確認 workers 的 UPDATE 權限');
-  await loadWorkMaster();
-  renderWorkMasterManager('workers');
+
+  const btn=document.getElementById('saveWageBtn');
+  if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+
+  try{
+    const {data,error}=await db
+      .from('workers')
+      .update({daily_wage:wage})
+      .eq('id',id)
+      .select('id,worker_name,daily_wage')
+      .maybeSingle();
+
+    if(error){
+      return alert('修改日薪失敗：'+error.message);
+    }
+
+    // RLS 擋住 UPDATE 時，有時不一定丟錯，只會回傳 0 rows。
+    if(!data){
+      return alert(
+        '日薪沒有更新成功。\n\n' +
+        '通常是 Supabase 的 workers UPDATE 權限（RLS）擋住。'
+      );
+    }
+
+    const idx=workers.findIndex(w=>Number(w.id)===id);
+    if(idx>=0)workers[idx]={...workers[idx],daily_wage:Number(data.daily_wage||0)};
+
+    closeWageModal();
+    renderWorkMasterManager('workers');
+
+    alert(`日薪已更新：${data.worker_name}｜${money(data.daily_wage)}`);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='儲存日薪';}
+  }
 }
 async function disableWorkSite(id){
   if(!confirm('確定停用這個案場？過去記工紀錄不會刪除。'))return;
@@ -2659,6 +2709,8 @@ Object.assign(window,{
   addWorkSite,
   addWorker,
   editWorkerWage,
+  closeWageModal,
+  saveWorkerWage,
   disableWorkSite,
   disableWorker,
   openWorkStats,
@@ -2747,6 +2799,30 @@ Object.assign(window,{
 
     <div class="stats-section-title">依案場統計</div>
     <div id="statsSiteList" class="stats-list"></div>
+  </div>
+</div>
+
+
+<div id="wageModal" class="work-modal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <h2>💰 修改日薪</h2>
+      <button class="work-close" type="button" onclick="closeWageModal()">×</button>
+    </div>
+    <input id="wageWorkerId" type="hidden">
+    <div class="work-field">
+      <label>人員</label>
+      <div id="wageWorkerName" style="font-weight:900;font-size:18px"></div>
+      <div id="wageCurrent" class="wage-current"></div>
+    </div>
+    <div class="work-field">
+      <label>新日薪</label>
+      <input id="wageInput" type="number" min="0" step="100" placeholder="例如 4000">
+    </div>
+    <div class="work-edit-actions">
+      <button class="work-submit work-delete" type="button" onclick="closeWageModal()">取消</button>
+      <button id="saveWageBtn" class="work-submit" type="button" onclick="saveWorkerWage()">儲存日薪</button>
+    </div>
   </div>
 </div>
 
