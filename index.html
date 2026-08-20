@@ -392,6 +392,25 @@
   margin-top:3px;
 }
 
+
+/* ===== V17.6.3 案場累積總工數 ===== */
+.site-total-units{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--accent);
+  font-weight:900;
+}
+.site-total-chip{
+  display:inline-block;
+  margin-left:6px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#f0e7dd;
+  color:var(--accent);
+  font-size:10px;
+  font-weight:900;
+}
+
 </style>
 </head>
 <body>
@@ -637,7 +656,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6.2｜管理視窗上移＋請假時數扣薪
+// Lumberkings 木作設備中心 V17.6.3｜員工可看案場累積總工數
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2211,7 +2230,7 @@ window.confirmBatchReturn=async()=>{
 
 
 // ===== V17 案場記工 =====
-let workSites=[], workers=[], attendanceLogs=[];
+let workSites=[], workers=[], attendanceLogs=[], siteTotals={};
 let attendanceViewDate=new Date();
 
 function localDateISO(d=new Date()){
@@ -2222,6 +2241,20 @@ function formatWorkDate(s){
   const [y,m,d]=s.split('-');
   return `${Number(m)}/${Number(d)}`;
 }
+
+async function loadSiteTotals(){
+  const {data,error}=await db.rpc('get_site_total_units');
+  if(error){
+    console.warn('案場總工數讀取失敗',error);
+    siteTotals={};
+    return;
+  }
+  siteTotals={};
+  (data||[]).forEach(r=>{
+    siteTotals[String(r.site_name||'')]=Number(r.total_units||0);
+  });
+}
+
 async function loadWorkMaster(){
   const sitePromise=db.from('work_sites')
     .select('id,site_name,address,client_name,is_active,created_at')
@@ -2243,6 +2276,8 @@ async function loadWorkMaster(){
   workSites=(siteRes.data||[]).filter(x=>x.is_active!==false);
   workers=(workerRes.data||[]).filter(x=>x.is_active!==false)
     .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||'')));
+
+  await loadSiteTotals();
 }
 async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
   // 一律使用傳入的 YYYY-MM-DD 查詢，避免手機時區造成日期偏移。
@@ -2279,7 +2314,7 @@ function renderAttendance(dateStr){
   summary.textContent=`${Object.keys(map).length} 個案場`;
   groups.innerHTML=Object.entries(map).map(([site,rows])=>`
     <div class="today-group">
-      <strong>${esc(site)}｜${rows.length} 人</strong>
+      <strong>${esc(site)}｜${rows.length} 人 <span class="site-total-chip">累積 ${Number(siteTotals[site]||0).toFixed(1).replace(/\.0$/,'')} 工</span></strong>
       ${rows.map(r=>`
         <div class="today-person">
           <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}${Number(r.leave_hours||0)>0?`<span class="leave-tag">請假 ${Number(r.leave_hours)}h</span>`:''}</div>
@@ -2430,7 +2465,11 @@ function renderWorkMasterManager(tab=workMasterTab){
   if(siteList){
     siteList.innerHTML=workSites.length?workSites.map(s=>`
       <div class="master-row">
-        <div><b>${esc(s.site_name)}</b><small>啟用中案場</small></div>
+        <div>
+          <b>${esc(s.site_name)}</b>
+          <small>啟用中案場</small>
+          <div class="site-total-units">累積總工數：${Number(siteTotals[s.site_name]||0).toFixed(1).replace(/\.0$/,'')} 工</div>
+        </div>
         <button type="button" onclick="disableWorkSite(${Number(s.id)})">停用</button>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的案場</div>';
   }
@@ -2695,6 +2734,7 @@ async function saveWorkLogEdit(){
   attendanceLogs=attendanceLogs
     .filter(x=>Number(x.id)!==Number(data.id));
   attendanceLogs.push(data);
+  await loadSiteTotals();
   attendanceLogs.sort((a,b)=>
     String(a.site_name||'').localeCompare(String(b.site_name||''))
     || String(a.employee_name||'').localeCompare(String(b.employee_name||''))
@@ -2759,6 +2799,7 @@ async function deleteWorkLog(){
   // 確認資料庫真的刪除後，才從畫面移除。
   attendanceLogs=attendanceLogs.filter(x=>Number(x.id)!==id);
   closeWorkLogEdit();
+  await loadSiteTotals();
   renderAttendance(row.work_date);
 
   // 再向資料庫確認一次；若查詢失敗也不把舊資料硬塞回畫面。
