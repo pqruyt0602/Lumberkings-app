@@ -249,7 +249,7 @@
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
 <script type="module">
-// Lumberkings 木作設備中心 V14.1｜新增工具資料編輯
+// Lumberkings 木作設備中心 V14.2｜新增工具資料編輯
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,statusFilter='全部',categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -373,23 +373,27 @@ window.openDetail=id=>{
       <div><span>維修占比</span><b>${t.purchase_price?Math.round(cost/Number(t.purchase_price)*100):0}%</b></div>
     </div>`;
 
+  // V14.2：V12 起已移除獨立 repairTimeline，避免點工具時因找不到元素而中斷
   const rs=[...(t.repairs||[])].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-  $('repairTimeline').innerHTML=rs.length ? rs.map(r=>{
-    const reportDate=r.repair_date || (r.created_at ? r.created_at.slice(0,10) : '');
-    const lines=[
-      `報修：${reportDate||'未填'}`,
-      r.sent_date ? `送修：${r.sent_date}` : null,
-      r.completed_date ? `完成：${r.completed_date}` : null,
-      r.repair_vendor ? `廠商：${r.repair_vendor}` : null,
-      r.repair_content ? `維修內容：${r.repair_content}` : null,
-      `費用：${money(r.repair_cost)}`,
-      r.description ? `故障：${r.description}` : null
-    ].filter(Boolean);
-    return `<div class="tl">
-      <div class="tlhead"><b>${esc((r.fault_type||'其他')+'｜'+r.status)}</b><div class="tlmenu"><button class="mini" onclick="event.stopPropagation();editRepair(${r.id})">編輯</button><button class="mini danger" onclick="event.stopPropagation();deleteRepair(${r.id})">刪除</button></div></div>
-      <p>${lines.map(esc).join('<br>')}</p>
-    </div>`;
-  }).join('') : '<div class="empty">目前沒有維修紀錄</div>';
+  const repairTimelineEl=$('repairTimeline');
+  if(repairTimelineEl){
+    repairTimelineEl.innerHTML=rs.length ? rs.map(r=>{
+      const reportDate=r.repair_date || (r.created_at ? r.created_at.slice(0,10) : '');
+      const lines=[
+        `報修：${reportDate||'未填'}`,
+        r.sent_date ? `送修：${r.sent_date}` : null,
+        r.completed_date ? `完成：${r.completed_date}` : null,
+        r.repair_vendor ? `廠商：${r.repair_vendor}` : null,
+        r.repair_content ? `維修內容：${r.repair_content}` : null,
+        `費用：${money(r.repair_cost)}`,
+        r.description ? `故障：${r.description}` : null
+      ].filter(Boolean);
+      return `<div class="tl">
+        <div class="tlhead"><b>${esc((r.fault_type||'其他')+'｜'+r.status)}</b><div class="tlmenu"><button class="mini" onclick="event.stopPropagation();editRepair(${r.id})">編輯</button><button class="mini danger" onclick="event.stopPropagation();deleteRepair(${r.id})">刪除</button></div></div>
+        <p>${lines.map(esc).join('<br>')}</p>
+      </div>`;
+    }).join('') : '<div class="empty">目前沒有維修紀錄</div>';
+  }
 
   const txs=transactions.filter(x=>Number(x.tool_id)===Number(t.id)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const activeLoan=txs.find(x=>x.action==='借出'&&!x.return_date);
