@@ -3885,7 +3885,7 @@ async function loadRoleManager(){
           <option value="foreman" ${u.role==='foreman'?'selected':''}>師傅頭</option>
           <option value="manager_assistant" ${u.role==='manager_assistant'?'selected':''}>管理員助理</option>
           <option value="admin" ${u.role==='admin'?'selected':''}>管理員</option>
-        </select><button type="button" class="mini" onclick="editEmployeeName('${u.id}','${String(u.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">修改姓名</button>
+        </select><button type="button" class="mini" onclick="editEmployeeName('${esc(u.user_id)}','${String(u.display_name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">修改姓名</button>
         ${u.approval_status==='pending'?`
           <button class="mini" type="button" onclick="reviewAccount('${esc(u.user_id)}','approved')">核准</button>
           <button class="mini" type="button" onclick="reviewAccount('${esc(u.user_id)}','rejected')">拒絕</button>
