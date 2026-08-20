@@ -3885,7 +3885,7 @@ async function loadRoleManager(){
           <option value="foreman" ${u.role==='foreman'?'selected':''}>師傅頭</option>
           <option value="manager_assistant" ${u.role==='manager_assistant'?'selected':''}>管理員助理</option>
           <option value="admin" ${u.role==='admin'?'selected':''}>管理員</option>
-        </select>
+        </select><button type="button" class="mini" onclick="editEmployeeName('${u.id}','${String(u.name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">修改姓名</button>
         ${u.approval_status==='pending'?`
           <button class="mini" type="button" onclick="reviewAccount('${esc(u.user_id)}','approved')">核准</button>
           <button class="mini" type="button" onclick="reviewAccount('${esc(u.user_id)}','rejected')">拒絕</button>
@@ -3903,6 +3903,28 @@ async function reviewAccount(userId,status){
   if(error)return alert('帳號審核失敗：'+error.message);
   await loadRoleManager();
 }
+
+
+window.editEmployeeName=async(userId,currentName)=>{
+  if(!isAdmin())return alert('只有管理員可以修改員工姓名');
+  const next=prompt('修改員工姓名',currentName||'');
+  if(next===null)return;
+  const name=String(next).trim();
+  if(!name)return alert('姓名不能空白');
+  if(name===String(currentName||'').trim())return;
+
+  if(!confirm(`確定將「${currentName||''}」改成「${name}」？\n\n過去記工紀錄中的姓名也會同步更新。`))return;
+
+  const {error}=await db.rpc('admin_change_employee_name',{
+    p_user_id:userId,
+    p_new_name:name
+  });
+  if(error)return alert('修改姓名失敗：'+error.message);
+
+  alert('員工姓名已更新');
+  await refreshAll();
+  if(typeof loadRoleManager==='function')await loadRoleManager();
+};
 
 async function setUserRole(userId,role){
   if(!isAdmin())return alert('只有管理員可以修改權限');
