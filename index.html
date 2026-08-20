@@ -131,6 +131,14 @@
 
 .tool-card{cursor:pointer;touch-action:manipulation;position:relative;z-index:1}
 .tool-card:active{transform:scale(.995)}
+
+.batch-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.batch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.batch-row small{display:block;color:var(--muted);margin-top:3px}
+.batch-remove{border:0;background:#f7ece8;color:#a54b35;border-radius:10px;padding:7px 9px;font-weight:800}
+.scan-box{padding:12px;border:1px dashed var(--brown);border-radius:14px;background:#fffaf5;margin:10px 0}
+.scan-video{width:100%;border-radius:14px;background:#111;display:none;max-height:280px}
+
 </style>
 </head>
 <body>
@@ -142,7 +150,7 @@
 <div id="cardFixing" class="card metric" onclick="setStatusFilter('送修中')"><span>送修中</span><strong id="mFixing">0</strong><span>點我查看送修設備</span></div>
 <div id="cardCost" class="card metric" onclick="setStatusFilter('全部')"><span>累積維修費</span><strong id="mCost">$0</strong><span>點我查看全部設備</span></div>
 <div id="cardBorrowed" class="card metric borrowed" onclick="setBorrowedFilter()"><span>借出中</span><strong id="mBorrowed">0</strong><span>點我只看目前借出的工具</span></div>
-</div><div class="quick"><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
+</div><div class="quick"><button onclick="openBatchLoan()">▣<br><span>掃碼借出</span></button><div class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div><div class="section"><div class="title"><h2>工具清單</h2><div style="display:flex;gap:10px"><a onclick="openBatchLabel()">▣ 批次標籤</a><a onclick="show('add')">＋新增</a></div></div></div><div class="catwrap"><div class="catbar" id="categoryBar"><button class="catbtn active" data-cat="全部" onclick="setCategoryFilter('全部')">全部</button><button class="catbtn" data-cat="釘槍" onclick="setCategoryFilter('釘槍')">釘槍</button><button class="catbtn" data-cat="風車" onclick="setCategoryFilter('風車')">風車</button><button class="catbtn" data-cat="電鋸" onclick="setCategoryFilter('電鋸')">電鋸</button><button class="catbtn" data-cat="鋸台" onclick="setCategoryFilter('鋸台')">鋸台</button><button class="catbtn" data-cat="修邊機" onclick="setCategoryFilter('修邊機')">修邊機</button><button class="catbtn" data-cat="砂輪機" onclick="setCategoryFilter('砂輪機')">砂輪機</button><button class="catbtn" data-cat="磨切機" onclick="setCategoryFilter('磨切機')">磨切機</button><button class="catbtn" data-cat="雷射" onclick="setCategoryFilter('雷射')">雷射</button><button class="catbtn" data-cat="砂紙機" onclick="setCategoryFilter('砂紙機')">砂紙機</button><button class="catbtn" data-cat="線鋸機" onclick="setCategoryFilter('線鋸機')">線鋸機</button><button class="catbtn" data-cat="電動" onclick="setCategoryFilter('電動')">電動</button><button class="catbtn" data-cat="夾頭" onclick="setCategoryFilter('夾頭')">夾頭</button><button class="catbtn" data-cat="電鑽" onclick="setCategoryFilter('電鑽')">電鑽</button><button class="catbtn" data-cat="電風扇" onclick="setCategoryFilter('電風扇')">電風扇</button><button class="catbtn" data-cat="其他" onclick="setCategoryFilter('其他')">其他</button></div><div class="catfade">›</div></div><div class="section" style="padding-top:0"><div id="toolList"><div class="loading">載入中…</div></div></div></div>
 <div id="detail" class="screen">
 <div class="header"><h2 onclick="show('home')">‹ 工具詳細資料</h2><p id="detailSub"></p></div>
 <div class="detailtop"><div class="hero" id="detailHero"></div></div>
@@ -254,8 +262,37 @@
 </div>
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><input id="eRepairId" type="hidden"><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
+
+<div id="batchLoanModal" class="modal" style="display:none">
+  <div class="modalbox">
+    <div class="modalhead"><b>QR 批次借出</b><button class="x" onclick="closeBatchLoan()">×</button></div>
+    <div class="field"><label>借用人</label><input id="batchEmployee" readonly></div>
+    <div class="field"><label>借出地點／工地</label><input id="batchLocation" placeholder="例如：三重砲哥"></div>
+    <div class="field"><label>預計歸還日期</label><input id="batchReturnDate" type="date"></div>
+
+    <div class="scan-box">
+      <b>掃描工具 QR Code</b>
+      <div class="meta" style="margin:5px 0 10px">可連續掃描多支工具；也可以直接輸入 TR-001 這類工具代碼。</div>
+      <video id="batchVideo" class="scan-video" playsinline></video>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="primary" type="button" onclick="startBatchCamera()">開啟相機掃描</button>
+        <button type="button" onclick="stopBatchCamera()">停止相機</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input id="batchCode" placeholder="掃碼或輸入工具代碼" onkeydown="if(event.key==='Enter'){event.preventDefault();addBatchCode()}">
+        <button type="button" onclick="addBatchCode()">加入</button>
+      </div>
+      <div id="batchMsg" class="meta" style="margin-top:8px"></div>
+    </div>
+
+    <b>待借出工具 <span id="batchCount">0</span> 支</b>
+    <div id="batchList" class="batch-list"></div>
+    <button class="primary" style="width:100%" type="button" onclick="confirmBatchLoan()">確認借出全部</button>
+  </div>
+</div>
+
 <script type="module">
-// Lumberkings 木作設備中心 V15.3.1｜修正借出中統計卡顯示
+// Lumberkings 木作設備中心 V16｜QR 批次借出
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -1181,5 +1218,144 @@ window.saveRepair=async()=>{
 };
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));init();
+
+// ===== V16 QR 批次借出 =====
+let batchToolIds=[];
+let batchStream=null;
+let batchScanTimer=null;
+
+window.openBatchLoan=()=>{
+  batchToolIds=[];
+  $('batchEmployee').value=(currentProfile?.display_name||currentUser?.email||'');
+  $('batchLocation').value='';
+  $('batchReturnDate').value='';
+  $('batchCode').value='';
+  $('batchMsg').textContent='';
+  renderBatchList();
+  $('batchLoanModal').style.display='flex';
+};
+
+window.closeBatchLoan=()=>{
+  stopBatchCamera();
+  $('batchLoanModal').style.display='none';
+};
+
+function batchActiveLoan(toolId){
+  return transactions.find(x=>Number(x.tool_id)===Number(toolId)&&x.action==='借出'&&!x.return_date);
+}
+
+window.addBatchCode=(raw)=>{
+  const code=String(raw??$('batchCode').value??'').trim();
+  if(!code)return;
+  const normalized=code.split('/').pop().split('?')[0].trim();
+  const t=tools.find(x=>
+    String(x.tool_code||'').toLowerCase()===normalized.toLowerCase() ||
+    String(x.id)===normalized
+  );
+  $('batchCode').value='';
+  if(!t){$('batchMsg').textContent='找不到工具：'+normalized;return}
+  if(batchToolIds.includes(Number(t.id))){$('batchMsg').textContent='這支工具已經在清單內';return}
+  if(batchActiveLoan(t.id)){$('batchMsg').textContent=`${t.tool_code} ${t.name} 目前已借出，不能重複借出`;return}
+  if(t.status==='待維修'||t.status==='送修中'){$('batchMsg').textContent=`${t.tool_code} ${t.name} 目前為${t.status}，不能借出`;return}
+  batchToolIds.push(Number(t.id));
+  $('batchMsg').textContent=`已加入：${t.tool_code} ${t.name}`;
+  renderBatchList();
+};
+
+window.removeBatchTool=id=>{
+  batchToolIds=batchToolIds.filter(x=>Number(x)!==Number(id));
+  renderBatchList();
+};
+
+function renderBatchList(){
+  $('batchCount').textContent=batchToolIds.length;
+  $('batchList').innerHTML=batchToolIds.length?batchToolIds.map(id=>{
+    const t=tools.find(x=>Number(x.id)===Number(id));
+    if(!t)return '';
+    return `<div class="batch-row"><div><b>${esc(t.tool_code+' '+t.name)}</b><small>${esc((t.brand||'')+'・'+(t.model||'無型號'))}</small></div><button class="batch-remove" onclick="removeBatchTool(${Number(t.id)})">移除</button></div>`;
+  }).join(''):'<div class="empty">尚未掃描工具</div>';
+}
+
+window.startBatchCamera=async()=>{
+  const video=$('batchVideo'),msg=$('batchMsg');
+  if(!('BarcodeDetector' in window)){
+    msg.textContent='這台瀏覽器目前不支援直接辨識 QR Code，可使用手機相機掃 QR 後輸入工具代碼。';
+    return;
+  }
+  try{
+    stopBatchCamera();
+    batchStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    video.srcObject=batchStream;
+    video.style.display='block';
+    await video.play();
+    const detector=new BarcodeDetector({formats:['qr_code']});
+    let busy=false;
+    batchScanTimer=setInterval(async()=>{
+      if(busy||video.readyState<2)return;
+      busy=true;
+      try{
+        const codes=await detector.detect(video);
+        if(codes?.length){
+          addBatchCode(codes[0].rawValue);
+          if(navigator.vibrate)navigator.vibrate(80);
+          await new Promise(r=>setTimeout(r,700));
+        }
+      }catch(e){}
+      busy=false;
+    },450);
+    msg.textContent='相機已開啟，可連續掃描工具 QR Code';
+  }catch(e){
+    msg.textContent='無法開啟相機，請確認瀏覽器已允許相機權限。';
+  }
+};
+
+window.stopBatchCamera=()=>{
+  if(batchScanTimer){clearInterval(batchScanTimer);batchScanTimer=null}
+  if(batchStream){batchStream.getTracks().forEach(t=>t.stop());batchStream=null}
+  const v=$('batchVideo');
+  if(v){v.pause();v.srcObject=null;v.style.display='none'}
+};
+
+window.confirmBatchLoan=async()=>{
+  const loc=$('batchLocation').value.trim();
+  const expected=$('batchReturnDate').value||null;
+  const employee=(currentProfile?.display_name||currentUser?.email||'').trim();
+  if(!loc){alert('請先輸入借出地點／工地');return}
+  if(!batchToolIds.length){alert('請先掃描至少一支工具');return}
+
+  // Re-check current state immediately before writing.
+  const selected=batchToolIds.map(id=>tools.find(t=>Number(t.id)===Number(id))).filter(Boolean);
+  const blocked=selected.find(t=>batchActiveLoan(t.id)||t.status==='待維修'||t.status==='送修中');
+  if(blocked){alert(`${blocked.tool_code} ${blocked.name} 現在無法借出，請重新整理後再試。`);return}
+
+  const rows=selected.map(t=>({
+    tool_id:t.id,
+    action:'借出',
+    employee_name:employee,
+    location:loc,
+    expected_return_date:expected
+  }));
+
+  try{
+    const {error}=await sb.from('tool_transactions').insert(rows);
+    if(error)throw error;
+
+    // Keep tools' current display fields synchronized when these columns exist.
+    for(const t of selected){
+      const patch={current_user_name:employee,location:loc};
+      const {error:upErr}=await sb.from('tools').update(patch).eq('id',t.id);
+      if(upErr)console.warn('tools 同步更新失敗',t.id,upErr);
+    }
+
+    alert(`已成功借出 ${rows.length} 支工具`);
+    closeBatchLoan();
+    await loadAll();
+    renderHome();
+  }catch(e){
+    console.error(e);
+    alert('批次借出失敗：'+(e?.message||e));
+  }
+};
+
 </script>
 </body></html>
