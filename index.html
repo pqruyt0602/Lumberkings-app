@@ -272,6 +272,10 @@
 .stats-bar{height:5px;background:#eee7de;border-radius:999px;margin-top:7px;overflow:hidden}
 .stats-bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
 
+
+.work-success{display:none;margin-top:9px;padding:10px 12px;border-radius:11px;background:#e8f2ea;color:var(--ok);font-size:12px;font-weight:800}
+.work-success.show{display:block}
+
 </style>
 </head>
 <body>
@@ -317,6 +321,8 @@
     </div>
     <button class="attendance-main-btn" type="button" onclick="openWorkLog()">＋ 記工</button>
   </div>
+
+  <div id="workSuccessMsg" class="work-success"></div>
 
   <div id="attendanceGroups" class="attendance-groups"></div>
 
@@ -515,7 +521,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.3｜記工統計
+// Lumberkings 木作設備中心 V17.3.1｜修正記工完成顯示
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2169,6 +2175,16 @@ async function openWorkLog(){
 function closeWorkLog(){
   document.getElementById('workLogModal')?.classList.remove('show');
 }
+
+function showWorkSuccess(message){
+  const box=document.getElementById('workSuccessMsg');
+  if(!box)return;
+  box.textContent=message;
+  box.classList.add('show');
+  clearTimeout(showWorkSuccess._timer);
+  showWorkSuccess._timer=setTimeout(()=>box.classList.remove('show'),4500);
+}
+
 async function saveWorkLogs(){
   const date=document.getElementById('workDate').value;
   const siteId=Number(document.getElementById('workSite').value);
@@ -2200,8 +2216,18 @@ async function saveWorkLogs(){
   }
   closeWorkLog();
   attendanceViewDate=new Date(date+'T12:00:00');
+
+  // 重新讀取當天資料，確保首頁立即顯示最新記工
   await loadAttendance(date);
-  alert(`記工完成，共 ${rows.length} 人`);
+
+  const msg=`記工完成｜${site.site_name}｜${rows.length} 人`;
+  showWorkSuccess(msg);
+
+  // 自動捲到今日出勤，讓師傅頭馬上看到已記錄的人員
+  document.getElementById('attendanceSection')?.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // 保留簡短提示
+  setTimeout(()=>alert(msg),120);
 }
 
 async function openWorkMasterManager(){
