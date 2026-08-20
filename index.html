@@ -256,6 +256,22 @@
 .master-row button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 8px;color:var(--danger);font-size:11px}
 
 
+
+/* ===== V17.3 記工統計 ===== */
+.workstats-btn{border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:800;padding:5px 0}
+.stats-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stats-range input{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.stats-run{width:100%;margin-top:8px;padding:12px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:900}
+.stats-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}
+.stats-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:11px 8px;text-align:center}
+.stats-card b{display:block;font-size:20px}.stats-card small{font-size:10px;color:var(--muted)}
+.stats-section-title{font-size:13px;font-weight:900;margin:14px 0 7px}
+.stats-list{display:grid;gap:7px}
+.stats-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px}
+.stats-row-head{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:800}
+.stats-bar{height:5px;background:#eee7de;border-radius:999px;margin-top:7px;overflow:hidden}
+.stats-bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
 </style>
 </head>
 <body>
@@ -288,6 +304,7 @@
     <h2>👷 今日出勤</h2>
     <div class="attendance-head-actions">
       <span id="attendanceDateLabel" class="attendance-date"></span>
+      <button id="workStatsBtn" class="workstats-btn" type="button" onclick="openWorkStats()">記工統計</button>
       <button id="attendanceManageBtn" class="attendance-manage" type="button" onclick="openWorkMasterManager()" style="display:none">人員／案場管理</button>
     </div>
   </div>
@@ -498,7 +515,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.2.2｜修正登入失效與記工按鈕
+// Lumberkings 木作設備中心 V17.3｜記工統計
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2263,6 +2280,76 @@ async function disableWorker(id){
 }
 
 
+
+// ===== V17.3 記工統計 =====
+function firstDayOfMonth(d=new Date()){
+  return localDateISO(new Date(d.getFullYear(),d.getMonth(),1));
+}
+function workUnitsFromNote(note=''){
+  const m=String(note||'').match(/^([0-9.]+)工/);
+  const n=m?Number(m[1]):1;
+  return Number.isFinite(n)?n:1;
+}
+function openWorkStats(){
+  const start=document.getElementById('statsStart');
+  const end=document.getElementById('statsEnd');
+  if(start&&!start.value)start.value=firstDayOfMonth();
+  if(end&&!end.value)end.value=localDateISO();
+  document.getElementById('workStatsModal')?.classList.add('show');
+  loadWorkStats();
+}
+function closeWorkStats(){
+  document.getElementById('workStatsModal')?.classList.remove('show');
+}
+async function loadWorkStats(){
+  const start=document.getElementById('statsStart')?.value;
+  const end=document.getElementById('statsEnd')?.value;
+  if(!start||!end)return alert('請選擇日期區間');
+  if(start>end)return alert('開始日期不能晚於結束日期');
+
+  const {data,error}=await db.from('work_logs')
+    .select('work_date,site_name,employee_name,note')
+    .gte('work_date',start).lte('work_date',end)
+    .order('work_date',{ascending:true});
+  if(error)return alert('統計讀取失敗：'+error.message);
+
+  const rows=data||[];
+  const workersMap={}, sitesMap={};
+  let totalUnits=0;
+
+  rows.forEach(r=>{
+    const units=workUnitsFromNote(r.note);
+    totalUnits+=units;
+    workersMap[r.employee_name]=(workersMap[r.employee_name]||0)+units;
+    sitesMap[r.site_name]=(sitesMap[r.site_name]||0)+units;
+  });
+
+  document.getElementById('statsTotalWorkers').textContent=Object.keys(workersMap).length;
+  document.getElementById('statsTotalDays').textContent=Number(totalUnits.toFixed(1));
+  document.getElementById('statsTotalSites').textContent=Object.keys(sitesMap).length;
+
+  const maxWorker=Math.max(1,...Object.values(workersMap));
+  const maxSite=Math.max(1,...Object.values(sitesMap));
+
+  const workerList=document.getElementById('statsWorkerList');
+  workerList.innerHTML=Object.keys(workersMap).length
+    ? Object.entries(workersMap).sort((a,b)=>b[1]-a[1]).map(([name,units])=>`
+      <div class="stats-row">
+        <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(units.toFixed(1))} 工</span></div>
+        <div class="stats-bar"><i style="width:${Math.max(3,units/maxWorker*100)}%"></i></div>
+      </div>`).join('')
+    : '<div class="empty">這個日期區間沒有記工資料</div>';
+
+  const siteList=document.getElementById('statsSiteList');
+  siteList.innerHTML=Object.keys(sitesMap).length
+    ? Object.entries(sitesMap).sort((a,b)=>b[1]-a[1]).map(([name,units])=>`
+      <div class="stats-row">
+        <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(units.toFixed(1))} 工</span></div>
+        <div class="stats-bar"><i style="width:${Math.max(3,units/maxSite*100)}%"></i></div>
+      </div>`).join('')
+    : '<div class="empty">這個日期區間沒有案場資料</div>';
+}
+
 // V17.2.1：讓 HTML onclick 可以呼叫 module 內的案場記工函式
 Object.assign(window,{
   openWorkLog,
@@ -2275,13 +2362,44 @@ Object.assign(window,{
   addWorkSite,
   addWorker,
   disableWorkSite,
-  disableWorker
+  disableWorker,
+  openWorkStats,
+  closeWorkStats,
+  loadWorkStats
 });
 
 </script>
 
 
 
+
+
+<div id="workStatsModal" class="work-modal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <h2>📊 記工統計</h2>
+      <button class="work-close" type="button" onclick="closeWorkStats()">×</button>
+    </div>
+
+    <div class="stats-range">
+      <div class="work-field" style="margin-top:0"><label>開始日期</label><input id="statsStart" type="date"></div>
+      <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
+    </div>
+    <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
+
+    <div class="stats-cards">
+      <div class="stats-card"><b id="statsTotalWorkers">0</b><small>出勤人數</small></div>
+      <div class="stats-card"><b id="statsTotalDays">0</b><small>總工數</small></div>
+      <div class="stats-card"><b id="statsTotalSites">0</b><small>案場數</small></div>
+    </div>
+
+    <div class="stats-section-title">依人員統計</div>
+    <div id="statsWorkerList" class="stats-list"></div>
+
+    <div class="stats-section-title">依案場統計</div>
+    <div id="statsSiteList" class="stats-list"></div>
+  </div>
+</div>
 
 <div id="workMasterModal" class="work-modal">
   <div class="work-sheet">
