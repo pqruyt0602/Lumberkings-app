@@ -656,7 +656,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.6.3｜員工可看案場累積總工數
+// Lumberkings 木作設備中心 V17.6.4｜修正案場累積總工數載入
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2251,8 +2251,11 @@ async function loadSiteTotals(){
   }
   siteTotals={};
   (data||[]).forEach(r=>{
-    siteTotals[String(r.site_name||'')]=Number(r.total_units||0);
+    const site=String(r.site_name||'');
+    const units=Number(r.total_units||0);
+    if(site) siteTotals[site]=Number.isFinite(units)?units:0;
   });
+  console.log('案場累積總工數',siteTotals);
 }
 
 async function loadWorkMaster(){
@@ -2280,6 +2283,11 @@ async function loadWorkMaster(){
   await loadSiteTotals();
 }
 async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
+  // 先抓案場「累積總工數」，再渲染今日出勤。
+  // V17.6.3 首頁啟動時 loadAttendance 會先於 loadWorkMaster，
+  // 因此 siteTotals 尚未載入，畫面才會全部顯示 0 工。
+  await loadSiteTotals();
+
   // 一律使用傳入的 YYYY-MM-DD 查詢，避免手機時區造成日期偏移。
   const {data,error}=await db.from('work_logs')
     .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at')
