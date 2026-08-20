@@ -436,6 +436,41 @@
 }
 #roleManageBtn{cursor:pointer;position:relative;z-index:2}
 
+
+/* ===== V17.8 加班 ===== */
+.worker-overtime-wrap{
+  margin-top:6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:var(--muted);
+}
+.worker-overtime{
+  width:68px!important;
+  padding:6px 7px!important;
+  border:1px solid var(--line)!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  font-size:12px!important;
+}
+.overtime-tag{
+  display:inline-block;
+  margin-left:5px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:#e8eef8;
+  color:#4c6790;
+  font-size:10px;
+  font-weight:900;
+}
+.stats-overtime{
+  font-size:11px;
+  color:#4c6790;
+  font-weight:800;
+  margin-top:3px;
+}
+
 </style>
 </head>
 <body>
@@ -682,7 +717,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.7.2｜重做權限管理視窗
+// Lumberkings 木作設備中心 V17.8｜加班時數與加班費
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],notificationPollTimer=null,selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -2347,7 +2382,7 @@ async function loadAttendance(dateStr=localDateISO(attendanceViewDate)){
   await loadSiteTotals();
 
   const {data,error}=await db.from('work_logs')
-    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at')
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,overtime_hours,created_at,updated_at')
     .eq('work_date',targetDate)
     .order('site_name')
     .order('employee_name');
@@ -2394,7 +2429,7 @@ function renderAttendance(dateStr){
       <strong>${esc(site)}｜${rows.length} 人 <span class="site-total-chip">累積 ${Number(siteTotals[site]||0).toFixed(1).replace(/\.0$/,'')} 工</span></strong>
       ${rows.map(r=>`
         <div class="today-person">
-          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}${Number(r.leave_hours||0)>0?`<span class="leave-tag">請假 ${Number(r.leave_hours)}h</span>`:''}</div>
+          <div class="today-person-info">${esc(r.employee_name)}${r.note?'・'+esc(r.note):''}${r.is_site_leader?'<span class="bonus-tag">案場負責人</span>':''}${Number(r.leave_hours||0)>0?`<span class="leave-tag">請假 ${Number(r.leave_hours)}h</span>`:''}${Number(r.overtime_hours||0)>0?`<span class="overtime-tag">加班 ${Number(r.overtime_hours)}h</span>`:''}</div>
           <button class="today-edit" type="button" onclick="openWorkLogEdit(${Number(r.id)})">修改</button>
         </div>`).join('')}
     </div>`).join('');
@@ -2458,6 +2493,11 @@ async function openWorkLog(){
           <input class="worker-leave" type="number" min="0" max="8" step="0.5" value="0">
           小時
         </label>
+        <label class="worker-overtime-wrap">
+          加班
+          <input class="worker-overtime" type="number" min="0" max="8" step="0.5" value="0">
+          小時
+        </label>
       </div>
       <select class="worker-day">
         <option value="1">1 工</option>
@@ -2497,6 +2537,7 @@ async function saveWorkLogs(){
     const day=rowEl.querySelector('.worker-day').value;
     const isLeader=!!rowEl.querySelector('.worker-leader')?.checked;
     const leaveHours=Math.max(0,Math.min(8,Number(rowEl.querySelector('.worker-leave')?.value||0)));
+    const overtimeHours=Math.max(0,Math.min(8,Number(rowEl.querySelector('.worker-overtime')?.value||0)));
     return {
       work_date:date,
       site_name:site.site_name,
@@ -2505,6 +2546,7 @@ async function saveWorkLogs(){
       recorded_by_name:recorder,
       is_site_leader:isLeader,
       leave_hours:leaveHours,
+      overtime_hours:overtimeHours,
       note:`${day}工${note?'｜'+note:''}`
     };
   });
@@ -2512,7 +2554,7 @@ async function saveWorkLogs(){
   // 寫入後直接把資料取回。這樣不是只看「送出了幾人」，而是確認 Supabase 真正存進去的資料。
   const {data:savedRows,error}=await db.from('work_logs')
     .upsert(rows,{onConflict:'work_date,site_name,employee_name'})
-    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at');
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,overtime_hours,created_at,updated_at');
   if(error){
     alert('記工失敗：'+error.message);
     return;
@@ -2787,6 +2829,7 @@ async function openWorkLogEdit(id){
   document.getElementById('editWorkNote').value=parsed.note;
   document.getElementById('editWorkLeader').checked=!!row.is_site_leader;
   document.getElementById('editWorkLeaveHours').value=Number(row.leave_hours||0);
+  document.getElementById('editWorkOvertimeHours').value=Number(row.overtime_hours||0);
 
   const deleteBtn=document.getElementById('deleteWorkLogBtn');
   if(deleteBtn)deleteBtn.style.display=isAdmin()?'block':'none';
@@ -2808,6 +2851,7 @@ async function saveWorkLogEdit(){
   const note=document.getElementById('editWorkNote').value.trim();
   const isLeader=!!document.getElementById('editWorkLeader')?.checked;
   const leaveHours=Math.max(0,Math.min(8,Number(document.getElementById('editWorkLeaveHours')?.value||0)));
+  const overtimeHours=Math.max(0,Math.min(8,Number(document.getElementById('editWorkOvertimeHours')?.value||0)));
   if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
   if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
 
@@ -2817,6 +2861,7 @@ async function saveWorkLogEdit(){
     employee_name,
     is_site_leader:isLeader,
     leave_hours:leaveHours,
+    overtime_hours:overtimeHours,
     note:`${units}工${note?'｜'+note:''}`,
     updated_at:new Date().toISOString()
   };
@@ -2824,7 +2869,7 @@ async function saveWorkLogEdit(){
   const {data,error}=await db.from('work_logs')
     .update(payload)
     .eq('id',id)
-    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,created_at,updated_at')
+    .select('id,work_date,site_name,employee_name,recorded_by,recorded_by_name,note,is_site_leader,leave_hours,overtime_hours,created_at,updated_at')
     .maybeSingle();
 
   if(error){
@@ -2959,7 +3004,7 @@ async function loadWorkStats(){
 
   const rows=data||[];
   const workersMap={}, sitesMap={};
-  let totalUnits=0,totalCost=0,totalBonus=0;
+  let totalUnits=0,totalCost=0,totalBonus=0,totalOvertimePay=0,totalOvertimeHours=0;
 
   const currentWageByName=new Map();
   if(isAdmin()){
@@ -2978,30 +3023,38 @@ async function loadWorkStats(){
     const leaveDeduction=Number(r.leave_deduction ?? (hourlyDeduction*leaveHours));
     const baseCost=Math.max(0,grossBase-leaveDeduction);
     const bonus=Number(r.role_bonus||0);
-    const cost=baseCost+bonus;
+    const overtimeHours=Number(r.overtime_hours||0);
+    const overtimePay=Number(r.overtime_pay ?? ((wage/5)*overtimeHours));
+    const cost=baseCost+bonus+overtimePay;
 
     totalUnits+=units;
     totalBonus+=bonus;
     totalLeaveDeduction+=leaveDeduction;
+    totalOvertimeHours+=overtimeHours;
+    totalOvertimePay+=overtimePay;
     totalCost+=cost;
 
-    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,baseCost:0,grossBase:0,bonus:0,leaveDeduction:0,leaveHours:0,wage};
+    if(!workersMap[r.employee_name])workersMap[r.employee_name]={units:0,cost:0,baseCost:0,grossBase:0,bonus:0,leaveDeduction:0,leaveHours:0,overtimeHours:0,overtimePay:0,wage};
     workersMap[r.employee_name].units+=units;
     workersMap[r.employee_name].grossBase+=grossBase;
     workersMap[r.employee_name].baseCost+=baseCost;
     workersMap[r.employee_name].bonus+=bonus;
     workersMap[r.employee_name].leaveDeduction+=leaveDeduction;
     workersMap[r.employee_name].leaveHours+=leaveHours;
+    workersMap[r.employee_name].overtimeHours+=overtimeHours;
+    workersMap[r.employee_name].overtimePay+=overtimePay;
     workersMap[r.employee_name].cost+=cost;
     if(wage)workersMap[r.employee_name].wage=wage;
 
-    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0,baseCost:0,grossBase:0,bonus:0,leaveDeduction:0,leaveHours:0};
+    if(!sitesMap[r.site_name])sitesMap[r.site_name]={units:0,cost:0,baseCost:0,grossBase:0,bonus:0,leaveDeduction:0,leaveHours:0,overtimeHours:0,overtimePay:0};
     sitesMap[r.site_name].units+=units;
     sitesMap[r.site_name].grossBase+=grossBase;
     sitesMap[r.site_name].baseCost+=baseCost;
     sitesMap[r.site_name].bonus+=bonus;
     sitesMap[r.site_name].leaveDeduction+=leaveDeduction;
     sitesMap[r.site_name].leaveHours+=leaveHours;
+    sitesMap[r.site_name].overtimeHours+=overtimeHours;
+    sitesMap[r.site_name].overtimePay+=overtimePay;
     sitesMap[r.site_name].cost+=cost;
   });
 
@@ -3014,6 +3067,10 @@ async function loadWorkStats(){
   if(totalBonusEl)totalBonusEl.textContent=money(totalBonus);
   const totalLeaveEl=document.getElementById('statsTotalLeaveDeduction');
   if(totalLeaveEl)totalLeaveEl.textContent=money(totalLeaveDeduction);
+  const totalOtEl=document.getElementById('statsTotalOvertimePay');
+  if(totalOtEl)totalOtEl.textContent=money(totalOvertimePay);
+  const totalOtHoursEl=document.getElementById('statsTotalOvertimeHours');
+  if(totalOtHoursEl)totalOtHoursEl.textContent=Number(totalOvertimeHours.toFixed(1));
 
   const maxWorker=Math.max(1,...Object.values(workersMap).map(x=>x.units));
   const maxSite=Math.max(1,...Object.values(sitesMap).map(x=>x.units));
@@ -3028,6 +3085,7 @@ async function loadWorkStats(){
         ${x.leaveDeduction?`<div class="stats-deduction">請假 ${Number(x.leaveHours)}h｜扣 ${money(x.leaveDeduction)}</div>`:''}
         <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
         ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
+        ${x.overtimeHours?`<div class="stats-overtime">加班 ${Number(x.overtimeHours)}h｜加班費 ${money(x.overtimePay)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxWorker*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有記工資料</div>';
@@ -3042,6 +3100,7 @@ async function loadWorkStats(){
         ${x.leaveDeduction?`<div class="stats-deduction">請假扣薪 ${money(x.leaveDeduction)}</div>`:''}
         <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
         ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
+        ${x.overtimeHours?`<div class="stats-overtime">加班 ${Number(x.overtimeHours)}h｜加班費 ${money(x.overtimePay)}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxSite*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有案場資料</div>';
@@ -3188,6 +3247,12 @@ Object.assign(window,{
     </div>
 
     <div class="work-field">
+      <label>加班時數</label>
+      <input id="editWorkOvertimeHours" type="number" min="0" max="8" step="0.5" value="0" placeholder="例如 2">
+      <div class="stats-sub">加班時薪＝日薪 ÷ 5；例如日薪 $3,500，加班 2 小時＝$1,400。</div>
+    </div>
+
+    <div class="work-field">
       <label>備註</label>
       <textarea id="editWorkNote" rows="2" placeholder="可留空"></textarea>
     </div>
@@ -3211,7 +3276,7 @@ Object.assign(window,{
       <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
     </div>
     <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
-    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪－請假扣薪＋負責人加給。請假每小時＝日薪 ÷ 8 後無條件捨去小數；例如 $3,500 ÷ 8＝437.5，每小時扣 $437。</div>
+    <div class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪－請假扣薪＋負責人加給＋加班費。加班時薪＝日薪 ÷ 5；例如日薪 $3,500，加班 2 小時＝$1,400。</div>
 
     <div class="stats-cards">
       <div class="stats-card"><b id="statsTotalWorkers">0</b><small>出勤人數</small></div>
@@ -3222,6 +3287,7 @@ Object.assign(window,{
         <b id="statsTotalCost">$0</b>
         <div class="stats-deduction">請假扣薪 <span id="statsTotalLeaveDeduction">$0</span></div>
         <div class="stats-bonus">負責人加給 <span id="statsTotalBonus">$0</span></div>
+        <div class="stats-overtime">加班 <span id="statsTotalOvertimeHours">0</span>h｜加班費 <span id="statsTotalOvertimePay">$0</span></div>
       </div>
     </div>
 
