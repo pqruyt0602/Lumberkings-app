@@ -386,7 +386,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.7.3｜修正舊重複維修單判斷
+// Lumberkings 木作設備中心 V16.7.4｜修正舊待維修重複資料阻擋新報修
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -1396,6 +1396,7 @@ function effectiveRepairs(list=[]){
   const rank={'待維修':1,'送修中':2,'已完成':3};
   const map=new Map();
 
+  // 第一層：相同日期＋故障類型＋描述，保留狀態最新的一筆
   list.forEach(r=>{
     const key=repairLogicalKey(r);
     const old=map.get(key);
@@ -1412,7 +1413,23 @@ function effectiveRepairs(list=[]){
     }
   });
 
-  return [...map.values()];
+  const deduped=[...map.values()];
+
+  // 第二層：處理舊版本曾產生的「同一天 已完成 + 待維修」重複資料。
+  // 只要同一天已有已完成紀錄，就把該天殘留的待維修/送修中視為舊重複紀錄，
+  // 不再拿來阻擋新的報修。
+  const completedDates=new Set(
+    deduped
+      .filter(r=>r.status==='已完成')
+      .map(r=>String(r.repair_date||r.created_at||'').slice(0,10))
+      .filter(Boolean)
+  );
+
+  return deduped.filter(r=>{
+    if(r.status!=='待維修' && r.status!=='送修中') return true;
+    const d=String(r.repair_date||r.created_at||'').slice(0,10);
+    return !completedDates.has(d);
+  });
 }
 
 function findRepairById(id){
@@ -1512,7 +1529,7 @@ window.saveRepair=async()=>{
 
   const status=$('rStatus').value;
 
-  const existingTool=tools.find(t=>t.id===toolId);
+  const existingTool=tools.find(t=>Number(t.id)===Number(toolId));
   const activeTicket=effectiveRepairs(existingTool?.repairs||[]).find(r=>r.status==='待維修'||r.status==='送修中');
   if(activeTicket){
     alert('這台工具目前已有進行中的維修單（'+activeTicket.status+'），請先完成原本的維修單。');
