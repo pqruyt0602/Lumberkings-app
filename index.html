@@ -780,7 +780,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V17.9.3｜忘記密碼／重設密碼
+// Lumberkings 木作設備中心 V17.10.1｜管理員助理可查看完整薪資統計
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 db.auth.onAuthStateChange((event,session)=>{
@@ -902,14 +902,23 @@ function bindToolCardClicks(){
 function isAdmin(){
   return String(currentProfile?.role||'').toLowerCase()==='admin';
 }
+function isManagerAssistant(){
+  return currentProfile?.role==='manager_assistant';
+}
 function isForeman(){
   return currentProfile?.role==='foreman';
 }
 function canManageAttendance(){
-  return isAdmin() || isForeman();
+  return isAdmin() || isManagerAssistant() || isForeman();
+}
+function canViewWorkStats(){
+  return isAdmin() || isManagerAssistant();
 }
 function roleLabel(role){
-  return role==='admin'?'管理員':role==='foreman'?'師傅頭':'一般員工';
+  return role==='admin'?'管理員'
+    :role==='manager_assistant'?'管理員助理'
+    :role==='foreman'?'師傅頭'
+    :'一般員工';
 }
 
 
@@ -930,7 +939,7 @@ function syncAdminNoticeVisibility(){
   const attendanceManageBtn=$('attendanceManageBtn');
   if(attendanceManageBtn) attendanceManageBtn.style.display=canManageAttendance()?'inline-block':'none';
   const workStatsBtn=$('workStatsBtn');
-  if(workStatsBtn) workStatsBtn.style.display=admin?'inline-block':'none';
+  if(workStatsBtn) workStatsBtn.style.display=canViewWorkStats()?'inline-block':'none';
   const roleManageBtn=$('roleManageBtn');
   if(roleManageBtn) roleManageBtn.style.display=admin?'inline-block':'none';
 
@@ -3060,7 +3069,7 @@ function workUnitsFromNote(note=''){
   return Number.isFinite(n)?n:1;
 }
 function openWorkStats(){
-  if(!isAdmin())return alert('記工成本統計只有管理員可以查看');
+  if(!canViewWorkStats())return alert('只有管理員或管理員助理可以查看記工統計');
   const start=document.getElementById('statsStart');
   const end=document.getElementById('statsEnd');
   if(start&&!start.value)start.value=firstDayOfMonth();
@@ -3077,7 +3086,7 @@ async function loadWorkStats(){
   if(!start||!end)return alert('請選擇日期區間');
   if(start>end)return alert('開始日期不能晚於結束日期');
 
-  if(!isAdmin())return alert('記工成本統計只有管理員可以查看');
+  if(!canViewWorkStats())return alert('只有管理員或管理員助理可以查看記工統計');
 
   const {data,error}=await db.rpc('admin_get_work_costs',{
     p_start:start,
@@ -3086,6 +3095,7 @@ async function loadWorkStats(){
   if(error)return alert('統計讀取失敗：'+error.message);
 
   const rows=data||[];
+  const showMoney=isAdmin() || isManagerAssistant();
   const workersMap={}, sitesMap={};
   let totalUnits=0,totalCost=0,totalBonus=0,totalOvertimePay=0,totalOvertimeHours=0;
 
@@ -3150,6 +3160,8 @@ async function loadWorkStats(){
   document.getElementById('statsTotalSites').textContent=Object.keys(sitesMap).length;
   const totalCostEl=document.getElementById('statsTotalCost');
   if(totalCostEl)totalCostEl.textContent=money(totalCost);
+  const moneyCard=totalCostEl?.closest('.stats-money-card');
+  if(moneyCard)moneyCard.style.display=showMoney?'block':'none';
   const totalBonusEl=document.getElementById('statsTotalBonus');
   if(totalBonusEl)totalBonusEl.textContent=money(totalBonus);
   const totalLeaveEl=document.getElementById('statsTotalLeaveDeduction');
@@ -3167,12 +3179,12 @@ async function loadWorkStats(){
     ? Object.entries(workersMap).sort((a,b)=>b[1].cost-a[1].cost).map(([name,x])=>`
       <div class="stats-row">
         <div class="stats-row-head"><span>${esc(name)}</span><span>${Number(x.units.toFixed(1))} 工</span></div>
-        <div class="stats-cost">人工 ${money(x.cost)}</div>
-        <div class="stats-sub">應計基本人工 ${money(x.grossBase)}｜日薪 ${money(x.wage)}</div>
-        ${x.leaveDeduction?`<div class="stats-deduction">請假 ${Number(x.leaveHours)}h｜扣 ${money(x.leaveDeduction)}</div>`:''}
-        <div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>
-        ${x.bonus?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
-        ${x.overtimeHours?`<div class="stats-overtime">加班 ${overtimeLabel(x.overtimeHours)}｜加班費 ${money(x.overtimePay)}</div>`:''}
+        ${showMoney?`<div class="stats-cost">人工 ${money(x.cost)}</div>`:''}
+        ${showMoney?`<div class="stats-sub">應計基本人工 ${money(x.grossBase)}｜日薪 ${money(x.wage)}</div>`:''}
+        ${x.leaveHours?`<div class="stats-deduction">請假 ${Number(x.leaveHours)}h${showMoney?'｜扣 '+money(x.leaveDeduction):''}</div>`:''}
+        ${showMoney?`<div class="stats-sub">扣假後基本人工 ${money(x.baseCost)}</div>`:''}
+        ${x.bonus&&showMoney?`<div class="stats-bonus">負責人加給 ${money(x.bonus)}</div>`:''}
+        ${x.overtimeHours?`<div class="stats-overtime">加班 ${overtimeLabel(x.overtimeHours)}${showMoney?'｜加班費 '+money(x.overtimePay):''}</div>`:''}
         <div class="stats-bar"><i style="width:${Math.max(3,x.units/maxWorker*100)}%"></i></div>
       </div>`).join('')
     : '<div class="empty">這個日期區間沒有記工資料</div>';
@@ -3324,6 +3336,7 @@ async function loadRoleManager(){
         <select onchange="setUserRole('${esc(u.user_id)}',this.value)" ${u.user_id===currentProfile?.id || u.approval_status!=='approved'?'disabled':''}>
           <option value="employee" ${u.role==='employee'?'selected':''}>一般員工</option>
           <option value="foreman" ${u.role==='foreman'?'selected':''}>師傅頭</option>
+          <option value="manager_assistant" ${u.role==='manager_assistant'?'selected':''}>管理員助理</option>
           <option value="admin" ${u.role==='admin'?'selected':''}>管理員</option>
         </select>
         ${u.approval_status==='pending'?`
@@ -3346,7 +3359,7 @@ async function reviewAccount(userId,status){
 
 async function setUserRole(userId,role){
   if(!isAdmin())return alert('只有管理員可以修改權限');
-  if(!['admin','foreman','employee'].includes(role))return;
+  if(!['admin','manager_assistant','foreman','employee'].includes(role))return;
   const {error}=await db.rpc('admin_set_user_role',{p_user_id:userId,p_role:role});
   if(error){alert('權限修改失敗：'+error.message);await loadRoleManager();return;}
   await loadRoleManager();
@@ -3600,7 +3613,7 @@ Object.assign(window,{
       <button class="mini" type="button" onclick="closeRoleManager()">關閉</button>
     </div>
     <div class="stats-sub" style="margin-bottom:10px">
-      管理員：全部權限｜師傅頭：記工、修改記工、工具與報修｜一般員工：工具、報修、查看案場總工數
+      管理員：全部權限｜管理員助理：師傅頭全部功能＋完整記工／薪資統計｜師傅頭：記工、修改記工、工具與報修｜一般員工：工具、報修、查看案場總工數
     </div>
     <div id="roleManagerList"></div>
   </div>
