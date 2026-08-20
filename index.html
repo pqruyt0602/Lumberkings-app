@@ -386,7 +386,7 @@
 </div>
 
 <script type="module">
-// Lumberkings 木作設備中心 V16.7.4｜修正舊待維修重複資料阻擋新報修
+// Lumberkings 木作設備中心 V16.7.5｜工具狀態以維修單同步判斷
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://iqighvgnnvnvhbnuqvvh.supabase.co','sb_publishable_6rifc42Bjjepi2mMFTwexw_XNdVU7rv');
 let tools=[],transactions=[],notifications=[],selectedId=null,currentUser=null,currentProfile=null,statusFilter='全部',borrowedOnly=false,categoryFilter='全部',historyFilter='全部',historyLimit=10,currentHistoryEvents=[];const $=id=>document.getElementById(id),money=n=>'$'+Number(n||0).toLocaleString('zh-TW'),today=()=>new Date().toISOString().slice(0,10),esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -647,7 +647,20 @@ async function loadTools(){
   transactions=txRows||[];
   const byTool={};
   (repairRows||[]).forEach(r=>(byTool[r.tool_id]??=[]).push(r));
-  tools=(toolRows||[]).map(t=>({...t,repairs:byTool[t.id]||[]}));
+
+  // V16.7.5：
+  // 工具目前狀態不要只相信 tools.status。
+  // 有些 employee 帳號可以新增 repairs，但 RLS 可能讓 tools.update 實際更新 0 筆而不報錯。
+  // 因此每次載入時，直接依「有效維修單」推導目前狀態。
+  tools=(toolRows||[]).map(t=>{
+    const repairs=byTool[t.id]||[];
+    const activeRepair=effectiveRepairs(repairs)
+      .find(r=>r.status==='送修中'||r.status==='待維修');
+
+    const derivedStatus=activeRepair?.status || '正常';
+    return {...t,status:derivedStatus,repairs};
+  });
+
   renderHome();
   return true;
 }
@@ -1607,7 +1620,9 @@ window.saveRepair=async()=>{
 
   if(ok===false)return;
   openDetail(toolId);
-  alert('報修完成，工具狀態已更新為「'+newToolStatus+'」');
+  const refreshedTool=tools.find(t=>Number(t.id)===Number(toolId));
+  const actualStatus=refreshedTool?.status||newToolStatus;
+  alert('報修完成，工具狀態已更新為「'+actualStatus+'」');
 };
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));init();
