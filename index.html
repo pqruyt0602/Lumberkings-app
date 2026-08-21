@@ -703,7 +703,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.21.1 自動更新 ===== */
+/* ===== V17.21.2 自動更新 ===== */
 .update-toast{
   position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
   transform:translateX(-50%);z-index:2147483647;
@@ -714,7 +714,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .update-toast.show{display:block}
 
 
-/* ===== V17.21.1 記工人員資料可修改 ===== */
+/* ===== V17.21.2 記工人員資料可修改 ===== */
 #workerEditModal{
   position:fixed!important;
   inset:0!important;
@@ -737,7 +737,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .worker-info-edit{color:var(--accent)!important}
 
 
-/* ===== V17.21.1 iPhone 管理視窗安全區調整 ===== */
+/* ===== V17.21.2 iPhone 管理視窗安全區調整 ===== */
 @media (max-width: 700px){
   #permissionModal,
   #workMasterModal,
@@ -762,7 +762,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.21.1 修正：使用者權限管理視窗下移 ===== */
+/* ===== V17.21.2 修正：使用者權限管理視窗下移 ===== */
 @media (max-width: 700px){
   #roleManagerModal{
     align-items:flex-start !important;
@@ -792,7 +792,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.21.1</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.21.2</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -4582,4 +4582,46 @@ Object.assign(window,{
 </div>
 
 <div id="updateToast" class="update-toast">正在更新系統…</div>
+
+<script>
+/* ===== V17.21.2 首頁敏感統計權限 ===== */
+(function(){
+  function roleText(){
+    var vals=[
+      window.currentUserRole, window.userRole, window.currentRole,
+      window.currentProfile && (window.currentProfile.role || window.currentProfile.user_role),
+      window.profile && (window.profile.role || window.profile.user_role)
+    ];
+    for(var i=0;i<vals.length;i++){
+      if(vals[i]!=null && String(vals[i]).trim()) return String(vals[i]).trim().toLowerCase();
+    }
+    var el=document.getElementById('userLine');
+    return String(el ? el.textContent : '').trim().toLowerCase();
+  }
+  function allowed(){
+    var r=roleText();
+    return r.indexOf('管理員助理')>=0 || r.indexOf('管理員')>=0 ||
+           r==='admin' || r==='administrator' ||
+           r==='admin_assistant' || r==='assistant_admin';
+  }
+  window.applySensitiveMetricVisibility=function(){
+    var show=allowed();
+    ['cardCost','cardRetired'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.display=show ? '' : 'none';
+    });
+  };
+  document.addEventListener('DOMContentLoaded',function(){
+    applySensitiveMetricVisibility();
+    var n=0,t=setInterval(function(){
+      applySensitiveMetricVisibility();
+      if(++n>=30) clearInterval(t);
+    },300);
+  });
+  document.addEventListener('click',function(){
+    setTimeout(applySensitiveMetricVisibility,0);
+  },true);
+})();
+</script>
+
 </body></html>
