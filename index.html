@@ -805,7 +805,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.22</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.22.1</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2787,7 +2787,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.22';
+const APP_VERSION='17.22.1';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3267,7 +3267,14 @@ function renderAttendance(dateStr){
   const groups=document.getElementById('attendanceGroups');
   if(!label||!count||!summary||!groups)return;
   label.textContent=formatWorkDate(dateStr);
-  count.textContent=`${attendanceLogs.length} 人`;
+  // V17.22.1：當日出工人數依員工姓名去重複。
+  // 同一位師傅早上 A 案場 0.5 工、下午 B 案場 0.5 工，仍只算 1 人；工數與各案場紀錄維持原本計算。
+  const uniqueWorkerCount=new Set(
+    attendanceLogs
+      .map(r=>String(r.employee_name||'').trim())
+      .filter(Boolean)
+  ).size;
+  count.textContent=`${uniqueWorkerCount} 人`;
   if(!attendanceLogs.length){
     summary.textContent=dateStr===localDateISO(new Date())?'今天尚未記工':'這天尚未記工';
     groups.innerHTML='';
