@@ -799,10 +799,10 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .photo-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
 
 
-/* ===== V17.25 多案場工時分攤 ===== */
+/* ===== V17.26 多案場工時分攤 ===== */
 .work-units-hint{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
 
-/* ===== V17.25 已完工案場管理 ===== */
+/* ===== V17.26 已完工案場管理 ===== */
 .completed-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .completed-summary-grid>div{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px}
 .completed-summary-grid span{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
@@ -811,7 +811,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 @media(max-width:700px){#completedSiteSummaryModal{align-items:flex-start!important;padding-top:calc(env(safe-area-inset-top,0px) + 18px)!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px)!important;overflow-y:auto!important}}
 
 
-/* ===== V17.25 已完成維修紀錄編輯 ===== */
+/* ===== V17.26 已完成維修紀錄編輯 ===== */
 .repair-history-edit{
   margin-top:10px;
   color:var(--accent)!important;
@@ -822,11 +822,13 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.25 維修紀錄更換工具＋刪除 ===== */
+/* ===== V17.26 維修紀錄更換工具＋刪除 ===== */
 .repair-history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .repair-history-actions .repair-history-edit{margin-top:0}
 .repair-history-delete{color:#ff7a7a!important;border-color:rgba(255,90,90,.55)!important}
 
+/* V17.26 案場損益＋進度追蹤 */
+.project-hub-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.project-progress-list{display:grid;gap:10px}.project-progress-card{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:14px;padding:11px}.project-progress-head{display:flex;justify-content:space-between;gap:10px}.project-progress-photos,.progress-photo-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.project-progress-photos img,.progress-photo-preview img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.pnl-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pnl-card{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;padding:11px}.pnl-card span{display:block;color:var(--muted);font-size:10px}.pnl-card b{font-size:16px}.pnl-profit{grid-column:1/-1}.pnl-positive{color:#70e6a1}.pnl-negative{color:#ff8b8b}.progress-status-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.project-hub-actions{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -834,7 +836,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.25</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.26</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -877,7 +879,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     <button class="attendance-main-btn" type="button" onclick="openWorkLog()">＋ 記工</button>
   </div>
 
-  <div id="workSuccessMsg" class="work-success"></div>
+  <div id="workSuccessMsg" class="work-success"></div><div class="project-hub-actions"><button class="btn secondary" type="button" onclick="openProjectProgress()">📷 今日進度回報</button><button id="projectPnlBtn" class="btn secondary" type="button" onclick="openProjectPnl()">📊 案場損益</button></div>
 
   <div id="attendanceGroups" class="attendance-groups"></div>
 
@@ -2846,7 +2848,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.25';
+const APP_VERSION='17.26';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3333,7 +3335,7 @@ function renderAttendance(dateStr){
   const groups=document.getElementById('attendanceGroups');
   if(!label||!count||!summary||!groups)return;
   label.textContent=formatWorkDate(dateStr);
-  // V17.25：當日出工人數依員工姓名去重複。
+  // V17.26：當日出工人數依員工姓名去重複。
   // 同一位師傅早上 A 案場 0.5 工、下午 B 案場 0.5 工，仍只算 1 人；工數與各案場紀錄維持原本計算。
   const uniqueWorkerCount=new Set(
     attendanceLogs
@@ -3488,7 +3490,7 @@ async function saveWorkLogs(){
     };
   });
 
-  // V17.25：同一位人員可分攤到多個案場，但正常工合計超過 1 工時提醒。
+  // V17.26：同一位人員可分攤到多個案場，但正常工合計超過 1 工時提醒。
   // 同一天同一案場為 upsert，因此計算時會先排除即將被覆蓋的舊紀錄。
   const overLimit=[];
   for(const newRow of rows){
@@ -3967,7 +3969,7 @@ async function saveWorkLogEdit(){
   if(!Number.isFinite(unitsNum) || unitsNum<=0 || unitsNum>1)
     return alert('正常工數必須大於 0 且不超過 1 工');
 
-  // V17.25：修改記工時也檢查同一人當日正常工數。
+  // V17.26：修改記工時也檢查同一人當日正常工數。
   const otherUnits=attendanceLogs
     .filter(r=>
       Number(r.id)!==id &&
@@ -4702,6 +4704,8 @@ Object.assign(window,{
   </div>
 </div>
 
+<div id="projectProgressModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>📷 今日進度回報</h2><button class="work-close" type="button" onclick="closeProjectProgress()">×</button></div><div class="work-field"><label>案場</label><select id="progressSite" class="select"></select></div><div class="progress-status-row"><div class="work-field"><label>日期</label><input id="progressDate" class="input" type="date"></div><div class="work-field"><label>進度</label><select id="progressPercent" class="select"><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100% 完成</option></select></div></div><div class="work-field"><label>施工狀態</label><select id="progressStatus" class="select"><option>施工中</option><option>接近完成</option><option>已完成</option><option>待料／暫停</option></select></div><div class="work-field"><label>今日施工說明</label><textarea id="progressNote" class="textarea"></textarea></div><div class="work-field"><label>施工照片（最多9張）</label><input id="progressPhotos" class="input" type="file" accept="image/*" multiple><div id="progressPhotoPreview" class="progress-photo-preview"></div></div><button id="saveProgressBtn" class="btn" onclick="saveProjectProgress()">儲存今日進度</button><div class="label" style="margin-top:14px">最近回報</div><div id="projectProgressList" class="project-progress-list"></div></div></div>
+<div id="projectPnlModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>📊 案場損益</h2><button class="work-close" type="button" onclick="closeProjectPnl()">×</button></div><div class="work-field"><label>案場</label><select id="pnlSite" class="select" onchange="loadProjectPnl()"></select></div><div class="row"><div><div class="label">原始報價</div><input id="pnlQuote" class="input" type="number" min="0"></div><div><div class="label">追加工程</div><input id="pnlExtra" class="input" type="number" min="0"></div></div><div class="row"><div><div class="label">材料成本</div><input id="pnlMaterial" class="input" type="number" min="0"></div><div><div class="label">外包成本</div><input id="pnlSubcontract" class="input" type="number" min="0"></div></div><div class="row"><div><div class="label">運費／吊料／垃圾</div><input id="pnlLogistics" class="input" type="number" min="0"></div><div><div class="label">其他成本</div><input id="pnlOther" class="input" type="number" min="0"></div></div><div class="label">備註</div><textarea id="pnlNote" class="textarea"></textarea><button class="btn" onclick="saveProjectPnl()">儲存損益資料</button><div id="pnlSummary" style="margin-top:12px"></div><button class="btn secondary" onclick="printProjectPnl()">列印／產出損益表</button></div></div>
 <div id="completedSiteSummaryModal" class="work-modal">
   <div class="work-sheet">
     <div class="work-head">
@@ -4904,6 +4908,27 @@ Object.assign(window,{
     setTimeout(applySensitiveMetricVisibility,0);
   },true);
 })();
+
+function allProjectSites(){return [...workSites,...completedWorkSites].sort((a,b)=>String(a.site_name).localeCompare(String(b.site_name),'zh-Hant'))}
+function fillProjectSiteSelect(id){const el=$(id);if(!el)return;el.innerHTML=allProjectSites().map(s=>`<option value="${Number(s.id)}">${esc(s.site_name)}${s.is_active===false?'（已完工）':''}</option>`).join('')}
+window.openProjectProgress=async()=>{fillProjectSiteSelect('progressSite');$('progressDate').value=attendanceDate||today();$('progressNote').value='';$('progressPhotos').value='';$('progressPhotoPreview').innerHTML='';$('projectProgressModal').classList.add('show');await loadProjectProgress()};
+window.closeProjectProgress=()=>$('projectProgressModal')?.classList.remove('show');
+$('progressPhotos')?.addEventListener('change',e=>{$('progressPhotoPreview').innerHTML=[...(e.target.files||[])].slice(0,9).map(f=>`<img src="${URL.createObjectURL(f)}">`).join('')});
+async function uploadProgressPhoto(file,siteId){const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),path=`${siteId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;const {error}=await db.storage.from('site-progress').upload(path,file,{contentType:file.type||'image/jpeg'});if(error)throw error;return db.storage.from('site-progress').getPublicUrl(path).data.publicUrl}
+window.saveProjectProgress=async()=>{const siteId=Number($('progressSite').value),site=allProjectSites().find(s=>Number(s.id)===siteId);if(!site)return alert('請選擇案場');const btn=$('saveProgressBtn');btn.disabled=true;btn.textContent='上傳中…';try{const urls=[];for(const f of [...($('progressPhotos').files||[])].slice(0,9))urls.push(await uploadProgressPhoto(f,siteId));const {error}=await db.from('site_progress_reports').insert({site_id:siteId,site_name:site.site_name,report_date:$('progressDate').value||today(),progress_percent:Number($('progressPercent').value||0),status:$('progressStatus').value,note:$('progressNote').value.trim()||null,photo_urls:urls,reported_by:currentUser?.id||null,reported_by_name:currentDisplayName()||null});if(error)throw error;$('progressNote').value='';$('progressPhotos').value='';$('progressPhotoPreview').innerHTML='';await loadProjectProgress();alert('今日進度已回報')}catch(e){alert('進度回報失敗：'+e.message)}finally{btn.disabled=false;btn.textContent='儲存今日進度'}};
+window.loadProjectProgress=async()=>{const siteId=Number($('progressSite')?.value||0);if(!siteId)return;const {data,error}=await db.from('site_progress_reports').select('*').eq('site_id',siteId).order('report_date',{ascending:false}).limit(30);if(error){$('projectProgressList').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}$('projectProgressList').innerHTML=(data||[]).length?(data||[]).map(r=>`<div class="project-progress-card"><div class="project-progress-head"><div><b>${esc(r.report_date||'')}</b><div class="meta">${esc(r.reported_by_name||'')}｜${esc(r.status||'')}｜${Number(r.progress_percent||0)}%</div></div>${isAdmin()?`<button class="mini" onclick="deleteProjectProgress(${Number(r.id)})">刪除</button>`:''}</div>${r.note?`<p>${esc(r.note)}</p>`:''}<div class="project-progress-photos">${(r.photo_urls||[]).map(u=>`<img src="${esc(u)}">`).join('')}</div></div>`).join(''):'<div class="empty">尚無進度回報</div>'};
+$('progressSite')?.addEventListener('change',loadProjectProgress);
+window.deleteProjectProgress=async id=>{if(!isAdmin())return alert('只有管理員可以刪除進度回報');if(!confirm('確定刪除這筆進度回報？'))return;const {error}=await db.from('site_progress_reports').delete().eq('id',id);if(error)return alert(error.message);await loadProjectProgress()};
+
+window.openProjectPnl=async()=>{if(!canViewWorkStats())return alert('只有管理員或管理員助理可以查看案場損益');fillProjectSiteSelect('pnlSite');$('projectPnlModal').classList.add('show');await loadProjectPnl()};
+window.closeProjectPnl=()=>$('projectPnlModal')?.classList.remove('show');
+async function projectLaborCost(siteName){const {data,error}=await db.rpc('admin_get_work_costs',{p_start:'2000-01-01',p_end:'2099-12-31'});if(error)throw error;let total=0,units=0;(data||[]).filter(r=>r.site_name===siteName).forEach(r=>{const u=workUnitsFromNote(r.note),w=Number(r.daily_wage||0),leave=Number(r.leave_deduction??(Math.floor(w/8)*Number(r.leave_hours||0))),base=Math.max(0,u*w-leave),bonus=Number(r.role_bonus||0),h=Number(r.overtime_hours||0),ot=Number(r.overtime_pay??(h===1?w/5:h===2?w/2:h===4?w:0));total+=base+bonus+ot;units+=u});return{total,units}}
+window.loadProjectPnl=async()=>{const siteId=Number($('pnlSite')?.value||0),site=allProjectSites().find(s=>Number(s.id)===siteId);if(!site)return;const {data}=await db.from('site_financials').select('*').eq('site_id',siteId).maybeSingle();$('pnlQuote').value=Number(data?.quote_amount||0);$('pnlExtra').value=Number(data?.extra_amount||0);$('pnlMaterial').value=Number(data?.material_cost||0);$('pnlSubcontract').value=Number(data?.subcontract_cost||0);$('pnlLogistics').value=Number(data?.logistics_cost||0);$('pnlOther').value=Number(data?.other_cost||0);$('pnlNote').value=data?.note||'';try{renderPnlSummary(site,await projectLaborCost(site.site_name))}catch(e){$('pnlSummary').innerHTML='<div class="empty">人工成本讀取失敗：'+esc(e.message)+'</div>'}};
+function renderPnlSummary(site,labor){const revenue=Number($('pnlQuote').value||0)+Number($('pnlExtra').value||0),other=Number($('pnlMaterial').value||0)+Number($('pnlSubcontract').value||0)+Number($('pnlLogistics').value||0)+Number($('pnlOther').value||0),cost=labor.total+other,profit=revenue-cost,margin=revenue?profit/revenue*100:0;$('pnlSummary').innerHTML=`<div class="pnl-grid"><div class="pnl-card"><span>總營收</span><b>${money(revenue)}</b></div><div class="pnl-card"><span>累積工數</span><b>${Number(labor.units.toFixed(3))} 工</b></div><div class="pnl-card"><span>人工成本</span><b>${money(labor.total)}</b></div><div class="pnl-card"><span>總成本</span><b>${money(cost)}</b></div><div class="pnl-card pnl-profit"><span>案場毛利／毛利率</span><b class="${profit>=0?'pnl-positive':'pnl-negative'}">${money(profit)} ／ ${margin.toFixed(1)}%</b></div></div>`;window._lastPnl={site,revenue,labor:labor.total,units:labor.units,cost,profit,margin}}
+['pnlQuote','pnlExtra','pnlMaterial','pnlSubcontract','pnlLogistics','pnlOther'].forEach(id=>$(id)?.addEventListener('input',async()=>{const site=allProjectSites().find(s=>Number(s.id)===Number($('pnlSite')?.value));if(site)renderPnlSummary(site,await projectLaborCost(site.site_name))}));
+window.saveProjectPnl=async()=>{if(!isAdmin())return alert('只有管理員可以修改案場損益資料');const siteId=Number($('pnlSite').value),site=allProjectSites().find(s=>Number(s.id)===siteId);if(!site)return;const {error}=await db.from('site_financials').upsert({site_id:siteId,site_name:site.site_name,quote_amount:Number($('pnlQuote').value||0),extra_amount:Number($('pnlExtra').value||0),material_cost:Number($('pnlMaterial').value||0),subcontract_cost:Number($('pnlSubcontract').value||0),logistics_cost:Number($('pnlLogistics').value||0),other_cost:Number($('pnlOther').value||0),note:$('pnlNote').value.trim()||null,updated_by:currentUser?.id||null,updated_at:new Date().toISOString()},{onConflict:'site_id'});if(error)return alert('儲存失敗：'+error.message);await loadProjectPnl();alert('案場損益已儲存')};
+window.printProjectPnl=()=>{const x=window._lastPnl;if(!x)return alert('請先載入損益資料');const w=window.open('','_blank');w.document.write(`<html><head><title>${esc(x.site.site_name)} 損益表</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111}table{border-collapse:collapse;width:100%;margin-top:20px}td,th{border:1px solid #bbb;padding:10px;text-align:right}th:first-child,td:first-child{text-align:left}</style></head><body><h1>${esc(x.site.site_name)}｜案場損益表</h1><div>產出日期：${today()}</div><table><tr><th>項目</th><th>金額</th></tr><tr><td>原始報價</td><td>${money(Number($('pnlQuote').value||0))}</td></tr><tr><td>追加工程</td><td>${money(Number($('pnlExtra').value||0))}</td></tr><tr><td>總營收</td><td>${money(x.revenue)}</td></tr><tr><td>人工成本（${Number(x.units.toFixed(3))}工）</td><td>${money(x.labor)}</td></tr><tr><td>材料成本</td><td>${money(Number($('pnlMaterial').value||0))}</td></tr><tr><td>外包成本</td><td>${money(Number($('pnlSubcontract').value||0))}</td></tr><tr><td>運費／吊料／垃圾</td><td>${money(Number($('pnlLogistics').value||0))}</td></tr><tr><td>其他成本</td><td>${money(Number($('pnlOther').value||0))}</td></tr><tr><td>總成本</td><td>${money(x.cost)}</td></tr><tr><td><b>案場毛利</b></td><td><b>${money(x.profit)}</b></td></tr><tr><td><b>毛利率</b></td><td><b>${x.margin.toFixed(1)}%</b></td></tr></table><p>備註：${esc($('pnlNote').value||'')}</p><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()};
+
 </script>
 
 </body></html>
