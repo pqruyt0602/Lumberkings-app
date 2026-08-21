@@ -703,7 +703,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.21.3 自動更新 ===== */
+/* ===== V17.22 自動更新 ===== */
 .update-toast{
   position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
   transform:translateX(-50%);z-index:2147483647;
@@ -714,7 +714,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .update-toast.show{display:block}
 
 
-/* ===== V17.21.3 記工人員資料可修改 ===== */
+/* ===== V17.22 記工人員資料可修改 ===== */
 #workerEditModal{
   position:fixed!important;
   inset:0!important;
@@ -737,7 +737,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .worker-info-edit{color:var(--accent)!important}
 
 
-/* ===== V17.21.3 iPhone 管理視窗安全區調整 ===== */
+/* ===== V17.22 iPhone 管理視窗安全區調整 ===== */
 @media (max-width: 700px){
   #permissionModal,
   #workMasterModal,
@@ -762,7 +762,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.21.3 修正：使用者權限管理視窗下移 ===== */
+/* ===== V17.22 修正：使用者權限管理視窗下移 ===== */
 @media (max-width: 700px){
   #roleManagerModal{
     align-items:flex-start !important;
@@ -786,10 +786,18 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.21.3 首頁統計卡重新排列 =====
+/* ===== V17.22 首頁統計卡重新排列 =====
    一般員工／師傅頭：工具總數、待維修、送修中、借出中 = 2x2，不留空格
    管理員／管理員助理：下方再顯示累積維修費、已報廢
 */
+
+/* ===== V17.22 工具照片 ===== */
+.tool-photo-input{width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+.tool-photo-preview{display:none;width:100%;max-height:230px;object-fit:cover;border-radius:14px;margin-top:9px;border:1px solid var(--line);background:#111}
+.detail-photo{width:100%;max-height:250px;object-fit:cover;border-radius:14px;margin-bottom:13px;border:1px solid #ffffff22;background:#111}
+.tool-thumb{width:48px;height:48px;border-radius:13px;object-fit:cover;background:#35302b;flex:0 0 48px}
+.photo-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -797,7 +805,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.21.3</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.22</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -867,7 +875,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div class="form"><button class="btn" onclick="reportSelected()">建立維修單</button></div>
 </div>
 <div id="report" class="screen"><div class="header"><h2 onclick="backFromReport()">‹ 快速報修</h2><p>維修紀錄會同步保存到 Supabase</p></div><div class="form"><div class="label">設備</div><select id="rTool" class="select"></select><div class="label">故障類型</div><select id="rType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="rDesc" class="textarea"></textarea><div class="label">預估/實際維修費</div><input id="rCost" class="input" type="number" placeholder="0"><div class="label">狀態</div><select id="rStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select><button class="btn" id="saveRepairBtn" onclick="saveRepair()">送出報修</button></div></div>
-<div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
+<div id="add" class="screen"><div class="header"><h2 onclick="show('home')">‹ 新增工具</h2><p>會自動產生設備編號</p></div><div class="form"><div class="label">工具名稱</div><input id="aName" class="input"><div class="row"><div><div class="label">品牌</div><input id="aBrand" class="input"></div><div><div class="label">型號</div><input id="aModel" class="input"></div></div><div class="label">分類</div><select id="aCat" class="select"></select><div class="row"><div><div class="label">購入價格</div><input id="aPrice" class="input" type="number"></div><div><div class="label">購入日期</div><input id="aDate" class="input" type="date"></div></div><div class="label">工具照片</div><input id="aPhoto" class="tool-photo-input" type="file" accept="image/*" capture="environment" onchange="previewToolPhoto(this,'aPhotoPreview')"><img id="aPhotoPreview" class="tool-photo-preview" alt="工具照片預覽"><div class="photo-hint">可直接拍照或從相簿選擇；建議單張 8MB 以內。</div><div class="label">目前位置</div><input id="aLoc" class="input"><div class="label">使用人</div><input id="aUser" class="input"><button class="btn" id="saveToolBtn" onclick="saveTool()">建立工具</button></div></div>
 
 <div id="editToolModal" class="modal"><div class="modalbox">
 <h3>編輯工具資料</h3>
@@ -876,7 +884,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div class="row"><div><div class="label">品牌</div><input id="eToolBrand" class="input"></div><div><div class="label">型號</div><input id="eToolModel" class="input"></div></div>
 <div class="label">分類</div><select id="eToolCat" class="select"></select>
 <div class="row"><div><div class="label">購入價格</div><input id="eToolPrice" class="input" type="number" min="0"></div><div><div class="label">購入日期</div><input id="eToolDate" class="input" type="date"></div></div>
-<div class="label">目前位置</div><input id="eToolLoc" class="input">
+<div class="label">工具照片</div><input id="eToolPhoto" class="tool-photo-input" type="file" accept="image/*" capture="environment" onchange="previewToolPhoto(this,'eToolPhotoPreview')"><img id="eToolPhotoPreview" class="tool-photo-preview" alt="工具照片預覽"><div class="photo-hint">不選新照片就保留原照片。</div><div class="label">目前位置</div><input id="eToolLoc" class="input">
 <div class="label">目前使用人</div><input id="eToolUser" class="input">
 <div class="modalactions"><button class="btn secondary" onclick="closeToolEdit()">取消</button><button id="saveToolEditBtn" class="btn" onclick="saveToolEdit()">儲存修改</button></div>
 </div></div>
@@ -1729,11 +1737,50 @@ window.renderHome=()=>{
       metaParts.push(t.location||'未設定位置');
     }
 
-    return `<div class="item tool-card" data-tool-id="${t.id}" role="button" tabindex="0"><div class="icon">${icon}</div><div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(metaParts.join('・'))}</div></div><div class="status ${cls}">${esc(displayStatus)}</div></div>`;
+    return `<div class="item tool-card" data-tool-id="${t.id}" role="button" tabindex="0">${t.photo_url?`<img class="tool-thumb" src="${esc(t.photo_url)}" alt="${esc(t.name||'工具')}">`:`<div class="icon">${icon}</div>`}<div class="itemmain"><b>${esc((t.brand||'')+' '+t.name)}</b><div class="meta">${esc(metaParts.join('・'))}</div></div><div class="status ${cls}">${esc(displayStatus)}</div></div>`;
   }).join('') + (totalFilteredTools>visibleTools.length?`<div class="load-more-wrap"><button class="load-more-btn" type="button" onclick="loadMoreTools()">載入更多</button><div class="load-more-meta">目前顯示 ${visibleTools.length} / ${totalFilteredTools} 項</div></div>`:(totalFilteredTools?`<div class="load-more-meta" style="text-align:center;padding:12px 0 2px">已顯示全部 ${totalFilteredTools} 項</div>`:'')):`<div class="empty">${retiredOnly?'目前沒有已報廢工具':borrowedOnly?'目前沒有借出中的工具':statusFilter==='全部'?'目前沒有符合的工具':'目前沒有「'+esc(statusFilter)+'」的工具'}</div>`;
 };
-function nextCode(){const nums=tools.map(t=>{const m=String(t.tool_code||'').match(/TR-(\d+)/i);return m?Number(m[1]):0});return 'TR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0')}
-window.saveTool=async()=>{if(!isAdmin())return alert('只有管理員可以新增工具');const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');const payload={tool_code:nextCode(),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category:$('aCat').value,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};const {data,error}=await db.from('tools').insert(payload).select().single();if(error)return alert('新增失敗：'+error.message);alert('已建立 '+data.tool_code);await refreshAll();show('home')};
+function categoryCodePrefix(category){
+  const map={'釘槍':'NAIL','風車':'AIR','電鋸':'SAW','鋸台':'TABLE','修邊機':'RTR','砂輪機':'GRD','磨切機':'CUT','雷射':'LAS','砂紙機':'SND','線鋸機':'JIG','電動':'PWR','夾頭':'CLP','電鑽':'DRL','電風扇':'FAN','其他':'TOOL'};
+  return map[String(category||'').trim()]||'TOOL';
+}
+function nextCode(category){
+  const prefix=categoryCodePrefix(category);
+  const nums=tools.map(t=>{const m=String(t.tool_code||'').match(new RegExp('^'+prefix+'-(\\d+)$','i'));return m?Number(m[1]):0});
+  return prefix+'-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');
+}
+window.previewToolPhoto=(input,imgId)=>{
+  const img=$(imgId),file=input?.files?.[0];
+  if(!img)return;
+  if(!file){img.style.display='none';img.removeAttribute('src');return}
+  if(file.size>8*1024*1024){alert('照片請控制在 8MB 以內');input.value='';img.style.display='none';return}
+  img.src=URL.createObjectURL(file);img.style.display='block';
+};
+async function uploadToolPhoto(toolId,file){
+  if(!file)return null;
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`${toolId}/${Date.now()}.${ext}`;
+  const {error}=await db.storage.from('tool-photos').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type||undefined});
+  if(error)throw error;
+  const {data}=db.storage.from('tool-photos').getPublicUrl(path);
+  return data?.publicUrl||null;
+}
+window.saveTool=async()=>{
+  if(!isAdmin())return alert('只有管理員可以新增工具');
+  const name=$('aName').value.trim();if(!name)return alert('請輸入工具名稱');
+  const category=$('aCat').value;
+  const payload={tool_code:nextCode(category),name,brand:$('aBrand').value.trim()||null,model:$('aModel').value.trim()||null,category,purchase_price:Number($('aPrice').value||0),purchase_date:$('aDate').value||null,location:$('aLoc').value.trim()||null,current_user_name:$('aUser').value.trim()||null,status:'正常',created_by:currentUser?.id||null};
+  const btn=$('saveToolBtn');btn.disabled=true;btn.textContent='建立中…';
+  const {data,error}=await db.from('tools').insert(payload).select().single();
+  if(error){btn.disabled=false;btn.textContent='建立工具';return alert('新增失敗：'+error.message)}
+  const file=$('aPhoto')?.files?.[0];
+  if(file){
+    try{const photo_url=await uploadToolPhoto(data.id,file);if(photo_url)await db.from('tools').update({photo_url}).eq('id',data.id)}
+    catch(e){alert('工具已建立，但照片上傳失敗：'+(e?.message||e))}
+  }
+  btn.disabled=false;btn.textContent='建立工具';
+  alert('已建立 '+data.tool_code);await refreshAll();show('home')
+};
 window.openDetail=id=>{
   selectedId=Number(id);
   const t=tools.find(x=>Number(x.id)===Number(id));
@@ -1750,6 +1797,7 @@ window.openDetail=id=>{
     const cost=(t.repairs||[]).reduce((s,r)=>s+Number(r.repair_cost||0),0);
 
     $('detailHero').innerHTML=`
+      ${t.photo_url?`<img class="detail-photo" src="${esc(t.photo_url)}" alt="${esc(t.name||'工具')}">`:''}
       <h3>${esc(((t.brand||'')+' '+(t.name||'')).trim())}</h3>
       <p>${esc(t.model||'無型號')}</p>
       <div class="kv">
@@ -1990,6 +2038,8 @@ window.openToolEdit=id=>{
   $('eToolDate').value=t.purchase_date||'';
   $('eToolLoc').value=t.location||'';
   $('eToolUser').value=t.current_user_name||'';
+  $('eToolPhoto').value='';
+  if(t.photo_url){$('eToolPhotoPreview').src=t.photo_url;$('eToolPhotoPreview').style.display='block'}else{$('eToolPhotoPreview').style.display='none';$('eToolPhotoPreview').removeAttribute('src')}
   $('editToolModal').classList.add('open');
 };
 window.closeToolEdit=()=>$('editToolModal').classList.remove('open');
@@ -2003,6 +2053,11 @@ window.saveToolEdit=async()=>{
   const {error}=await db.from('tools').update(payload).eq('id',id);
   btn.disabled=false;btn.textContent='儲存修改';
   if(error)return alert('修改失敗：'+error.message);
+  const newPhoto=$('eToolPhoto')?.files?.[0];
+  if(newPhoto){
+    try{const photo_url=await uploadToolPhoto(id,newPhoto);if(photo_url){const {error:pe}=await db.from('tools').update({photo_url}).eq('id',id);if(pe)throw pe}}
+    catch(e){return alert('基本資料已儲存，但照片更新失敗：'+(e?.message||e))}
+  }
   closeToolEdit();await refreshAll();openDetail(id);alert('工具資料已更新');
 };
 
@@ -2732,7 +2787,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.19';
+const APP_VERSION='17.22';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -4589,7 +4644,7 @@ Object.assign(window,{
 <div id="updateToast" class="update-toast">正在更新系統…</div>
 
 <script>
-/* ===== V17.21.3 首頁敏感統計權限 ===== */
+/* ===== V17.22 首頁敏感統計權限 ===== */
 (function(){
   function roleText(){
     var vals=[
