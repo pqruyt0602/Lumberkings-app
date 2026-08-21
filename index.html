@@ -798,6 +798,10 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .tool-thumb{width:48px;height:48px;border-radius:13px;object-fit:cover;background:#35302b;flex:0 0 48px}
 .photo-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
 
+
+/* ===== V17.22.2 多案場工時分攤 ===== */
+.work-units-hint{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
+
 </style>
 </head>
 <body>
@@ -805,7 +809,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.22.1</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.22.2</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2787,7 +2791,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.22.1';
+const APP_VERSION='17.22.2';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3267,7 +3271,7 @@ function renderAttendance(dateStr){
   const groups=document.getElementById('attendanceGroups');
   if(!label||!count||!summary||!groups)return;
   label.textContent=formatWorkDate(dateStr);
-  // V17.22.1：當日出工人數依員工姓名去重複。
+  // V17.22.2：當日出工人數依員工姓名去重複。
   // 同一位師傅早上 A 案場 0.5 工、下午 B 案場 0.5 工，仍只算 1 人；工數與各案場紀錄維持原本計算。
   const uniqueWorkerCount=new Set(
     attendanceLogs
@@ -3365,8 +3369,14 @@ async function openWorkLog(){
         </label>
       </div>
       <select class="worker-day">
-        <option value="1">1 工</option>
-        <option value="0.5">0.5 工</option>
+        <option value="1">1 工（8小時）</option>
+        <option value="0.5">0.5 工（4小時）</option>
+        <option value="0.125">1 小時（0.125工）</option>
+        <option value="0.25">2 小時（0.25工）</option>
+        <option value="0.375">3 小時（0.375工）</option>
+        <option value="0.625">5 小時（0.625工）</option>
+        <option value="0.75">6 小時（0.75工）</option>
+        <option value="0.875">7 小時（0.875工）</option>
       </select>
     </div>`).join('');
   document.getElementById('workNote').value='';
@@ -3415,6 +3425,32 @@ async function saveWorkLogs(){
       note:`${day}工${note?'｜'+note:''}`
     };
   });
+
+  // V17.22.2：同一位人員可分攤到多個案場，但正常工合計超過 1 工時提醒。
+  // 同一天同一案場為 upsert，因此計算時會先排除即將被覆蓋的舊紀錄。
+  const overLimit=[];
+  for(const newRow of rows){
+    const newUnits=workUnitsFromNote(newRow.note);
+    const existingUnits=attendanceLogs
+      .filter(r=>
+        r.work_date===date &&
+        r.employee_name===newRow.employee_name &&
+        r.site_name!==newRow.site_name
+      )
+      .reduce((sum,r)=>sum+workUnitsFromNote(r.note),0);
+    const total=existingUnits+newUnits;
+    if(total>1.000001){
+      overLimit.push(`${newRow.employee_name}：${Number(total.toFixed(3))} 工`);
+    }
+  }
+  if(overLimit.length){
+    const ok=confirm(
+      '⚠️ 今日正常工數超過 1 工：\n\n' +
+      overLimit.join('\n') +
+      '\n\n加班不計入正常工數。若資料正確仍可繼續儲存。'
+    );
+    if(!ok)return;
+  }
 
   // 寫入後直接把資料取回。這樣不是只看「送出了幾人」，而是確認 Supabase 真正存進去的資料。
   const {data:savedRows,error}=await db.from('work_logs')
@@ -3791,7 +3827,26 @@ async function saveWorkLogEdit(){
   const leaveHours=Math.max(0,Math.min(8,Number(document.getElementById('editWorkLeaveHours')?.value||0)));
   const overtimeHours=Math.max(0,Math.min(8,Number(document.getElementById('editWorkOvertimeHours')?.value||0)));
   if(!id||!work_date||!site_name||!employee_name)return alert('請確認日期、案場與人員');
-  if(!['1','0.5'].includes(units))return alert('工數請選 1 工或 0.5 工');
+  const unitsNum=Number(units);
+  if(!Number.isFinite(unitsNum) || unitsNum<=0 || unitsNum>1)
+    return alert('正常工數必須大於 0 且不超過 1 工');
+
+  // V17.22.2：修改記工時也檢查同一人當日正常工數。
+  const otherUnits=attendanceLogs
+    .filter(r=>
+      Number(r.id)!==id &&
+      r.work_date===work_date &&
+      r.employee_name===employee_name
+    )
+    .reduce((sum,r)=>sum+workUnitsFromNote(r.note),0);
+  const editedTotal=otherUnits+unitsNum;
+  if(editedTotal>1.000001){
+    const ok=confirm(
+      `⚠️ ${employee_name} 這天正常工合計會變成 ${Number(editedTotal.toFixed(3))} 工。\n\n` +
+      '加班不計入正常工數。若資料正確仍可繼續儲存。'
+    );
+    if(!ok)return;
+  }
 
   const payload={
     work_date,
@@ -4324,8 +4379,14 @@ Object.assign(window,{
     <div class="work-field">
       <label>工數</label>
       <select id="editWorkUnits">
-        <option value="1">1 工</option>
-        <option value="0.5">0.5 工</option>
+        <option value="1">1 工（8小時）</option>
+        <option value="0.5">0.5 工（4小時）</option>
+        <option value="0.125">1 小時（0.125工）</option>
+        <option value="0.25">2 小時（0.25工）</option>
+        <option value="0.375">3 小時（0.375工）</option>
+        <option value="0.625">5 小時（0.625工）</option>
+        <option value="0.75">6 小時（0.75工）</option>
+        <option value="0.875">7 小時（0.875工）</option>
       </select>
     </div>
 
