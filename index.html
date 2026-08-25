@@ -931,7 +931,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.5</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.6</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2999,7 +2999,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.5';
+const APP_VERSION='17.27.2.1.6';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3064,7 +3064,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.5',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.6',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -4392,6 +4392,37 @@ async function deleteWorkLog(){
 function firstDayOfMonth(d=new Date()){
   return localDateISO(new Date(d.getFullYear(),d.getMonth(),1));
 }
+function salaryPeriodForDate(d=new Date()){
+  const date=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0,0);
+  const day=date.getDate();
+  const startDay=day<=10?1:(day<=20?11:21);
+  const endDay=day<=10?10:(day<=20?20:new Date(date.getFullYear(),date.getMonth()+1,0).getDate());
+  return{
+    start:localDateISO(new Date(date.getFullYear(),date.getMonth(),startDay,12)),
+    end:localDateISO(new Date(date.getFullYear(),date.getMonth(),endDay,12))
+  };
+}
+function setWorkStatsPeriod(period,load=true){
+  const start=document.getElementById('statsStart');
+  const end=document.getElementById('statsEnd');
+  if(start)start.value=period.start;
+  if(end)end.value=period.end;
+  const label=document.getElementById('statsPeriodLabel');
+  if(label)label.textContent=`本期：${period.start} ～ ${period.end}`;
+  if(load)loadWorkStats();
+}
+function goCurrentWorkStatsPeriod(){
+  setWorkStatsPeriod(salaryPeriodForDate(new Date()));
+}
+function changeWorkStatsPeriod(delta){
+  const startValue=document.getElementById('statsStart')?.value;
+  const endValue=document.getElementById('statsEnd')?.value;
+  const anchor=delta<0
+    ? localDateFromISO(startValue||localDateISO())
+    : localDateFromISO(endValue||localDateISO());
+  anchor.setDate(anchor.getDate()+(delta<0?-1:1));
+  setWorkStatsPeriod(salaryPeriodForDate(anchor));
+}
 
 function overtimeLabel(hours){
   const h=Number(hours||0);
@@ -4408,10 +4439,7 @@ function workUnitsFromNote(note=''){
 }
 function openWorkStats(){
   if(!canViewAttendanceStats())return alert('只有管理員、管理員助理或師傅頭可以查看記工統計');
-  const start=document.getElementById('statsStart');
-  const end=document.getElementById('statsEnd');
-  if(start&&!start.value)start.value=firstDayOfMonth();
-  if(end&&!end.value)end.value=localDateISO();
+  setWorkStatsPeriod(salaryPeriodForDate(new Date()),false);
   document.getElementById('workStatsModal')?.classList.add('show');
   loadWorkStats();
 }
@@ -4423,6 +4451,8 @@ async function loadWorkStats(){
   const end=document.getElementById('statsEnd')?.value;
   if(!start||!end)return alert('請選擇日期區間');
   if(start>end)return alert('開始日期不能晚於結束日期');
+  const periodLabel=document.getElementById('statsPeriodLabel');
+  if(periodLabel)periodLabel.textContent=`統計期間：${start} ～ ${end}`;
 
   if(!canViewAttendanceStats())return alert('只有管理員、管理員助理或師傅頭可以查看記工統計');
 
@@ -4836,6 +4866,8 @@ Object.assign(window,{
   openWorkStats,
   closeWorkStats,
   loadWorkStats,
+  goCurrentWorkStatsPeriod,
+  changeWorkStatsPeriod,
   openWorkLogEdit,
   closeWorkLogEdit,
   saveWorkLogEdit,
@@ -4935,6 +4967,12 @@ Object.assign(window,{
       <div class="work-field" style="margin-top:0"><label>開始日期</label><input id="statsStart" type="date"></div>
       <div class="work-field" style="margin-top:0"><label>結束日期</label><input id="statsEnd" type="date"></div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <button class="mini" type="button" onclick="changeWorkStatsPeriod(-1)">← 上一期</button>
+      <button class="mini" type="button" onclick="goCurrentWorkStatsPeriod()">本期</button>
+      <button class="mini" type="button" onclick="changeWorkStatsPeriod(1)">下一期 →</button>
+    </div>
+    <div id="statsPeriodLabel" class="stats-sub" style="margin-top:8px;text-align:center"></div>
     <button class="stats-run" type="button" onclick="loadWorkStats()">查詢統計</button>
     <div id="statsCostFormula" class="stats-sub" style="margin-top:8px">人工成本＝工數 × 當次日薪－請假扣薪＋負責人加給＋加班費。加班只選 1小時／半天／1天；1小時＝日薪÷5、半天＝日薪÷2、1天＝1天日薪。</div>
 
