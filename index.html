@@ -931,7 +931,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.4</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.5</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1339,6 +1339,9 @@ function canViewWorkStats(){
 function canViewAttendanceStats(){
   return canViewWorkStats() || isForeman();
 }
+function canEditSiteSchedule(){
+  return isAdmin() || isForeman();
+}
 function roleLabel(role){
   return role==='admin'?'管理員'
     :role==='manager_assistant'?'管理員助理'
@@ -1362,7 +1365,7 @@ function syncAdminNoticeVisibility(){
   }
 
   const attendanceManageBtn=$('attendanceManageBtn');
-  if(attendanceManageBtn) attendanceManageBtn.style.display=canManageAttendance()?'inline-block':'none';
+  if(attendanceManageBtn) attendanceManageBtn.style.display=canEditSiteSchedule()?'inline-block':'none';
   const workStatsBtn=$('workStatsBtn');
   if(workStatsBtn) workStatsBtn.style.display=canViewAttendanceStats()?'inline-block':'none';
   syncProjectButtons();
@@ -2996,7 +2999,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.4';
+const APP_VERSION='17.27.2.1.5';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3061,7 +3064,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.4',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.5',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -3502,12 +3505,12 @@ async function loadSiteTotals(){
 
 async function loadWorkMaster(){
   const sitePromise=db.from('work_sites')
-    .select('id,site_name,address,client_name,is_active,created_at')
+    .select('id,site_name,address,client_name,is_active,planned_entry_date,planned_exit_date,created_at')
     .eq('is_active',true)
     .order('site_name');
 
   const completedSitePromise=db.from('work_sites')
-    .select('id,site_name,address,client_name,is_active,created_at')
+    .select('id,site_name,address,client_name,is_active,planned_entry_date,planned_exit_date,created_at')
     .eq('is_active',false)
     .order('site_name');
 
@@ -3797,7 +3800,7 @@ async function saveWorkLogs(){
 }
 
 async function openWorkMasterManager(){
-  if(!isAdmin()){ alert('只有管理員可以管理人員與案場'); return; }
+  if(!canEditSiteSchedule()){ alert('只有管理員或師傅頭可以管理案場日期'); return; }
   await loadWorkMaster();
   renderWorkMasterManager('sites');
   document.getElementById('workMasterModal')?.classList.add('show');
@@ -3807,6 +3810,7 @@ function closeWorkMasterManager(){
 }
 let workMasterTab='sites';
 function renderWorkMasterManager(tab=workMasterTab){
+  if(!isAdmin()&&tab==='workers')tab='sites';
   workMasterTab=tab;
   const siteTab=document.getElementById('masterTabSites');
   const completedTab=document.getElementById('masterTabCompleted');
@@ -3814,6 +3818,9 @@ function renderWorkMasterManager(tab=workMasterTab){
   if(siteTab)siteTab.classList.toggle('active',tab==='sites');
   if(completedTab)completedTab.classList.toggle('active',tab==='completed');
   if(workerTab)workerTab.classList.toggle('active',tab==='workers');
+  if(workerTab)workerTab.style.display=isAdmin()?'inline-block':'none';
+  const siteAdd=document.getElementById('masterSiteAdd');
+  if(siteAdd)siteAdd.style.display=isAdmin()?'flex':'none';
 
   const sitePane=document.getElementById('masterSitesPane');
   const completedPane=document.getElementById('masterCompletedPane');
@@ -3829,9 +3836,13 @@ function renderWorkMasterManager(tab=workMasterTab){
         <div>
           <b>${esc(s.site_name)}</b>
           <small>施工中案場</small>
+          <div class="site-total-units">預計進場：${esc(s.planned_entry_date||'未設定')}｜預計退場：${esc(s.planned_exit_date||'未設定')}</div>
           <div class="site-total-units">累積總工數：${Number(siteTotals[s.site_name]||0).toFixed(1).replace(/\.0$/,'')} 工</div>
         </div>
-        <button type="button" onclick="completeWorkSite(${Number(s.id)})">完工</button>
+        <div class="master-row-actions">
+          <button class="wage-edit" type="button" onclick="editSiteSchedule(${Number(s.id)})">進退場日</button>
+          ${isAdmin()?`<button type="button" onclick="completeWorkSite(${Number(s.id)})">完工</button>`:''}
+        </div>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的案場</div>';
   }
 
@@ -3842,11 +3853,12 @@ function renderWorkMasterManager(tab=workMasterTab){
         <div>
           <b>${esc(s.site_name)}</b>
           <small>✅ 已完工案場</small>
+          <div class="site-total-units">預計進場：${esc(s.planned_entry_date||'未設定')}｜預計退場：${esc(s.planned_exit_date||'未設定')}</div>
           <div class="site-total-units">記工紀錄保留，可查看案場總結</div>
         </div>
         <div class="master-row-actions">
-          <button class="wage-edit" type="button" onclick="openCompletedSiteSummary(${Number(s.id)})">總結</button>
-          <button type="button" onclick="reopenWorkSite(${Number(s.id)})">復工</button>
+          <button class="wage-edit" type="button" onclick="editSiteSchedule(${Number(s.id)})">進退場日</button>
+          ${isAdmin()?`<button class="wage-edit" type="button" onclick="openCompletedSiteSummary(${Number(s.id)})">總結</button><button type="button" onclick="reopenWorkSite(${Number(s.id)})">復工</button>`:''}
         </div>
       </div>`).join(''):'<div class="empty">目前沒有已完工案場</div>';
   }
@@ -3862,6 +3874,41 @@ function renderWorkMasterManager(tab=workMasterTab){
           <button type="button" onclick="disableWorker(${Number(w.id)})">停用</button>
         </div>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的人員</div>';
+  }
+}
+function editSiteSchedule(id){
+  if(!canEditSiteSchedule())return alert('只有管理員或師傅頭可以修改進退場日期');
+  const site=[...workSites,...completedWorkSites].find(s=>Number(s.id)===Number(id));
+  if(!site)return alert('找不到這個案場');
+  document.getElementById('siteScheduleId').value=site.id;
+  document.getElementById('siteScheduleName').textContent=site.site_name||'';
+  document.getElementById('siteEntryDate').value=site.planned_entry_date||'';
+  document.getElementById('siteExitDate').value=site.planned_exit_date||'';
+  document.getElementById('workMasterModal')?.classList.remove('show');
+  document.getElementById('siteScheduleModal')?.classList.add('show');
+}
+function closeSiteSchedule(){
+  document.getElementById('siteScheduleModal')?.classList.remove('show');
+  document.getElementById('workMasterModal')?.classList.add('show');
+}
+async function saveSiteSchedule(){
+  if(!canEditSiteSchedule())return alert('只有管理員或師傅頭可以修改進退場日期');
+  const id=Number(document.getElementById('siteScheduleId').value);
+  const entry=document.getElementById('siteEntryDate').value||null;
+  const exit=document.getElementById('siteExitDate').value||null;
+  if(!id)return alert('找不到案場資料');
+  if(entry&&exit&&exit<entry)return alert('預計退場日不能早於預計進場日');
+  const btn=document.getElementById('saveSiteScheduleBtn');
+  if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  try{
+    const {error}=await db.rpc('set_work_site_schedule',{p_site_id:id,p_entry_date:entry,p_exit_date:exit});
+    if(error)return alert('日期儲存失敗：'+error.message+'\n\n請先執行本版本附帶的 Supabase SQL 設定檔。');
+    await loadWorkMaster();
+    renderWorkMasterManager(workMasterTab==='completed'?'completed':'sites');
+    closeSiteSchedule();
+    alert('案場進退場日期已儲存');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='儲存日期';}
   }
 }
 async function addWorkSite(){
@@ -4770,6 +4817,9 @@ Object.assign(window,{
   openWorkMasterManager,
   closeWorkMasterManager,
   renderWorkMasterManager,
+  editSiteSchedule,
+  closeSiteSchedule,
+  saveSiteSchedule,
   addWorkSite,
   addWorker,
   editWorkerInfo,
@@ -4980,7 +5030,7 @@ Object.assign(window,{
     </div>
 
     <div id="masterSitesPane">
-      <div class="master-add">
+      <div id="masterSiteAdd" class="master-add">
         <input id="newSiteName" placeholder="新增案場名稱">
         <button type="button" onclick="addWorkSite()">＋新增</button>
       </div>
@@ -5007,6 +5057,20 @@ Object.assign(window,{
       </div>
       <div id="masterWorkerList" class="master-list"></div>
     </div>
+  </div>
+</div>
+
+<div id="siteScheduleModal" class="work-modal">
+  <div class="work-sheet">
+    <div class="work-head">
+      <div><h2>📅 案場進退場日期</h2><div id="siteScheduleName" class="stats-sub"></div></div>
+      <button class="work-close" type="button" onclick="closeSiteSchedule()">×</button>
+    </div>
+    <input id="siteScheduleId" type="hidden">
+    <div class="work-field"><label>預計進場日</label><input id="siteEntryDate" type="date"></div>
+    <div class="work-field"><label>預計退場日</label><input id="siteExitDate" type="date"></div>
+    <div class="stats-sub" style="margin-top:8px">日期可留空；此功能只做紀錄，不會發送提醒或自動將案場設為完工。</div>
+    <button id="saveSiteScheduleBtn" class="work-submit" type="button" onclick="saveSiteSchedule()">儲存日期</button>
   </div>
 </div>
 
