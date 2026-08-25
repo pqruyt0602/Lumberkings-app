@@ -950,7 +950,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.7</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.8</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -3018,7 +3018,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.7';
+const APP_VERSION='17.27.2.1.8';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3083,7 +3083,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.7',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.8',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -3487,7 +3487,7 @@ window.confirmBatchReturn=async()=>{
 
 
 // ===== V17 案場記工 =====
-let workSites=[], completedWorkSites=[], workers=[], attendanceLogs=[], siteTotals={};
+let workSites=[], completedWorkSites=[], workers=[], inactiveWorkers=[], attendanceLogs=[], siteTotals={};
 let attendanceViewDate=new Date();
 let attendanceDateKey=localDateISO(new Date());
 let attendanceLoadSeq=0;
@@ -3539,17 +3539,23 @@ async function loadWorkMaster(){
         .select('id,worker_name,worker_type,is_active,note,created_at')
         .eq('is_active',true)
         .order('worker_name');
+  const inactiveWorkerPromise=isAdmin()
+    ? db.from('workers').select('id,worker_name,worker_type,is_active,note,created_at').eq('is_active',false).order('worker_name')
+    : Promise.resolve({data:[],error:null});
 
-  const [siteRes,completedSiteRes,workerRes]=await Promise.all([sitePromise,completedSitePromise,workerPromise]);
+  const [siteRes,completedSiteRes,workerRes,inactiveWorkerRes]=await Promise.all([sitePromise,completedSitePromise,workerPromise,inactiveWorkerPromise]);
 
   if(siteRes.error) console.warn('案場讀取失敗',siteRes.error);
   if(completedSiteRes.error) console.warn('已完工案場讀取失敗',completedSiteRes.error);
   if(workerRes.error) console.warn('師傅名單讀取失敗',workerRes.error);
+  if(inactiveWorkerRes.error) console.warn('非在職人員讀取失敗',inactiveWorkerRes.error);
 
   workSites=(siteRes.data||[]).filter(x=>x.is_active!==false);
   completedWorkSites=(completedSiteRes.data||[]).filter(x=>x.is_active===false);
   workers=(workerRes.data||[]).filter(x=>x.is_active!==false)
     .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||'')));
+  inactiveWorkers=isAdmin()?(inactiveWorkerRes.data||[]).filter(x=>x.is_active===false)
+    .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||''))):[];
 
   await loadSiteTotals();
 }
@@ -3894,6 +3900,16 @@ function renderWorkMasterManager(tab=workMasterTab){
         </div>
       </div>`).join(''):'<div class="empty">目前沒有啟用中的人員</div>';
   }
+  const inactiveWorkerList=document.getElementById('masterInactiveWorkerList');
+  if(inactiveWorkerList){
+    inactiveWorkerList.innerHTML=inactiveWorkers.length?inactiveWorkers.map(w=>`
+      <div class="master-row completed-site-row">
+        <div><b>${esc(w.worker_name)}</b><small>${esc(w.worker_type||'師傅')}｜非在職</small></div>
+        <div class="master-row-actions">
+          <button class="wage-edit" type="button" onclick="restoreWorker(${Number(w.id)})">恢復在職</button>
+        </div>
+      </div>`).join(''):'<div class="empty">目前沒有非在職人員</div>';
+  }
 }
 function editSiteSchedule(id){
   if(!canEditSiteSchedule())return alert('只有管理員或師傅頭可以修改進退場日期');
@@ -4120,6 +4136,8 @@ async function saveWorkerWage(){
 
     workers=(allWorkers||[]).filter(x=>x.is_active!==false)
       .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||'')));
+    inactiveWorkers=(allWorkers||[]).filter(x=>x.is_active===false)
+      .sort((a,b)=>String(a.worker_name||'').localeCompare(String(b.worker_name||'')));
 
     const verified=workers.find(w=>Number(w.id)===id);
     if(!verified || Number(verified.daily_wage)!==Number(wage)){
@@ -4204,6 +4222,17 @@ async function disableWorker(id){
   if(error)return alert('停用失敗：'+error.message);
   await loadWorkMaster();
   renderWorkMasterManager('workers');
+}
+async function restoreWorker(id){
+  if(!isAdmin())return alert('只有管理員可以恢復人員在職狀態');
+  const worker=inactiveWorkers.find(w=>Number(w.id)===Number(id));
+  if(!worker)return alert('找不到這位非在職人員');
+  if(!confirm(`確定讓「${worker.worker_name}」恢復為在職人員？`))return;
+  const {error}=await db.from('workers').update({is_active:true}).eq('id',id);
+  if(error)return alert('恢復在職失敗：'+error.message);
+  await loadWorkMaster();
+  renderWorkMasterManager('workers');
+  alert(`${worker.worker_name} 已恢復為在職人員`);
 }
 
 
@@ -4882,6 +4911,7 @@ Object.assign(window,{
   openCompletedSiteSummary,
   closeCompletedSiteSummary,
   disableWorker,
+  restoreWorker,
   openWorkStats,
   closeWorkStats,
   loadWorkStats,
@@ -5112,7 +5142,11 @@ Object.assign(window,{
         <input id="newWorkerWage" type="number" min="0" step="100" placeholder="日薪，例如 4000">
         <button class="work-submit" style="margin:0" type="button" onclick="addWorker()">＋ 新增人員</button>
       </div>
+      <div class="stats-section-title">在職人員</div>
       <div id="masterWorkerList" class="master-list"></div>
+      <div class="stats-section-title" style="margin-top:18px">非在職人員</div>
+      <div class="stats-sub" style="margin-bottom:8px">保留過去記工紀錄，不會出現在新的記工名單。</div>
+      <div id="masterInactiveWorkerList" class="master-list"></div>
     </div>
   </div>
 </div>
