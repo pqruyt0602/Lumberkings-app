@@ -799,10 +799,10 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .photo-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
 
 
-/* ===== V17.27.2.1.1 多案場工時分攤 ===== */
+/* ===== V17.27.2.1.2 多案場工時分攤 ===== */
 .work-units-hint{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
 
-/* ===== V17.27.2.1.1 已完工案場管理 ===== */
+/* ===== V17.27.2.1.2 已完工案場管理 ===== */
 .completed-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .completed-summary-grid>div{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px}
 .completed-summary-grid span{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
@@ -811,7 +811,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 @media(max-width:700px){#completedSiteSummaryModal{align-items:flex-start!important;padding-top:calc(env(safe-area-inset-top,0px) + 18px)!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px)!important;overflow-y:auto!important}}
 
 
-/* ===== V17.27.2.1.1 已完成維修紀錄編輯 ===== */
+/* ===== V17.27.2.1.2 已完成維修紀錄編輯 ===== */
 .repair-history-edit{
   margin-top:10px;
   color:var(--accent)!important;
@@ -822,12 +822,12 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 
 
-/* ===== V17.27.2.1.1 維修紀錄更換工具＋刪除 ===== */
+/* ===== V17.27.2.1.2 維修紀錄更換工具＋刪除 ===== */
 .repair-history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .repair-history-actions .repair-history-edit{margin-top:0}
 .repair-history-delete{color:#ff7a7a!important;border-color:rgba(255,90,90,.55)!important}
 
-/* V17.27.2.1.1 案場損益＋進度追蹤 */
+/* V17.27.2.1.2 案場損益＋進度追蹤 */
 .project-hub-actions{display:flex;flex-direction:column;gap:8px;margin:10px 0}.project-hub-actions .btn{width:100%}.project-progress-list{display:grid;gap:10px}.project-progress-card{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:14px;padding:11px}.project-progress-head{display:flex;justify-content:space-between;gap:10px}.project-progress-photos,.progress-photo-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.project-progress-photos img,.progress-photo-preview img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.pnl-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pnl-card{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;padding:11px}.pnl-card span{display:block;color:var(--muted);font-size:10px}.pnl-card b{font-size:16px}.pnl-profit{grid-column:1/-1}.pnl-positive{color:#70e6a1}.pnl-negative{color:#ff8b8b}.progress-status-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.project-hub-actions{grid-template-columns:1fr}}
 
 /* ===== V17.27.2.1 案場選單＋返回鍵放大 ===== */
@@ -867,6 +867,31 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 }
 #batchVideo{width:100%;max-height:46vh;object-fit:cover;border-radius:14px;background:#000}
 
+
+/* ===== V17.27.2.1.2 批次借出實際修正 ===== */
+#batchLoanModal #batchEmployee,
+#batchLoanModal #batchLocationSite{
+  display:block!important;
+  width:100%!important;
+  min-height:52px!important;
+  padding:12px!important;
+  border-radius:12px!important;
+  border:1px solid var(--line)!important;
+  background:#242321!important;
+  color:var(--ink)!important;
+  font-size:16px!important;
+  -webkit-appearance:menulist!important;
+  appearance:auto!important;
+}
+.batch-camera-wrap{position:relative;margin-top:10px}
+.batch-camera-wrap #batchVideo{display:none;width:100%;max-height:46vh;object-fit:cover;border-radius:14px;background:#000}
+.batch-scan-guide{
+  display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:58%;aspect-ratio:1/1;border:3px solid rgba(255,255,255,.82);
+  border-radius:18px;color:rgba(255,255,255,.9);font-weight:900;
+  align-items:center;justify-content:center;pointer-events:none;text-shadow:0 1px 4px #000;
+}
+
 </style>
 </head>
 <body>
@@ -874,7 +899,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.1</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.2</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1043,14 +1068,27 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div id="batchLoanModal" class="modal" style="display:none">
   <div class="modalbox">
     <div class="modalhead"><b>QR 批次借出</b><button class="x" onclick="closeBatchLoan()">×</button></div>
-    <div class="field"><label>借用人</label><input id="batchEmployee" readonly></div>
-    <div class="field"><label>借出地點／工地</label><input id="batchLocation" placeholder="例如：三重砲哥"></div>
+    <div class="field"><label>借用人</label>
+      <select id="batchEmployee">
+        <option value="">請選擇公司員工</option>
+      </select>
+    </div>
+    <div class="field"><label>借出地點／工地</label>
+      <select id="batchLocationSite" onchange="syncBatchLocation()">
+        <option value="">請選擇案場</option>
+      </select>
+      <input id="batchLocation" style="display:none;margin-top:8px" placeholder="其他地點（非案場）">
+    </div>
     <div class="field"><label>預計歸還日期</label><input id="batchReturnDate" type="date"></div>
 
     <div class="scan-box">
       <b>掃描工具 QR Code</b>
       <div class="meta" style="margin:5px 0 10px">可連續掃描多支工具；也可以直接輸入 TR-001 這類工具代碼。</div>
-      <video id="batchVideo" class="scan-video" playsinline muted></video><canvas id="batchScanCanvas" style="display:none"></canvas>
+      <div class="batch-camera-wrap">
+        <video id="batchVideo" class="scan-video" playsinline muted></video>
+        <div id="batchScanGuide" class="batch-scan-guide">QR</div>
+      </div>
+      <canvas id="batchScanCanvas" style="display:none"></canvas>
       <input id="batchCameraFallback" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleBatchCameraPhoto(this)">
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="primary" type="button" onclick="startBatchCamera()">開啟相機掃描</button>
@@ -3009,6 +3047,9 @@ function fillBatchEmployeeSelect(){
   const sel=$('batchEmployee'); if(!sel)return;
   sel.innerHTML='<option value="">請選擇公司員工</option>'+
     batchEmployees.map(w=>`<option value="${esc(w.worker_name)}">${esc(w.worker_name)}${w.worker_type?`｜${esc(w.worker_type)}`:''}</option>`).join('');
+  if(!batchEmployees.length){
+    sel.innerHTML='<option value="">目前讀不到公司員工</option>';
+  }
   const me=(currentProfile?.display_name||'').trim();
   if(me && batchEmployees.some(w=>w.worker_name===me))sel.value=me;
 }
@@ -3018,6 +3059,9 @@ function fillBatchLocationSites(){
   sel.innerHTML='<option value="">請選擇案場</option>'+
     sites.map(s=>`<option value="${esc(s.site_name)}">${esc(s.site_name)}</option>`).join('')+
     '<option value="__custom__">其他地點（非案場）</option>';
+  if(!sites.length){
+    sel.innerHTML='<option value="">目前沒有施工中案場</option><option value="__custom__">其他地點（非案場）</option>';
+  }
   $('batchLocation').style.display='none';
 }
 window.syncBatchLocation=()=>{
@@ -3038,10 +3082,26 @@ function batchActiveLoan(toolId){
 window.addBatchCode=(raw)=>{
   const code=String(raw??$('batchCode').value??'').trim();
   if(!code)return;
-  const normalized=code.split('/').pop().split('?')[0].trim();
+
+  let normalized=code;
+  // 本系統 QR Code 實際內容是網址，例如：
+  // https://.../Lumberkings-app/?tool=TR-001
+  // 先抓 ?tool=，抓不到再兼容純工具代碼 / id。
+  try{
+    const u=new URL(code,window.location.href);
+    normalized=(u.searchParams.get('tool')||u.searchParams.get('id')||'').trim();
+  }catch(e){}
+  if(!normalized || normalized===code){
+    const qMatch=code.match(/[?&](?:tool|id)=([^&#]+)/i);
+    if(qMatch)normalized=decodeURIComponent(qMatch[1]);
+  }
+  if(!normalized || normalized===code){
+    normalized=code.split('/').filter(Boolean).pop()?.split('?')[0]?.trim()||code.trim();
+  }
+
   const t=tools.find(x=>
-    String(x.tool_code||'').toLowerCase()===normalized.toLowerCase() ||
-    String(x.id)===normalized
+    String(x.tool_code||'').toLowerCase()===String(normalized).toLowerCase() ||
+    String(x.id)===String(normalized)
   );
   $('batchCode').value='';
   if(!t){$('batchMsg').textContent='找不到工具：'+normalized;return}
@@ -3079,7 +3139,7 @@ window.startBatchCamera=async()=>{
       video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
       audio:false
     });
-    video.srcObject=batchStream;video.style.display='block';await video.play();
+    video.srcObject=batchStream;video.style.display='block';if($('batchScanGuide'))$('batchScanGuide').style.display='flex';await video.play();
 
     let detector=null;
     if('BarcodeDetector' in window){
@@ -3114,7 +3174,7 @@ window.startBatchCamera=async()=>{
           if(raw!==lastCode || now-lastAt>1800){
             lastCode=raw;lastAt=now;
             addBatchCode(raw);
-            msg.textContent='✅ 已掃描：'+raw;
+            msg.textContent='✅ QR 已辨識，正在加入工具…';
             if(navigator.vibrate)navigator.vibrate(80);
           }
         }
@@ -3140,6 +3200,7 @@ window.stopBatchCamera=()=>{
   if(batchStream){batchStream.getTracks().forEach(t=>t.stop());batchStream=null}
   const v=$('batchVideo');
   if(v){v.pause();v.srcObject=null;v.style.display='none'}
+  if($('batchScanGuide'))$('batchScanGuide').style.display='none';
 };
 
 window.confirmBatchLoan=async()=>{
@@ -3448,7 +3509,7 @@ function renderAttendance(dateStr){
   const groups=document.getElementById('attendanceGroups');
   if(!label||!count||!summary||!groups)return;
   label.textContent=formatWorkDate(dateStr);
-  // V17.27.2.1.1：當日出工人數依員工姓名去重複。
+  // V17.27.2.1.2：當日出工人數依員工姓名去重複。
   // 同一位師傅早上 A 案場 0.5 工、下午 B 案場 0.5 工，仍只算 1 人；工數與各案場紀錄維持原本計算。
   const uniqueWorkerCount=new Set(
     attendanceLogs
@@ -3603,7 +3664,7 @@ async function saveWorkLogs(){
     };
   });
 
-  // V17.27.2.1.1：同一位人員可分攤到多個案場，但正常工合計超過 1 工時提醒。
+  // V17.27.2.1.2：同一位人員可分攤到多個案場，但正常工合計超過 1 工時提醒。
   // 同一天同一案場為 upsert，因此計算時會先排除即將被覆蓋的舊紀錄。
   const overLimit=[];
   for(const newRow of rows){
@@ -4082,7 +4143,7 @@ async function saveWorkLogEdit(){
   if(!Number.isFinite(unitsNum) || unitsNum<=0 || unitsNum>1)
     return alert('正常工數必須大於 0 且不超過 1 工');
 
-  // V17.27.2.1.1：修改記工時也檢查同一人當日正常工數。
+  // V17.27.2.1.2：修改記工時也檢查同一人當日正常工數。
   const otherUnits=attendanceLogs
     .filter(r=>
       Number(r.id)!==id &&
