@@ -842,6 +842,8 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 
 /* V17.27.2.1.3 案場損益＋進度追蹤 */
 .project-hub-actions{display:flex;flex-direction:column;gap:8px;margin:10px 0}.project-hub-actions .btn{width:100%}.project-progress-list{display:grid;gap:10px}.project-progress-card{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:14px;padding:11px}.project-progress-head{display:flex;justify-content:space-between;gap:10px}.project-progress-photos,.progress-photo-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.project-progress-photos img,.progress-photo-preview img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.pnl-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pnl-card{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;padding:11px}.pnl-card span{display:block;color:var(--muted);font-size:10px}.pnl-card b{font-size:16px}.pnl-profit{grid-column:1/-1}.pnl-positive{color:#70e6a1}.pnl-negative{color:#ff8b8b}.progress-status-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.project-hub-actions{grid-template-columns:1fr}}
+.feature-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.feature-action-grid .btn{margin:0;min-height:54px}.feature-action-grid .wide{grid-column:1/-1}
+.plan-list,.personal-calendar-list{display:grid;gap:8px;margin-top:10px}.plan-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:rgba(255,255,255,.04)}.plan-card-head{display:flex;justify-content:space-between;gap:8px}.plan-card small{display:block;color:var(--muted);margin-top:4px}.review-status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900}.review-pending{background:#3b3020;color:#e5b766}.review-confirmed{background:#213328;color:#8fc19b}.review-reshoot,.review-issue{background:#402622;color:#f09a8c}.review-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.personal-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.personal-summary>div{text-align:center;border:1px solid var(--line);border-radius:12px;padding:10px 4px}.personal-summary b{display:block;font-size:18px}.personal-summary small{font-size:10px;color:var(--muted)}.personal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.personal-day{min-height:48px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font-size:12px}.personal-day.worked{background:rgba(168,123,80,.32);border-color:var(--accent);font-weight:900}.personal-day small{display:block;font-size:8px;color:var(--muted)}
 
 /* ===== V17.27.2.1 案場選單＋返回鍵放大 ===== */
 .work-close{
@@ -963,7 +965,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.12</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.13</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1029,7 +1031,13 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     <button class="attendance-main-btn" type="button" onclick="openWorkLog()">＋ 記工</button>
   </div>
 
-  <div id="workSuccessMsg" class="work-success"></div><div class="project-hub-actions"><button class="btn secondary" type="button" onclick="openProjectProgress()">📷 今日進度回報</button><button id="projectPnlBtn" class="btn secondary" type="button" onclick="openProjectPnl()">📊 案場損益</button></div>
+  <div id="workSuccessMsg" class="work-success"></div>
+  <div class="feature-action-grid">
+    <button id="workforcePlanBtn" class="btn secondary" type="button" onclick="openWorkforcePlan()">🗓 案場人力配置</button>
+    <button id="personalAttendanceBtn" class="btn secondary" type="button" onclick="openPersonalAttendance()">👤 個人出勤月曆</button>
+    <button class="btn secondary wide" type="button" onclick="openProjectProgress()">📷 今日進度回報／確認</button>
+    <button id="projectPnlBtn" class="btn secondary wide" type="button" onclick="openProjectPnl()">📊 案場損益</button>
+  </div>
 
   <div id="attendanceGroups" class="attendance-groups"></div>
 
@@ -3041,7 +3049,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.12';
+const APP_VERSION='17.27.2.1.13';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3106,7 +3114,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.12',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.13',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -4900,6 +4908,63 @@ setTimeout(bindRoleManagerButton,0);
 setTimeout(bindRegisterButton,0);
 setTimeout(bindForgotPasswordButton,0);
 
+// ===== V17.27.2.1.13 案場人力配置 =====
+let workforcePlans=[];
+function canEditWorkforcePlan(){return isAdmin()||isForeman()}
+async function openWorkforcePlan(){
+  if(!canManageAttendance())return alert('只有管理員、管理員助理或師傅頭可以查看人力配置');
+  await loadWorkMaster();
+  $('planDate').value=attendanceDateKey||localDateISO(new Date());
+  $('planSite').innerHTML=workSites.map(s=>`<option value="${Number(s.id)}">${esc(s.site_name)}</option>`).join('');
+  $('planWorker').innerHTML=workers.map(w=>`<option value="${Number(w.id)}">${esc(w.worker_name)}｜${esc(w.worker_type||'')}</option>`).join('');
+  ['planSite','planWorker','planUnits','planLeader','planNote','saveWorkforcePlanBtn'].forEach(id=>{const el=$(id);if(el)el.disabled=!canEditWorkforcePlan()});
+  $('workforcePlanModal').classList.add('show');
+  await loadWorkforcePlans();
+}
+function closeWorkforcePlan(){$('workforcePlanModal')?.classList.remove('show')}
+async function loadWorkforcePlans(){
+  const date=$('planDate')?.value;if(!date)return;
+  const {data,error}=await db.from('workforce_plans').select('*').eq('plan_date',date).order('site_name').order('worker_name');
+  if(error){$('workforcePlanList').innerHTML=`<div class="empty">${esc(error.message)}<br>請先執行本版 SQL 設定檔</div>`;return}
+  workforcePlans=data||[];
+  $('workforcePlanList').innerHTML=workforcePlans.length?workforcePlans.map(p=>`<div class="plan-card"><div class="plan-card-head"><div><b>${esc(p.site_name)}</b><small>${esc(p.worker_name)}｜${Number(p.planned_units||0)} 工${p.is_site_leader?'｜案場負責人':''}</small>${p.note?`<small>${esc(p.note)}</small>`:''}</div>${canEditWorkforcePlan()?`<button class="mini danger" onclick="deleteWorkforcePlan(${Number(p.id)})">刪除</button>`:''}</div></div>`).join(''):'<div class="empty">這天尚未安排人力</div>';
+}
+async function saveWorkforcePlan(){
+  if(!canEditWorkforcePlan())return alert('只有管理員或師傅頭可以安排人力');
+  const site=workSites.find(s=>Number(s.id)===Number($('planSite').value)),worker=workers.find(w=>Number(w.id)===Number($('planWorker').value));
+  if(!site||!worker)return alert('請選擇案場與人員');
+  const row={plan_date:$('planDate').value,site_id:site.id,site_name:site.site_name,worker_id:worker.id,worker_name:worker.worker_name,planned_units:Number($('planUnits').value||1),is_site_leader:$('planLeader').checked,note:$('planNote').value.trim()||null,created_by:currentUser?.id||null};
+  const {error}=await db.from('workforce_plans').upsert(row,{onConflict:'plan_date,site_id,worker_id'});if(error)return alert('安排失敗：'+error.message+'\n請先執行本版 SQL 設定檔');
+  $('planNote').value='';$('planLeader').checked=false;await loadWorkforcePlans();
+}
+async function deleteWorkforcePlan(id){if(!canEditWorkforcePlan())return;if(!confirm('確定刪除這筆人力安排？'))return;const {error}=await db.from('workforce_plans').delete().eq('id',id);if(error)return alert(error.message);await loadWorkforcePlans()}
+
+// ===== V17.27.2.1.13 個人出勤月曆 =====
+let personalAttendanceRows=[];
+async function openPersonalAttendance(){
+  if(!canViewAttendanceStats())return alert('只有管理員、管理員助理或師傅頭可以查看個人出勤');
+  await loadWorkMaster();
+  $('personalWorker').innerHTML=workers.map(w=>`<option value="${esc(w.worker_name)}">${esc(w.worker_name)}｜${esc(w.worker_type||'')}</option>`).join('');
+  const d=new Date();$('personalMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  $('personalAttendanceModal').classList.add('show');await loadPersonalAttendance();
+}
+function closePersonalAttendance(){$('personalAttendanceModal')?.classList.remove('show')}
+async function loadPersonalAttendance(){
+  const name=$('personalWorker')?.value,month=$('personalMonth')?.value;if(!name||!month)return;
+  const [y,m]=month.split('-').map(Number),start=`${month}-01`,end=localDateISO(new Date(y,m,0,12));
+  const {data,error}=await db.from('work_logs').select('work_date,site_name,employee_name,note,leave_hours,overtime_hours,is_site_leader').eq('employee_name',name).gte('work_date',start).lte('work_date',end).order('work_date');
+  if(error)return alert('個人出勤讀取失敗：'+error.message);personalAttendanceRows=data||[];renderPersonalAttendance(y,m);
+}
+function renderPersonalAttendance(y,m){
+  const units=personalAttendanceRows.reduce((s,r)=>s+workUnitsFromNote(r.note),0),leave=personalAttendanceRows.reduce((s,r)=>s+Number(r.leave_hours||0),0),ot=personalAttendanceRows.reduce((s,r)=>s+Number(r.overtime_hours||0),0);
+  $('personalUnits').textContent=Number(units.toFixed(3));$('personalLeave').textContent=Number(leave.toFixed(1));$('personalOvertime').textContent=Number(ot.toFixed(1));
+  const byDate={};personalAttendanceRows.forEach(r=>(byDate[r.work_date]??=[]).push(r));
+  const first=new Date(y,m-1,1,12).getDay(),days=new Date(y,m,0,12).getDate(),cells=[];for(let i=0;i<first;i++)cells.push('<div></div>');
+  for(let d=1;d<=days;d++){const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,rows=byDate[key]||[],u=rows.reduce((s,r)=>s+workUnitsFromNote(r.note),0);cells.push(`<button class="personal-day ${rows.length?'worked':''}" type="button" onclick="showPersonalAttendanceDay('${key}')">${d}${rows.length?`<small>${Number(u.toFixed(3))}工</small>`:''}</button>`)}
+  $('personalCalendarGrid').innerHTML=cells.join('');$('personalDayDetail').innerHTML='<div class="empty">點選有出勤的日期查看案場明細</div>';
+}
+function showPersonalAttendanceDay(date){const rows=personalAttendanceRows.filter(r=>r.work_date===date);$('personalDayDetail').innerHTML=rows.length?`<div class="plan-card"><b>${esc(date)}</b>${rows.map(r=>`<small>${esc(r.site_name)}｜${Number(workUnitsFromNote(r.note).toFixed(3))} 工${r.is_site_leader?'｜案場負責人':''}${Number(r.leave_hours||0)?`｜請假 ${Number(r.leave_hours)}h`:''}${Number(r.overtime_hours||0)?`｜加班 ${overtimeLabel(r.overtime_hours)}`:''}</small>`).join('')}</div>`:'<div class="empty">這天沒有出勤</div>'}
+
 
 // ===== V17.27.2.1 案場損益＋施工進度（module scope 修正版） =====
 function allProjectSites(){return [...workSites,...completedWorkSites].sort((a,b)=>String(a.site_name).localeCompare(String(b.site_name),'zh-Hant'))}
@@ -4921,6 +4986,10 @@ function fillProjectSiteSelect(id){
 function syncProjectButtons(){
   const pnl=$('projectPnlBtn');
   if(pnl)pnl.style.display=canViewWorkStats()?'block':'none';
+  const workforce=$('workforcePlanBtn');
+  if(workforce)workforce.style.display=canManageAttendance()?'block':'none';
+  const personal=$('personalAttendanceBtn');
+  if(personal)personal.style.display=canViewAttendanceStats()?'block':'none';
 }
 async function openProjectProgress(){
   try{await refreshProjectSites()}catch(e){return alert('案場讀取失敗：'+e.message)}
@@ -4932,7 +5001,10 @@ async function openProjectProgress(){
 function closeProjectProgress(){$('projectProgressModal')?.classList.remove('show')}
 async function uploadProgressPhoto(file,siteId){const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),path=`${siteId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;const {error}=await db.storage.from('site-progress').upload(path,file,{contentType:file.type||'image/jpeg'});if(error)throw error;return db.storage.from('site-progress').getPublicUrl(path).data.publicUrl}
 async function saveProjectProgress(){const siteId=Number($('progressSite').value),site=allProjectSites().find(s=>Number(s.id)===siteId);if(!site)return alert('請選擇案場');const btn=$('saveProgressBtn');btn.disabled=true;btn.textContent='上傳中…';try{const urls=[];for(const f of [...($('progressPhotos').files||[])].slice(0,9))urls.push(await uploadProgressPhoto(f,siteId));const {error}=await db.from('site_progress_reports').insert({site_id:siteId,site_name:site.site_name,report_date:$('progressDate').value||localDateISO(new Date()),progress_percent:Number($('progressPercent').value||0),status:$('progressStatus').value,note:$('progressNote').value.trim()||null,photo_urls:urls,reported_by:currentUser?.id||null,reported_by_name:currentDisplayName()||null});if(error)throw error;$('progressNote').value='';$('progressPhotos').value='';$('progressPhotoPreview').innerHTML='';await loadProjectProgress();alert('今日進度已回報')}catch(e){alert('進度回報失敗：'+e.message)}finally{btn.disabled=false;btn.textContent='儲存今日進度'}}
-async function loadProjectProgress(){const siteId=Number($('progressSite')?.value||0);if(!siteId)return;const {data,error}=await db.from('site_progress_reports').select('*').eq('site_id',siteId).order('report_date',{ascending:false}).limit(30);if(error){$('projectProgressList').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}$('projectProgressList').innerHTML=(data||[]).length?(data||[]).map(r=>`<div class="project-progress-card"><div class="project-progress-head"><div><b>${esc(r.report_date||'')}</b><div class="meta">${esc(r.reported_by_name||'')}｜${esc(r.status||'')}｜${Number(r.progress_percent||0)}%</div></div>${isAdmin()?`<button class="mini" onclick="deleteProjectProgress(${Number(r.id)})">刪除</button>`:''}</div>${r.note?`<p>${esc(r.note)}</p>`:''}<div class="project-progress-photos">${(r.photo_urls||[]).map(u=>`<img src="${esc(u)}">`).join('')}</div></div>`).join(''):'<div class="empty">尚無進度回報</div>'}
+async function loadProjectProgress(){const siteId=Number($('progressSite')?.value||0);if(!siteId)return;const {data,error}=await db.from('site_progress_reports').select('*').eq('site_id',siteId).order('report_date',{ascending:false}).limit(30);if(error){$('projectProgressList').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}$('projectProgressList').innerHTML=(data||[]).length?(data||[]).map(r=>{const review=r.review_status||'pending',label=review==='confirmed'?'已確認':review==='reshoot'?'需要補拍':review==='issue'?'有問題':'待確認';return `<div class="project-progress-card"><div class="project-progress-head"><div><b>${esc(r.report_date||'')}</b><div class="meta">${esc(r.reported_by_name||'')}｜${esc(r.status||'')}｜${Number(r.progress_percent||0)}%</div></div><span class="review-status review-${esc(review)}">${label}</span></div>${r.note?`<p>${esc(r.note)}</p>`:''}<div class="project-progress-photos">${(r.photo_urls||[]).map(u=>`<img src="${esc(u)}">`).join('')}</div>${r.review_note?`<div class="meta">管理回覆：${esc(r.review_note)}</div>`:''}${r.next_day_todo?`<div class="meta">明日待辦：${esc(r.next_day_todo)}</div>`:''}${isAdmin()?`<div class="review-actions"><button class="mini" onclick="openProgressReview(${Number(r.id)},'confirmed')">已確認</button><button class="mini" onclick="openProgressReview(${Number(r.id)},'reshoot')">補拍</button><button class="mini danger" onclick="openProgressReview(${Number(r.id)},'issue')">有問題</button><button class="mini danger" onclick="deleteProjectProgress(${Number(r.id)})">刪除</button></div>`:''}</div>`}).join(''):'<div class="empty">尚無進度回報</div>'}
+function openProgressReview(id,status='confirmed'){if(!isAdmin())return alert('只有管理員可以確認進度回報');$('progressReviewId').value=id;$('progressReviewStatus').value=status;$('progressReviewNote').value='';$('progressNextTodo').value='';$('progressReviewModal').classList.add('show')}
+function closeProgressReview(){$('progressReviewModal')?.classList.remove('show')}
+async function saveProgressReview(){if(!isAdmin())return alert('只有管理員可以確認進度回報');const {error}=await db.rpc('admin_review_site_progress',{p_report_id:Number($('progressReviewId').value),p_review_status:$('progressReviewStatus').value,p_review_note:$('progressReviewNote').value.trim()||null,p_next_day_todo:$('progressNextTodo').value.trim()||null});if(error)return alert('確認失敗：'+error.message+'\n請先執行本版 SQL 設定檔');closeProgressReview();await loadProjectProgress()}
 async function deleteProjectProgress(id){if(!isAdmin())return alert('只有管理員可以刪除進度回報');if(!confirm('確定刪除這筆進度回報？'))return;const {error}=await db.from('site_progress_reports').delete().eq('id',id);if(error)return alert(error.message);await loadProjectProgress()}
 
 async function openProjectPnl(){if(!canViewWorkStats())return alert('只有管理員或管理員助理可以查看案場損益');try{await refreshProjectSites()}catch(e){return alert('案場讀取失敗：'+e.message)}fillProjectSiteSelect('pnlSite');$('projectPnlModal').classList.add('show');await loadProjectPnl()}
@@ -4953,6 +5025,18 @@ Object.assign(window,{
   saveProjectProgress,
   loadProjectProgress,
   deleteProjectProgress,
+  openProgressReview,
+  closeProgressReview,
+  saveProgressReview,
+  openWorkforcePlan,
+  closeWorkforcePlan,
+  loadWorkforcePlans,
+  saveWorkforcePlan,
+  deleteWorkforcePlan,
+  openPersonalAttendance,
+  closePersonalAttendance,
+  loadPersonalAttendance,
+  showPersonalAttendanceDay,
   openProjectPnl,
   closeProjectPnl,
   loadProjectPnl,
@@ -5253,6 +5337,12 @@ Object.assign(window,{
     <button id="saveSiteScheduleBtn" class="work-submit" type="button" onclick="saveSiteSchedule()">儲存日期</button>
   </div>
 </div>
+
+<div id="workforcePlanModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>🗓 案場人力配置</h2><button class="work-close" type="button" onclick="closeWorkforcePlan()">×</button></div><div class="work-field"><label>安排日期</label><input id="planDate" type="date" onchange="loadWorkforcePlans()"></div><div class="row"><div class="work-field"><label>案場</label><select id="planSite"></select></div><div class="work-field"><label>人員</label><select id="planWorker"></select></div></div><div class="row"><div class="work-field"><label>預計工數</label><select id="planUnits"><option value="1">1 工</option><option value="0.5">0.5 工</option><option value="0.25">0.25 工</option><option value="0.125">0.125 工</option></select></div><div class="work-field"><label>案場負責人</label><label style="display:flex;align-items:center;gap:8px;padding:12px"><input id="planLeader" type="checkbox"> 是</label></div></div><div class="work-field"><label>安排備註</label><input id="planNote" placeholder="例如：櫃體安裝、天花板施工"></div><button id="saveWorkforcePlanBtn" class="work-submit" type="button" onclick="saveWorkforcePlan()">加入人力安排</button><div class="stats-section-title">當日安排</div><div id="workforcePlanList" class="plan-list"></div></div></div>
+
+<div id="personalAttendanceModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>👤 個人出勤月曆</h2><button class="work-close" type="button" onclick="closePersonalAttendance()">×</button></div><div class="row"><div class="work-field"><label>人員</label><select id="personalWorker" onchange="loadPersonalAttendance()"></select></div><div class="work-field"><label>月份</label><input id="personalMonth" type="month" onchange="loadPersonalAttendance()"></div></div><div class="personal-summary"><div><b id="personalUnits">0</b><small>本月工數</small></div><div><b id="personalLeave">0</b><small>請假時數</small></div><div><b id="personalOvertime">0</b><small>加班紀錄</small></div></div><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="personalCalendarGrid" class="personal-month-grid"></div><div id="personalDayDetail" class="personal-calendar-list"></div><div class="stats-sub" style="margin-top:10px">此畫面只顯示出勤、工數、請假與加班，不顯示日薪或薪資金額。</div></div></div>
+
+<div id="progressReviewModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>✅ 進度回報確認</h2><button class="work-close" type="button" onclick="closeProgressReview()">×</button></div><input id="progressReviewId" type="hidden"><div class="work-field"><label>確認狀態</label><select id="progressReviewStatus"><option value="confirmed">已確認</option><option value="reshoot">需要補拍</option><option value="issue">有問題</option></select></div><div class="work-field"><label>管理回覆</label><textarea id="progressReviewNote" placeholder="例如：右側收邊請再補拍近照"></textarea></div><div class="work-field"><label>明日待辦</label><textarea id="progressNextTodo" placeholder="例如：完成門片安裝並補拍"></textarea></div><button class="work-submit" type="button" onclick="saveProgressReview()">儲存確認結果</button></div></div>
 
 <div id="projectProgressModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>📷 今日進度回報</h2><button class="work-close" type="button" onclick="closeProjectProgress()">×</button></div><div class="work-field"><label>案場</label><select id="progressSite" class="select"></select></div><div class="progress-status-row"><div class="work-field"><label>日期</label><input id="progressDate" class="input" type="date"></div><div class="work-field"><label>進度</label><select id="progressPercent" class="select"><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100% 完成</option></select></div></div><div class="work-field"><label>施工狀態</label><select id="progressStatus" class="select"><option>施工中</option><option>接近完成</option><option>已完成</option><option>待料／暫停</option></select></div><div class="work-field"><label>今日施工說明</label><textarea id="progressNote" class="textarea"></textarea></div><div class="work-field"><label>施工照片（最多9張）</label><input id="progressPhotos" class="input" type="file" accept="image/*" multiple><div id="progressPhotoPreview" class="progress-photo-preview"></div></div><button id="saveProgressBtn" class="btn" onclick="saveProjectProgress()">儲存今日進度</button><div class="label" style="margin-top:14px">最近回報</div><div id="projectProgressList" class="project-progress-list"></div></div></div>
 <div id="projectPnlModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>📊 案場損益</h2><button class="work-close" type="button" onclick="closeProjectPnl()">×</button></div><div class="work-field"><label>案場</label><select id="pnlSite" class="select" onchange="loadProjectPnl()"></select></div><div class="row"><div><div class="label">原始報價</div><input id="pnlQuote" class="input" type="number" min="0"></div><div><div class="label">追加工程</div><input id="pnlExtra" class="input" type="number" min="0"></div></div><div class="row"><div><div class="label">材料成本</div><input id="pnlMaterial" class="input" type="number" min="0"></div><div><div class="label">外包成本</div><input id="pnlSubcontract" class="input" type="number" min="0"></div></div><div class="row"><div><div class="label">運費／吊料／垃圾</div><input id="pnlLogistics" class="input" type="number" min="0"></div><div><div class="label">其他成本</div><input id="pnlOther" class="input" type="number" min="0"></div></div><div class="label">備註</div><textarea id="pnlNote" class="textarea"></textarea><button class="btn" onclick="saveProjectPnl()">儲存損益資料</button><div id="pnlSummary" style="margin-top:12px"></div><button class="btn secondary" onclick="printProjectPnl()">列印／產出損益表</button></div></div>
