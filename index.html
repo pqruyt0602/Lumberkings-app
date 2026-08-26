@@ -848,17 +848,17 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 #progressPhotoLightbox.show{display:flex}
 #progressPhotoLightbox .photo-lightbox-stage{position:absolute;inset:64px 54px 88px;display:flex;align-items:center;justify-content:center}
 #progressPhotoLightboxImg{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 10px 45px #000}
-#progressPhotoLightbox .photo-lightbox-close{position:absolute;top:14px;right:16px;width:44px;height:44px;border:1px solid #ffffff55;border-radius:50%;background:#161616cc;color:#fff;font-size:28px;z-index:2}
+#progressPhotoLightbox .photo-lightbox-close{position:absolute;top:18px;right:16px;width:44px;height:44px;border:1px solid #ffffff55;border-radius:50%;background:#161616cc;color:#fff;font-size:28px;z-index:2}
 #progressPhotoLightbox .photo-lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:58px;border:1px solid #ffffff33;border-radius:13px;background:#181818cc;color:#fff;font-size:34px;z-index:2}
 #progressPhotoLightbox .photo-lightbox-prev{left:10px}#progressPhotoLightbox .photo-lightbox-next{right:10px}
 #progressPhotoLightbox .photo-lightbox-footer{position:absolute;left:12px;right:12px;bottom:18px;display:flex;align-items:center;justify-content:center;gap:14px}
 #progressPhotoLightboxCounter{min-width:58px;text-align:center;color:#ddd;font-weight:900}
 #progressPhotoLightbox .photo-download{min-height:42px;padding:0 16px;border:1px solid #c79665;border-radius:12px;background:#a87b50;color:#fff;font-weight:900}
-@media(max-width:600px){#progressPhotoLightbox .photo-lightbox-stage{inset:62px 10px 86px}#progressPhotoLightbox .photo-lightbox-nav{top:auto;bottom:15px;width:44px;height:44px;border-radius:50%}#progressPhotoLightbox .photo-lightbox-prev{left:14px}#progressPhotoLightbox .photo-lightbox-next{right:14px}}
+@media(max-width:600px){#progressPhotoLightbox .photo-lightbox-close{top:max(62px,calc(env(safe-area-inset-top) + 16px));right:18px}#progressPhotoLightbox .photo-lightbox-stage{inset:118px 10px 86px}#progressPhotoLightbox .photo-lightbox-nav{top:auto;bottom:15px;width:44px;height:44px;border-radius:50%}#progressPhotoLightbox .photo-lightbox-prev{left:14px}#progressPhotoLightbox .photo-lightbox-next{right:14px}}
 .feature-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.feature-action-grid .btn{margin:0;min-height:54px}.feature-action-grid .wide{grid-column:1/-1}
 .plan-list,.personal-calendar-list{display:grid;gap:8px;margin-top:10px}.plan-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:rgba(255,255,255,.04)}.plan-card-head{display:flex;justify-content:space-between;gap:8px}.plan-card small{display:block;color:var(--muted);margin-top:4px}.review-status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900}.review-pending{background:#3b3020;color:#e5b766}.review-confirmed{background:#213328;color:#8fc19b}.review-reshoot,.review-issue{background:#402622;color:#f09a8c}.review-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.personal-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.personal-summary>div{text-align:center;border:1px solid var(--line);border-radius:12px;padding:10px 4px}.personal-summary b{display:block;font-size:18px}.personal-summary small{font-size:10px;color:var(--muted)}.personal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.personal-day{min-height:48px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font-size:12px}.personal-day.worked{background:rgba(168,123,80,.32);border-color:var(--accent);font-weight:900}.personal-day small{display:block;font-size:8px;color:var(--muted)}
 
-/* ===== V17.27.2.1.18 個人出勤月曆美化 ===== */
+/* ===== V17.27.2.1.19 個人出勤月曆美化 ===== */
 .feature-action-grid #personalAttendanceBtn{grid-column:1/-1}
 #personalAttendanceModal .work-sheet{width:min(480px,100%);padding:0 0 calc(22px + env(safe-area-inset-bottom));overflow:hidden;background:#1f1e1c}
 #personalAttendanceModal .personal-modal-head{padding:18px 18px 15px;background:linear-gradient(145deg,#33291f,#24211e);border-bottom:1px solid #4a3a2b}
@@ -1013,7 +1013,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.18</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.19</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -3099,7 +3099,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.18';
+const APP_VERSION='17.27.2.1.19';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3164,7 +3164,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.18',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.19',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
