@@ -843,10 +843,22 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 
 /* V17.27.2.1.3 案場損益＋進度追蹤 */
 .project-hub-actions{display:flex;flex-direction:column;gap:8px;margin:10px 0}.project-hub-actions .btn{width:100%}.project-progress-list{display:grid;gap:10px}.project-progress-card{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:14px;padding:11px}.project-progress-head{display:flex;justify-content:space-between;gap:10px}.project-progress-photos,.progress-photo-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.project-progress-photos img,.progress-photo-preview img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.pnl-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pnl-card{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;padding:11px}.pnl-card span{display:block;color:var(--muted);font-size:10px}.pnl-card b{font-size:16px}.pnl-profit{grid-column:1/-1}.pnl-positive{color:#70e6a1}.pnl-negative{color:#ff8b8b}.progress-status-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.project-hub-actions{grid-template-columns:1fr}}
+.project-progress-photos img{cursor:zoom-in;transition:transform .15s,border-color .15s}.project-progress-photos img:hover{transform:scale(1.025);border-color:var(--accent)}
+#progressPhotoLightbox{position:fixed;inset:0;z-index:2147483647;display:none;background:rgba(0,0,0,.96);color:#fff;align-items:center;justify-content:center;touch-action:pan-y}
+#progressPhotoLightbox.show{display:flex}
+#progressPhotoLightbox .photo-lightbox-stage{position:absolute;inset:64px 54px 88px;display:flex;align-items:center;justify-content:center}
+#progressPhotoLightboxImg{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 10px 45px #000}
+#progressPhotoLightbox .photo-lightbox-close{position:absolute;top:14px;right:16px;width:44px;height:44px;border:1px solid #ffffff55;border-radius:50%;background:#161616cc;color:#fff;font-size:28px;z-index:2}
+#progressPhotoLightbox .photo-lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:58px;border:1px solid #ffffff33;border-radius:13px;background:#181818cc;color:#fff;font-size:34px;z-index:2}
+#progressPhotoLightbox .photo-lightbox-prev{left:10px}#progressPhotoLightbox .photo-lightbox-next{right:10px}
+#progressPhotoLightbox .photo-lightbox-footer{position:absolute;left:12px;right:12px;bottom:18px;display:flex;align-items:center;justify-content:center;gap:14px}
+#progressPhotoLightboxCounter{min-width:58px;text-align:center;color:#ddd;font-weight:900}
+#progressPhotoLightbox .photo-download{min-height:42px;padding:0 16px;border:1px solid #c79665;border-radius:12px;background:#a87b50;color:#fff;font-weight:900}
+@media(max-width:600px){#progressPhotoLightbox .photo-lightbox-stage{inset:62px 10px 86px}#progressPhotoLightbox .photo-lightbox-nav{top:auto;bottom:15px;width:44px;height:44px;border-radius:50%}#progressPhotoLightbox .photo-lightbox-prev{left:14px}#progressPhotoLightbox .photo-lightbox-next{right:14px}}
 .feature-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.feature-action-grid .btn{margin:0;min-height:54px}.feature-action-grid .wide{grid-column:1/-1}
 .plan-list,.personal-calendar-list{display:grid;gap:8px;margin-top:10px}.plan-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:rgba(255,255,255,.04)}.plan-card-head{display:flex;justify-content:space-between;gap:8px}.plan-card small{display:block;color:var(--muted);margin-top:4px}.review-status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900}.review-pending{background:#3b3020;color:#e5b766}.review-confirmed{background:#213328;color:#8fc19b}.review-reshoot,.review-issue{background:#402622;color:#f09a8c}.review-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.personal-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.personal-summary>div{text-align:center;border:1px solid var(--line);border-radius:12px;padding:10px 4px}.personal-summary b{display:block;font-size:18px}.personal-summary small{font-size:10px;color:var(--muted)}.personal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.personal-day{min-height:48px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font-size:12px}.personal-day.worked{background:rgba(168,123,80,.32);border-color:var(--accent);font-weight:900}.personal-day small{display:block;font-size:8px;color:var(--muted)}
 
-/* ===== V17.27.2.1.17 個人出勤月曆美化 ===== */
+/* ===== V17.27.2.1.18 個人出勤月曆美化 ===== */
 .feature-action-grid #personalAttendanceBtn{grid-column:1/-1}
 #personalAttendanceModal .work-sheet{width:min(480px,100%);padding:0 0 calc(22px + env(safe-area-inset-bottom));overflow:hidden;background:#1f1e1c}
 #personalAttendanceModal .personal-modal-head{padding:18px 18px 15px;background:linear-gradient(145deg,#33291f,#24211e);border-bottom:1px solid #4a3a2b}
@@ -1001,7 +1013,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.17</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.18</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -3087,7 +3099,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.17';
+const APP_VERSION='17.27.2.1.18';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3152,7 +3164,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.17',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.18',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -5018,7 +5030,37 @@ async function openProjectProgress(){
 function closeProjectProgress(){$('projectProgressModal')?.classList.remove('show')}
 async function uploadProgressPhoto(file,siteId){const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),path=`${siteId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;const {error}=await db.storage.from('site-progress').upload(path,file,{contentType:file.type||'image/jpeg'});if(error)throw error;return db.storage.from('site-progress').getPublicUrl(path).data.publicUrl}
 async function saveProjectProgress(){const siteId=Number($('progressSite').value),site=allProjectSites().find(s=>Number(s.id)===siteId);if(!site)return alert('請選擇案場');const btn=$('saveProgressBtn');btn.disabled=true;btn.textContent='上傳中…';try{const urls=[];for(const f of [...($('progressPhotos').files||[])].slice(0,9))urls.push(await uploadProgressPhoto(f,siteId));const {error}=await db.from('site_progress_reports').insert({site_id:siteId,site_name:site.site_name,report_date:$('progressDate').value||localDateISO(new Date()),progress_percent:Number($('progressPercent').value||0),status:$('progressStatus').value,note:$('progressNote').value.trim()||null,photo_urls:urls,reported_by:currentUser?.id||null,reported_by_name:currentDisplayName()||null});if(error)throw error;$('progressNote').value='';$('progressPhotos').value='';$('progressPhotoPreview').innerHTML='';await loadProjectProgress();alert('今日進度已回報')}catch(e){alert('進度回報失敗：'+e.message)}finally{btn.disabled=false;btn.textContent='儲存今日進度'}}
-async function loadProjectProgress(){const siteId=Number($('progressSite')?.value||0);if(!siteId)return;const {data,error}=await db.from('site_progress_reports').select('*').eq('site_id',siteId).order('report_date',{ascending:false}).limit(30);if(error){$('projectProgressList').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}$('projectProgressList').innerHTML=(data||[]).length?(data||[]).map(r=>{const review=r.review_status||'pending',label=review==='confirmed'?'已確認':review==='reshoot'?'需要補拍':review==='issue'?'有問題':'待確認';return `<div class="project-progress-card"><div class="project-progress-head"><div><b>${esc(r.report_date||'')}</b><div class="meta">${esc(r.reported_by_name||'')}｜${esc(r.status||'')}｜${Number(r.progress_percent||0)}%</div></div><span class="review-status review-${esc(review)}">${label}</span></div>${r.note?`<p>${esc(r.note)}</p>`:''}<div class="project-progress-photos">${(r.photo_urls||[]).map(u=>`<img src="${esc(u)}">`).join('')}</div>${r.review_note?`<div class="meta">管理回覆：${esc(r.review_note)}</div>`:''}${r.next_day_todo?`<div class="meta">明日待辦：${esc(r.next_day_todo)}</div>`:''}${isAdmin()?`<div class="review-actions"><button class="mini" onclick="openProgressReview(${Number(r.id)},'confirmed')">已確認</button><button class="mini" onclick="openProgressReview(${Number(r.id)},'reshoot')">補拍</button><button class="mini danger" onclick="openProgressReview(${Number(r.id)},'issue')">有問題</button><button class="mini danger" onclick="deleteProjectProgress(${Number(r.id)})">刪除</button></div>`:''}</div>`}).join(''):'<div class="empty">尚無進度回報</div>'}
+let progressGallerySets={},activeProgressGallery=null,activeProgressPhotoIndex=0,progressPhotoTouchStartX=0;
+async function loadProjectProgress(){
+  const siteId=Number($('progressSite')?.value||0);if(!siteId)return;
+  const {data,error}=await db.from('site_progress_reports').select('*').eq('site_id',siteId).order('report_date',{ascending:false}).limit(30);
+  if(error){$('projectProgressList').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}
+  progressGallerySets={};
+  (data||[]).forEach(r=>{progressGallerySets[Number(r.id)]={urls:Array.isArray(r.photo_urls)?r.photo_urls:[],siteName:r.site_name||'案場',date:r.report_date||''}});
+  $('projectProgressList').innerHTML=(data||[]).length?(data||[]).map(r=>{
+    const review=r.review_status||'pending',label=review==='confirmed'?'已確認':review==='reshoot'?'需要補拍':review==='issue'?'有問題':'待確認',urls=Array.isArray(r.photo_urls)?r.photo_urls:[];
+    return `<div class="project-progress-card"><div class="project-progress-head"><div><b>${esc(r.report_date||'')}</b><div class="meta">${esc(r.reported_by_name||'')}｜${esc(r.status||'')}｜${Number(r.progress_percent||0)}%</div></div><span class="review-status review-${esc(review)}">${label}</span></div>${r.note?`<p>${esc(r.note)}</p>`:''}<div class="project-progress-photos">${urls.map((u,i)=>`<img src="${esc(u)}" alt="${esc(r.site_name||'案場')}施工照片 ${i+1}" loading="lazy" onclick="openProgressPhotoGallery(${Number(r.id)},${i})">`).join('')}</div>${r.review_note?`<div class="meta">管理回覆：${esc(r.review_note)}</div>`:''}${r.next_day_todo?`<div class="meta">明日待辦：${esc(r.next_day_todo)}</div>`:''}${isAdmin()?`<div class="review-actions"><button class="mini" onclick="openProgressReview(${Number(r.id)},'confirmed')">已確認</button><button class="mini" onclick="openProgressReview(${Number(r.id)},'reshoot')">補拍</button><button class="mini danger" onclick="openProgressReview(${Number(r.id)},'issue')">有問題</button><button class="mini danger" onclick="deleteProjectProgress(${Number(r.id)})">刪除</button></div>`:''}</div>`;
+  }).join(''):'<div class="empty">尚無進度回報</div>';
+}
+function openProgressPhotoGallery(reportId,index=0){
+  const gallery=progressGallerySets[Number(reportId)];if(!gallery?.urls?.length)return;
+  activeProgressGallery=gallery;activeProgressPhotoIndex=Math.max(0,Math.min(Number(index)||0,gallery.urls.length-1));
+  $('progressPhotoLightbox')?.classList.add('show');document.body.style.overflow='hidden';renderProgressPhotoGallery();
+}
+function renderProgressPhotoGallery(){
+  if(!activeProgressGallery)return;const total=activeProgressGallery.urls.length;
+  activeProgressPhotoIndex=(activeProgressPhotoIndex+total)%total;
+  $('progressPhotoLightboxImg').src=activeProgressGallery.urls[activeProgressPhotoIndex];
+  $('progressPhotoLightboxCounter').textContent=`${activeProgressPhotoIndex+1} / ${total}`;
+}
+function changeProgressPhoto(delta){if(!activeProgressGallery)return;activeProgressPhotoIndex+=Number(delta||0);renderProgressPhotoGallery()}
+function closeProgressPhotoGallery(){
+  $('progressPhotoLightbox')?.classList.remove('show');$('progressPhotoLightboxImg')?.removeAttribute('src');activeProgressGallery=null;document.body.style.overflow='';
+}
+async function downloadCurrentProgressPhoto(){
+  if(!activeProgressGallery)return;const url=activeProgressGallery.urls[activeProgressPhotoIndex],safe=s=>String(s||'').replace(/[\\/:*?"<>|]/g,'_'),name=`${safe(activeProgressGallery.siteName)}_${safe(activeProgressGallery.date)}_${String(activeProgressPhotoIndex+1).padStart(2,'0')}.jpg`;
+  try{const res=await fetch(url);if(!res.ok)throw new Error('下載失敗');const blob=await res.blob(),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}catch(e){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download=name;a.click()}
+}
 function openProgressReview(id,status='confirmed'){if(!isAdmin())return alert('只有管理員可以確認進度回報');const modal=$('progressReviewModal');if(!modal)return alert('找不到進度確認視窗，請重新整理頁面');$('progressReviewId').value=id;$('progressReviewStatus').value=status;$('progressReviewNote').value='';$('progressNextTodo').value='';modal.classList.add('show')}
 function closeProgressReview(){$('progressReviewModal')?.classList.remove('show')}
 async function saveProgressReview(){if(!isAdmin())return alert('只有管理員可以確認進度回報');const btn=$('saveProgressReviewBtn');if(btn){btn.disabled=true;btn.textContent='儲存中…'}try{const {error}=await db.rpc('admin_review_site_progress',{p_report_id:Number($('progressReviewId').value),p_review_status:$('progressReviewStatus').value,p_review_note:$('progressReviewNote').value.trim()||null,p_next_day_todo:$('progressNextTodo').value.trim()||null});if(error)throw error;closeProgressReview();await loadProjectProgress()}catch(e){alert('確認失敗：'+e.message+'\n請先執行本版 SQL 設定檔')}finally{if(btn){btn.disabled=false;btn.textContent='儲存確認結果'}}}
@@ -5034,6 +5076,9 @@ function printProjectPnl(){const x=window._lastPnl;if(!x)return alert('請先載
 $('progressPhotos')?.addEventListener('change',e=>{$('progressPhotoPreview').innerHTML=[...(e.target.files||[])].slice(0,9).map(f=>`<img src="${URL.createObjectURL(f)}">`).join('')});
 $('progressSite')?.addEventListener('change',()=>loadProjectProgress());
 $('pnlSite')?.addEventListener('change',()=>loadProjectPnl());
+document.addEventListener('keydown',e=>{if(!$('progressPhotoLightbox')?.classList.contains('show'))return;if(e.key==='Escape')closeProgressPhotoGallery();if(e.key==='ArrowLeft')changeProgressPhoto(-1);if(e.key==='ArrowRight')changeProgressPhoto(1)});
+$('progressPhotoLightbox')?.addEventListener('touchstart',e=>{progressPhotoTouchStartX=e.changedTouches[0]?.clientX||0},{passive:true});
+$('progressPhotoLightbox')?.addEventListener('touchend',e=>{const dx=(e.changedTouches[0]?.clientX||0)-progressPhotoTouchStartX;if(Math.abs(dx)>45)changeProgressPhoto(dx>0?-1:1)},{passive:true});
 ['pnlQuote','pnlExtra','pnlMaterial','pnlSubcontract','pnlLogistics','pnlOther'].forEach(id=>$(id)?.addEventListener('input',async()=>{const site=allProjectSites().find(s=>Number(s.id)===Number($('pnlSite')?.value));if(site)try{renderPnlSummary(site,await projectLaborCost(site.site_name))}catch(e){}}));
 
 Object.assign(window,{
@@ -5045,6 +5090,10 @@ Object.assign(window,{
   openProgressReview,
   closeProgressReview,
   saveProgressReview,
+  openProgressPhotoGallery,
+  closeProgressPhotoGallery,
+  changeProgressPhoto,
+  downloadCurrentProgressPhoto,
   openPersonalAttendance,
   closePersonalAttendance,
   changePersonalAttendanceMonth,
@@ -5354,6 +5403,8 @@ Object.assign(window,{
 <div id="personalAttendanceModal" class="work-modal"><div class="work-sheet"><div class="personal-modal-head"><div class="work-head"><div><h2>👤 個人出勤月曆</h2><div class="personal-modal-sub">每月出勤、工數與請假紀錄</div></div><button class="work-close" type="button" onclick="closePersonalAttendance()">×</button></div></div><div class="personal-body"><div id="personalWorkerField" class="personal-filter"><label>查看人員</label><select id="personalWorker" onchange="loadPersonalAttendance()"></select></div><div class="personal-toolbar"><button type="button" onclick="changePersonalAttendanceMonth(-1)" aria-label="上個月">‹</button><div class="personal-filter"><label>月份</label><input id="personalMonth" type="month" onchange="loadPersonalAttendance()"></div><button type="button" onclick="changePersonalAttendanceMonth(1)" aria-label="下個月">›</button></div><div class="personal-summary"><div><b id="personalUnits">0</b><small>本月工數</small></div><div><b id="personalLeave">0</b><small>請假時數</small></div><div><b id="personalOvertime">0</b><small>加班時數</small></div></div><div class="personal-calendar-card"><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="personalCalendarGrid" class="personal-month-grid"></div></div><div id="personalDayDetail" class="personal-calendar-list"></div><div class="personal-privacy-note">管理員與管理員助理可查看全部人員；其他角色只顯示自己的出勤。本頁不顯示薪資金額。</div></div></div></div>
 
 <div id="progressReviewModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>✅ 進度回報確認</h2><button class="work-close" type="button" onclick="closeProgressReview()">×</button></div><input id="progressReviewId" type="hidden"><div class="work-field"><label>確認狀態</label><select id="progressReviewStatus"><option value="confirmed">已確認</option><option value="reshoot">需要補拍</option><option value="issue">有問題</option></select></div><div class="work-field"><label>管理回覆</label><textarea id="progressReviewNote" placeholder="例如：右側收邊請再補拍近照"></textarea></div><div class="work-field"><label>明日待辦</label><textarea id="progressNextTodo" placeholder="例如：完成門片安裝並補拍"></textarea></div><button id="saveProgressReviewBtn" class="work-submit" type="button" onclick="saveProgressReview()">儲存確認結果</button></div></div>
+
+<div id="progressPhotoLightbox" role="dialog" aria-modal="true" aria-label="案場照片瀏覽" onclick="if(event.target===this)closeProgressPhotoGallery()"><button class="photo-lightbox-close" type="button" onclick="closeProgressPhotoGallery()" aria-label="關閉">×</button><button class="photo-lightbox-nav photo-lightbox-prev" type="button" onclick="changeProgressPhoto(-1)" aria-label="上一張">‹</button><div class="photo-lightbox-stage"><img id="progressPhotoLightboxImg" alt="放大的案場施工照片"></div><button class="photo-lightbox-nav photo-lightbox-next" type="button" onclick="changeProgressPhoto(1)" aria-label="下一張">›</button><div class="photo-lightbox-footer"><span id="progressPhotoLightboxCounter">1 / 1</span><button class="photo-download" type="button" onclick="downloadCurrentProgressPhoto()">⬇ 下載照片</button></div></div>
 
 <div id="projectProgressModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>📷 今日進度回報</h2><button class="work-close" type="button" onclick="closeProjectProgress()">×</button></div><div class="work-field"><label>案場</label><select id="progressSite" class="select"></select></div><div class="progress-status-row"><div class="work-field"><label>日期</label><input id="progressDate" class="input" type="date"></div><div class="work-field"><label>進度</label><select id="progressPercent" class="select"><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option><option value="90">90%</option><option value="100">100% 完成</option></select></div></div><div class="work-field"><label>施工狀態</label><select id="progressStatus" class="select"><option>施工中</option><option>接近完成</option><option>已完成</option><option>待料／暫停</option></select></div><div class="work-field"><label>今日施工說明</label><textarea id="progressNote" class="textarea"></textarea></div><div class="work-field"><label>施工照片（最多9張）</label><input id="progressPhotos" class="input" type="file" accept="image/*" multiple><div id="progressPhotoPreview" class="progress-photo-preview"></div></div><button id="saveProgressBtn" class="btn" onclick="saveProjectProgress()">儲存今日進度</button><div class="label" style="margin-top:14px">最近回報</div><div id="projectProgressList" class="project-progress-list"></div></div></div>
 <div id="projectPnlModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>📊 案場損益</h2><button class="work-close" type="button" onclick="closeProjectPnl()">×</button></div><div class="work-field"><label>案場</label><select id="pnlSite" class="select" onchange="loadProjectPnl()"></select></div><div class="row"><div><div class="label">原始報價</div><input id="pnlQuote" class="input" type="number" min="0"></div><div><div class="label">追加工程</div><input id="pnlExtra" class="input" type="number" min="0"></div></div><div class="row"><div><div class="label">材料成本</div><input id="pnlMaterial" class="input" type="number" min="0"></div><div><div class="label">外包成本</div><input id="pnlSubcontract" class="input" type="number" min="0"></div></div><div class="row"><div><div class="label">運費／吊料／垃圾</div><input id="pnlLogistics" class="input" type="number" min="0"></div><div><div class="label">其他成本</div><input id="pnlOther" class="input" type="number" min="0"></div></div><div class="label">備註</div><textarea id="pnlNote" class="textarea"></textarea><button class="btn" onclick="saveProjectPnl()">儲存損益資料</button><div id="pnlSummary" style="margin-top:12px"></div><button class="btn secondary" onclick="printProjectPnl()">列印／產出損益表</button></div></div>
