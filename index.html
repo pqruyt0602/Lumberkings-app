@@ -967,7 +967,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.15</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.16</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1035,7 +1035,6 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 
   <div id="workSuccessMsg" class="work-success"></div>
   <div class="feature-action-grid">
-    <button id="workforcePlanBtn" class="btn secondary" type="button" onclick="openWorkforcePlan()">🗓 案場人力配置</button>
     <button id="personalAttendanceBtn" class="btn secondary" type="button" onclick="openPersonalAttendance()">👤 個人出勤月曆</button>
     <button class="btn secondary wide" type="button" onclick="openProjectProgress()">📷 今日進度回報／確認</button>
     <button id="projectPnlBtn" class="btn secondary wide" type="button" onclick="openProjectPnl()">📊 案場損益</button>
@@ -1390,6 +1389,9 @@ function canViewWorkStats(){
 }
 function canViewAttendanceStats(){
   return canViewWorkStats() || isForeman();
+}
+function canViewAllPersonalAttendance(){
+  return isAdmin() || isManagerAssistant();
 }
 function canEditSiteSchedule(){
   return isAdmin() || isForeman();
@@ -3051,7 +3053,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.15';
+const APP_VERSION='17.27.2.1.16';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3116,7 +3118,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.15',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.16',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -4910,66 +4912,23 @@ setTimeout(bindRoleManagerButton,0);
 setTimeout(bindRegisterButton,0);
 setTimeout(bindForgotPasswordButton,0);
 
-// ===== V17.27.2.1.13 案場人力配置 =====
-let workforcePlans=[];
-function canEditWorkforcePlan(){return isAdmin()||isForeman()}
-async function openWorkforcePlan(){
-  if(!canManageAttendance())return alert('只有管理員、管理員助理或師傅頭可以查看人力配置');
-  await loadWorkMaster();
-  $('planDate').value=attendanceDateKey||localDateISO(new Date());
-  $('planSite').innerHTML=workSites.map(s=>`<option value="${Number(s.id)}">${esc(s.site_name)}</option>`).join('');
-  $('planWorker').innerHTML=workers.map(w=>`<option value="${Number(w.id)}">${esc(w.worker_name)}｜${esc(w.worker_type||'')}</option>`).join('');
-  ['planSite','planWorker','planUnits','planLeader','planNote','saveWorkforcePlanBtn'].forEach(id=>{const el=$(id);if(el)el.disabled=!canEditWorkforcePlan()});
-  if($('openWorkforcePlanFormBtn'))$('openWorkforcePlanFormBtn').style.display=canEditWorkforcePlan()?'block':'none';
-  toggleWorkforcePlanForm(false);
-  $('workforcePlanModal').classList.add('show');
-  await loadWorkforcePlans();
-}
-function closeWorkforcePlan(){$('workforcePlanModal')?.classList.remove('show')}
-function toggleWorkforcePlanForm(show){
-  const form=$('workforcePlanForm');if(!form)return;
-  const visible=show===undefined?!form.classList.contains('show'):!!show;
-  form.classList.toggle('show',visible);
-  if(visible)setTimeout(()=>$('planWorker')?.focus(),60);
-}
-function changeWorkforcePlanDate(delta){
-  const base=localDateFromISO($('planDate')?.value||localDateISO(new Date()));
-  base.setDate(base.getDate()+Number(delta||0));
-  $('planDate').value=localDateISO(base);
-  return loadWorkforcePlans();
-}
-async function loadWorkforcePlans(){
-  const date=$('planDate')?.value;if(!date)return;
-  const dateObj=localDateFromISO(date),week=['日','一','二','三','四','五','六'];
-  if($('planDateLabel'))$('planDateLabel').textContent=`${dateObj.getFullYear()}年 ${dateObj.getMonth()+1}月${dateObj.getDate()}日｜星期${week[dateObj.getDay()]}`;
-  const {data,error}=await db.from('workforce_plans').select('*').eq('plan_date',date).order('site_name').order('worker_name');
-  if(error){$('workforcePlanList').innerHTML=`<div class="empty">${esc(error.message)}<br>請先執行本版 SQL 設定檔</div>`;return}
-  workforcePlans=data||[];
-  const groups={};workforcePlans.forEach(p=>(groups[p.site_name]??=[]).push(p));
-  $('workforcePlanList').innerHTML=workforcePlans.length?Object.entries(groups).map(([site,rows])=>`<div class="plan-site-group"><div class="plan-site-head"><b>${esc(site)}</b><span>${rows.length} 人｜${Number(rows.reduce((s,p)=>s+Number(p.planned_units||0),0).toFixed(3))} 工</span></div>${rows.map(p=>`<div class="plan-worker-row"><div class="plan-worker-avatar">👷</div><div class="plan-worker-main"><b>${esc(p.worker_name)}${p.is_site_leader?' ⭐':''}</b><small>${p.note?esc(p.note):'尚未填寫工作內容'}</small></div><div class="plan-worker-side"><strong>${Number(p.planned_units||0)} 工</strong>${canEditWorkforcePlan()?`<button class="plan-delete" onclick="deleteWorkforcePlan(${Number(p.id)})">刪除</button>`:''}</div></div>`).join('')}</div>`).join(''):'<div class="empty">這天尚未安排人力<br>點下方「＋安排人力」開始安排</div>';
-}
-async function saveWorkforcePlan(){
-  if(!canEditWorkforcePlan())return alert('只有管理員或師傅頭可以安排人力');
-  const site=workSites.find(s=>Number(s.id)===Number($('planSite').value)),worker=workers.find(w=>Number(w.id)===Number($('planWorker').value));
-  if(!site||!worker)return alert('請選擇案場與人員');
-  const row={plan_date:$('planDate').value,site_id:site.id,site_name:site.site_name,worker_id:worker.id,worker_name:worker.worker_name,planned_units:Number($('planUnits').value||1),is_site_leader:$('planLeader').checked,note:$('planNote').value.trim()||null,created_by:currentUser?.id||null};
-  const {error}=await db.from('workforce_plans').upsert(row,{onConflict:'plan_date,site_id,worker_id'});if(error)return alert('安排失敗：'+error.message+'\n請先執行本版 SQL 設定檔');
-  $('planNote').value='';$('planLeader').checked=false;await loadWorkforcePlans();toggleWorkforcePlanForm(false);
-}
-async function deleteWorkforcePlan(id){if(!canEditWorkforcePlan())return;if(!confirm('確定刪除這筆人力安排？'))return;const {error}=await db.from('workforce_plans').delete().eq('id',id);if(error)return alert(error.message);await loadWorkforcePlans()}
-
 // ===== V17.27.2.1.13 個人出勤月曆 =====
 let personalAttendanceRows=[];
 async function openPersonalAttendance(){
-  if(!canViewAttendanceStats())return alert('只有管理員、管理員助理或師傅頭可以查看個人出勤');
   await loadWorkMaster();
-  $('personalWorker').innerHTML=workers.map(w=>`<option value="${esc(w.worker_name)}">${esc(w.worker_name)}｜${esc(w.worker_type||'')}</option>`).join('');
+  const canViewAll=canViewAllPersonalAttendance(),myName=currentDisplayName().trim();
+  const availableWorkers=canViewAll?workers:workers.filter(w=>String(w.worker_name||'').trim()===myName);
+  $('personalWorker').innerHTML=availableWorkers.length
+    ? availableWorkers.map(w=>`<option value="${esc(w.worker_name)}">${esc(w.worker_name)}｜${esc(w.worker_type||'')}</option>`).join('')
+    : `<option value="${esc(myName)}">${esc(myName||'我的出勤')}</option>`;
+  $('personalWorker').disabled=!canViewAll;
+  if($('personalWorkerField'))$('personalWorkerField').style.display=canViewAll?'block':'none';
   const d=new Date();$('personalMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   $('personalAttendanceModal').classList.add('show');await loadPersonalAttendance();
 }
 function closePersonalAttendance(){$('personalAttendanceModal')?.classList.remove('show')}
 async function loadPersonalAttendance(){
-  const name=$('personalWorker')?.value,month=$('personalMonth')?.value;if(!name||!month)return;
+  const name=canViewAllPersonalAttendance()?$('personalWorker')?.value:currentDisplayName().trim(),month=$('personalMonth')?.value;if(!name||!month)return;
   const [y,m]=month.split('-').map(Number),start=`${month}-01`,end=localDateISO(new Date(y,m,0,12));
   const {data,error}=await db.from('work_logs').select('work_date,site_name,employee_name,note,leave_hours,overtime_hours,is_site_leader').eq('employee_name',name).gte('work_date',start).lte('work_date',end).order('work_date');
   if(error)return alert('個人出勤讀取失敗：'+error.message);personalAttendanceRows=data||[];renderPersonalAttendance(y,m);
@@ -5005,10 +4964,8 @@ function fillProjectSiteSelect(id){
 function syncProjectButtons(){
   const pnl=$('projectPnlBtn');
   if(pnl)pnl.style.display=canViewWorkStats()?'block':'none';
-  const workforce=$('workforcePlanBtn');
-  if(workforce)workforce.style.display=canManageAttendance()?'block':'none';
   const personal=$('personalAttendanceBtn');
-  if(personal)personal.style.display=canViewAttendanceStats()?'block':'none';
+  if(personal)personal.style.display=currentUser?'block':'none';
 }
 async function openProjectProgress(){
   try{await refreshProjectSites()}catch(e){return alert('案場讀取失敗：'+e.message)}
@@ -5047,13 +5004,6 @@ Object.assign(window,{
   openProgressReview,
   closeProgressReview,
   saveProgressReview,
-  openWorkforcePlan,
-  closeWorkforcePlan,
-  toggleWorkforcePlanForm,
-  changeWorkforcePlanDate,
-  loadWorkforcePlans,
-  saveWorkforcePlan,
-  deleteWorkforcePlan,
   openPersonalAttendance,
   closePersonalAttendance,
   loadPersonalAttendance,
@@ -5359,9 +5309,7 @@ Object.assign(window,{
   </div>
 </div>
 
-<div id="workforcePlanModal" class="work-modal"><div class="work-sheet"><div class="work-head"><div><h2>🗓 案場人力配置</h2><div class="stats-sub">依案場查看與安排每日人力</div></div><button class="work-close" type="button" onclick="closeWorkforcePlan()">×</button></div><div class="plan-date-nav"><button type="button" onclick="changeWorkforcePlanDate(-1)">‹</button><div class="plan-date-center"><b id="planDateLabel"></b><input id="planDate" type="date" onchange="loadWorkforcePlans()"></div><button type="button" onclick="changeWorkforcePlanDate(1)">›</button></div><div id="workforcePlanForm" class="plan-form-panel"><div class="row"><div class="work-field"><label>案場</label><select id="planSite"></select></div><div class="work-field"><label>人員</label><select id="planWorker"></select></div></div><div class="row"><div class="work-field"><label>預計工數</label><select id="planUnits"><option value="1">1 工</option><option value="0.5">0.5 工</option><option value="0.25">0.25 工</option><option value="0.125">0.125 工</option></select></div><div class="work-field"><label>案場負責人</label><label style="display:flex;align-items:center;gap:8px;padding:12px"><input id="planLeader" type="checkbox"> 是</label></div></div><div class="work-field"><label>工作內容</label><input id="planNote" placeholder="例如：櫃體安裝、天花板施工"></div><div class="plan-form-actions"><button class="work-submit work-delete" type="button" onclick="toggleWorkforcePlanForm(false)">取消</button><button id="saveWorkforcePlanBtn" class="work-submit" type="button" onclick="saveWorkforcePlan()">加入安排</button></div></div><div id="workforcePlanList" class="plan-list"></div><button id="openWorkforcePlanFormBtn" class="plan-add-fixed" type="button" onclick="toggleWorkforcePlanForm(true)">＋ 安排人力</button></div></div>
-
-<div id="personalAttendanceModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>👤 個人出勤月曆</h2><button class="work-close" type="button" onclick="closePersonalAttendance()">×</button></div><div class="row"><div class="work-field"><label>人員</label><select id="personalWorker" onchange="loadPersonalAttendance()"></select></div><div class="work-field"><label>月份</label><input id="personalMonth" type="month" onchange="loadPersonalAttendance()"></div></div><div class="personal-summary"><div><b id="personalUnits">0</b><small>本月工數</small></div><div><b id="personalLeave">0</b><small>請假時數</small></div><div><b id="personalOvertime">0</b><small>加班紀錄</small></div></div><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="personalCalendarGrid" class="personal-month-grid"></div><div id="personalDayDetail" class="personal-calendar-list"></div><div class="stats-sub" style="margin-top:10px">此畫面只顯示出勤、工數、請假與加班，不顯示日薪或薪資金額。</div></div></div>
+<div id="personalAttendanceModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>👤 個人出勤月曆</h2><button class="work-close" type="button" onclick="closePersonalAttendance()">×</button></div><div class="row"><div id="personalWorkerField" class="work-field"><label>人員</label><select id="personalWorker" onchange="loadPersonalAttendance()"></select></div><div class="work-field"><label>月份</label><input id="personalMonth" type="month" onchange="loadPersonalAttendance()"></div></div><div class="personal-summary"><div><b id="personalUnits">0</b><small>本月工數</small></div><div><b id="personalLeave">0</b><small>請假時數</small></div><div><b id="personalOvertime">0</b><small>加班紀錄</small></div></div><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="personalCalendarGrid" class="personal-month-grid"></div><div id="personalDayDetail" class="personal-calendar-list"></div><div class="stats-sub" style="margin-top:10px">管理員與管理員助理可查看全部人員；其他角色只顯示自己的出勤。此畫面不顯示日薪或薪資金額。</div></div></div>
 
 <div id="progressReviewModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>✅ 進度回報確認</h2><button class="work-close" type="button" onclick="closeProgressReview()">×</button></div><input id="progressReviewId" type="hidden"><div class="work-field"><label>確認狀態</label><select id="progressReviewStatus"><option value="confirmed">已確認</option><option value="reshoot">需要補拍</option><option value="issue">有問題</option></select></div><div class="work-field"><label>管理回覆</label><textarea id="progressReviewNote" placeholder="例如：右側收邊請再補拍近照"></textarea></div><div class="work-field"><label>明日待辦</label><textarea id="progressNextTodo" placeholder="例如：完成門片安裝並補拍"></textarea></div><button id="saveProgressReviewBtn" class="work-submit" type="button" onclick="saveProgressReview()">儲存確認結果</button></div></div>
 
