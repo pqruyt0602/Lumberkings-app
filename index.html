@@ -226,6 +226,10 @@
 .calendar-head{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;margin-bottom:9px}
 .calendar-head strong{text-align:center;font-size:16px}
 .calendar-head button{height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card);color:var(--accent);font-size:22px;font-weight:900}
+.calendar-month-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.calendar-month-stat{min-width:0;text-align:center;border:1px solid var(--line);border-radius:11px;padding:8px 3px;background:rgba(122,92,62,.08)}
+.calendar-month-stat b{display:block;font-size:17px;color:var(--ink);white-space:nowrap}
+.calendar-month-stat small{display:block;margin-top:3px;font-size:9px;color:var(--muted);white-space:nowrap}
 .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .calendar-weekdays span{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
 .calendar-day{position:relative;min-height:48px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);padding:5px 2px;font-size:13px}
@@ -963,7 +967,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.9</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.10</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1015,6 +1019,11 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button type="button" onclick="changeAttendanceMonth(-1)" aria-label="上個月">‹</button>
       <strong id="attendanceMonthLabel"></strong>
       <button type="button" onclick="changeAttendanceMonth(1)" aria-label="下個月">›</button>
+    </div>
+    <div class="calendar-month-stats">
+      <div class="calendar-month-stat"><b id="calendarTotalAttendance">0</b><small>本月出勤人次</small></div>
+      <div class="calendar-month-stat"><b id="calendarWorkDays">0</b><small>記工天數</small></div>
+      <div class="calendar-month-stat"><b id="calendarTotalUnits">0</b><small>本月總工數</small></div>
     </div>
     <div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
     <div id="attendanceCalendarGrid" class="calendar-grid"></div>
@@ -3041,7 +3050,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.9';
+const APP_VERSION='17.27.2.1.10';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3106,7 +3115,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.9',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.10',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -3636,7 +3645,7 @@ async function loadAttendanceCalendar(){
   const start=localDateISO(new Date(y,m,1,12));
   const end=localDateISO(new Date(y,m+1,0,12));
   const {data,error}=await db.from('work_logs')
-    .select('work_date,employee_name')
+    .select('work_date,employee_name,note')
     .gte('work_date',start)
     .lte('work_date',end)
     .order('work_date');
@@ -3657,11 +3666,25 @@ function renderAttendanceCalendar(){
   const firstWeekday=new Date(y,m,1,12).getDay();
   const daysInMonth=new Date(y,m+1,0,12).getDate();
   const peopleByDate={};
+  const personDays=new Set(),workDays=new Set();
+  let totalUnits=0;
   attendanceCalendarRows.forEach(r=>{
     const key=String(r.work_date||'');
     if(!key)return;
-    (peopleByDate[key]??=new Set()).add(String(r.employee_name||'').trim());
+    const name=String(r.employee_name||'').trim();
+    if(name){
+      (peopleByDate[key]??=new Set()).add(name);
+      personDays.add(`${key}|${name}`);
+    }
+    workDays.add(key);
+    totalUnits+=workUnitsFromNote(r.note);
   });
+  const attendanceEl=document.getElementById('calendarTotalAttendance');
+  const workDaysEl=document.getElementById('calendarWorkDays');
+  const totalUnitsEl=document.getElementById('calendarTotalUnits');
+  if(attendanceEl)attendanceEl.textContent=personDays.size;
+  if(workDaysEl)workDaysEl.textContent=workDays.size;
+  if(totalUnitsEl)totalUnitsEl.textContent=Number(totalUnits.toFixed(3));
   const today=localDateISO(new Date());
   const cells=[];
   for(let i=0;i<firstWeekday;i++)cells.push('<div class="calendar-empty"></div>');
