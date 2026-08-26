@@ -845,6 +845,40 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .project-hub-actions{display:flex;flex-direction:column;gap:8px;margin:10px 0}.project-hub-actions .btn{width:100%}.project-progress-list{display:grid;gap:10px}.project-progress-card{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:14px;padding:11px}.project-progress-head{display:flex;justify-content:space-between;gap:10px}.project-progress-photos,.progress-photo-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.project-progress-photos img,.progress-photo-preview img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.pnl-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pnl-card{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:14px;padding:11px}.pnl-card span{display:block;color:var(--muted);font-size:10px}.pnl-card b{font-size:16px}.pnl-profit{grid-column:1/-1}.pnl-positive{color:#70e6a1}.pnl-negative{color:#ff8b8b}.progress-status-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.project-hub-actions{grid-template-columns:1fr}}
 .feature-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.feature-action-grid .btn{margin:0;min-height:54px}.feature-action-grid .wide{grid-column:1/-1}
 .plan-list,.personal-calendar-list{display:grid;gap:8px;margin-top:10px}.plan-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:rgba(255,255,255,.04)}.plan-card-head{display:flex;justify-content:space-between;gap:8px}.plan-card small{display:block;color:var(--muted);margin-top:4px}.review-status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900}.review-pending{background:#3b3020;color:#e5b766}.review-confirmed{background:#213328;color:#8fc19b}.review-reshoot,.review-issue{background:#402622;color:#f09a8c}.review-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.personal-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.personal-summary>div{text-align:center;border:1px solid var(--line);border-radius:12px;padding:10px 4px}.personal-summary b{display:block;font-size:18px}.personal-summary small{font-size:10px;color:var(--muted)}.personal-month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.personal-day{min-height:48px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font-size:12px}.personal-day.worked{background:rgba(168,123,80,.32);border-color:var(--accent);font-weight:900}.personal-day small{display:block;font-size:8px;color:var(--muted)}
+
+/* ===== V17.27.2.1.17 個人出勤月曆美化 ===== */
+.feature-action-grid #personalAttendanceBtn{grid-column:1/-1}
+#personalAttendanceModal .work-sheet{width:min(480px,100%);padding:0 0 calc(22px + env(safe-area-inset-bottom));overflow:hidden;background:#1f1e1c}
+#personalAttendanceModal .personal-modal-head{padding:18px 18px 15px;background:linear-gradient(145deg,#33291f,#24211e);border-bottom:1px solid #4a3a2b}
+#personalAttendanceModal .personal-modal-head .work-head h2{font-size:20px}
+#personalAttendanceModal .personal-modal-sub{margin-top:5px;color:#c9b6a3;font-size:12px}
+#personalAttendanceModal .personal-body{max-height:calc(92vh - 80px);overflow:auto;padding:14px 16px 20px}
+#personalAttendanceModal .personal-toolbar{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:end;margin-bottom:12px}
+#personalAttendanceModal .personal-toolbar button{width:44px;height:46px;border:1px solid #4b4036;border-radius:13px;background:#292724;color:#d4a16f;font-size:24px;font-weight:900}
+#personalAttendanceModal .personal-filter{min-width:0}
+#personalAttendanceModal .personal-filter label{display:block;margin:0 0 5px;color:#ad9b89;font-size:11px;font-weight:800}
+#personalAttendanceModal .personal-filter input,#personalAttendanceModal .personal-filter select{width:100%;height:46px;border:1px solid #4b4036;border-radius:13px;background:#292724;color:#f5eee7;padding:0 12px;font-weight:800}
+#personalAttendanceModal #personalWorkerField{margin-bottom:10px}
+#personalAttendanceModal .personal-summary{gap:9px;margin:0 0 15px}
+#personalAttendanceModal .personal-summary>div{position:relative;overflow:hidden;text-align:left;border:1px solid #493b2f;border-radius:14px;padding:12px 10px;background:linear-gradient(145deg,#2b2926,#242220)}
+#personalAttendanceModal .personal-summary>div:after{content:'';position:absolute;right:-13px;bottom:-18px;width:48px;height:48px;border-radius:50%;background:#a87b5030}
+#personalAttendanceModal .personal-summary b{font-size:22px;color:#fff3e8;line-height:1.1}
+#personalAttendanceModal .personal-summary small{font-size:10px;color:#bda58e;margin-top:5px;display:block}
+#personalAttendanceModal .personal-calendar-card{border:1px solid #423a33;border-radius:17px;padding:12px 10px;background:#242321}
+#personalAttendanceModal .calendar-weekdays{margin-bottom:5px}
+#personalAttendanceModal .calendar-weekdays span{font-size:11px;color:#a99582;font-weight:900}
+#personalAttendanceModal .calendar-weekdays span:first-child{color:#d48a76}
+#personalAttendanceModal .personal-month-grid{gap:6px}
+#personalAttendanceModal .personal-day{position:relative;min-height:55px;padding:7px 2px;border:1px solid transparent;border-radius:11px;background:#1f1e1c;color:#f4eee8;font-size:13px;font-weight:800}
+#personalAttendanceModal .personal-day:hover{border-color:#76583d}
+#personalAttendanceModal .personal-day.worked{background:linear-gradient(145deg,#4a3828,#352b23);border-color:#755638;box-shadow:inset 0 0 0 1px #ffffff08}
+#personalAttendanceModal .personal-day.today{border-color:#87b995;box-shadow:0 0 0 1px #87b99555}
+#personalAttendanceModal .personal-day small{margin-top:4px;font-size:9px;color:#efb36f;font-weight:900}
+#personalAttendanceModal .personal-calendar-list{margin-top:12px}
+#personalAttendanceModal .personal-calendar-list .plan-card{border-color:#4b3b2e;background:#292622;padding:13px}
+#personalAttendanceModal .personal-calendar-list .plan-card b{display:block;color:#e4ad78;margin-bottom:7px}
+#personalAttendanceModal .personal-calendar-list .plan-card small{padding:7px 0;margin:0;border-top:1px solid #ffffff0d;color:#d4c5b8;line-height:1.45}
+#personalAttendanceModal .personal-privacy-note{margin-top:12px;padding:10px 12px;border-radius:12px;background:#1a1918;color:#958778;font-size:10px;line-height:1.5;text-align:center}
 .plan-date-nav{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:8px;margin:12px 0}.plan-date-nav button{height:46px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--accent);font-size:24px;font-weight:900}.plan-date-center{text-align:center}.plan-date-center b{display:block;font-size:17px}.plan-date-center input{margin-top:5px;border:0;background:transparent;color:var(--muted);text-align:center;font-size:11px}.plan-site-group{border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.035);overflow:hidden}.plan-site-head{display:flex;align-items:center;justify-content:space-between;padding:12px 13px;border-bottom:1px solid var(--line)}.plan-site-head b{font-size:15px}.plan-site-head span{color:var(--muted);font-size:12px}.plan-worker-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05)}.plan-worker-row:last-child{border-bottom:0}.plan-worker-avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#3b3020}.plan-worker-main b{display:block;font-size:13px}.plan-worker-main small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.plan-worker-side{text-align:right}.plan-worker-side strong{display:block;color:var(--accent);font-size:13px}.plan-delete{border:0;background:transparent;color:#ff8585;font-size:10px;padding:5px}.plan-add-fixed{position:sticky;bottom:0;width:100%;min-height:54px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:16px;font-weight:900;margin-top:12px}.plan-form-panel{display:none;border:1px solid var(--line);border-radius:15px;padding:12px;background:var(--card);margin-bottom:12px}.plan-form-panel.show{display:block}.plan-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.plan-form-actions .work-submit{margin-top:12px}
 
 /* ===== V17.27.2.1 案場選單＋返回鍵放大 ===== */
@@ -967,7 +1001,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.16</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.17</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1035,7 +1069,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 
   <div id="workSuccessMsg" class="work-success"></div>
   <div class="feature-action-grid">
-    <button id="personalAttendanceBtn" class="btn secondary" type="button" onclick="openPersonalAttendance()">👤 個人出勤月曆</button>
+    <button id="personalAttendanceBtn" class="btn secondary wide" type="button" onclick="openPersonalAttendance()">👤 個人出勤月曆</button>
     <button class="btn secondary wide" type="button" onclick="openProjectProgress()">📷 今日進度回報／確認</button>
     <button id="projectPnlBtn" class="btn secondary wide" type="button" onclick="openProjectPnl()">📊 案場損益</button>
   </div>
@@ -3053,7 +3087,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.16';
+const APP_VERSION='17.27.2.1.17';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3118,7 +3152,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.16',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.17',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -4927,6 +4961,12 @@ async function openPersonalAttendance(){
   $('personalAttendanceModal').classList.add('show');await loadPersonalAttendance();
 }
 function closePersonalAttendance(){$('personalAttendanceModal')?.classList.remove('show')}
+function changePersonalAttendanceMonth(delta){
+  const input=$('personalMonth');if(!input)return;
+  const [y,m]=String(input.value||localDateISO(new Date()).slice(0,7)).split('-').map(Number),d=new Date(y,m-1+Number(delta||0),1,12);
+  input.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  loadPersonalAttendance();
+}
 async function loadPersonalAttendance(){
   const name=canViewAllPersonalAttendance()?$('personalWorker')?.value:currentDisplayName().trim(),month=$('personalMonth')?.value;if(!name||!month)return;
   const [y,m]=month.split('-').map(Number),start=`${month}-01`,end=localDateISO(new Date(y,m,0,12));
@@ -4938,7 +4978,8 @@ function renderPersonalAttendance(y,m){
   $('personalUnits').textContent=Number(units.toFixed(3));$('personalLeave').textContent=Number(leave.toFixed(1));$('personalOvertime').textContent=Number(ot.toFixed(1));
   const byDate={};personalAttendanceRows.forEach(r=>(byDate[r.work_date]??=[]).push(r));
   const first=new Date(y,m-1,1,12).getDay(),days=new Date(y,m,0,12).getDate(),cells=[];for(let i=0;i<first;i++)cells.push('<div></div>');
-  for(let d=1;d<=days;d++){const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,rows=byDate[key]||[],u=rows.reduce((s,r)=>s+workUnitsFromNote(r.note),0);cells.push(`<button class="personal-day ${rows.length?'worked':''}" type="button" onclick="showPersonalAttendanceDay('${key}')">${d}${rows.length?`<small>${Number(u.toFixed(3))}工</small>`:''}</button>`)}
+  const today=localDateISO(new Date());
+  for(let d=1;d<=days;d++){const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`,rows=byDate[key]||[],u=rows.reduce((s,r)=>s+workUnitsFromNote(r.note),0);cells.push(`<button class="personal-day ${rows.length?'worked':''} ${key===today?'today':''}" type="button" onclick="showPersonalAttendanceDay('${key}')">${d}${rows.length?`<small>${Number(u.toFixed(3))} 工</small>`:''}</button>`)}
   $('personalCalendarGrid').innerHTML=cells.join('');$('personalDayDetail').innerHTML='<div class="empty">點選有出勤的日期查看案場明細</div>';
 }
 function showPersonalAttendanceDay(date){const rows=personalAttendanceRows.filter(r=>r.work_date===date);$('personalDayDetail').innerHTML=rows.length?`<div class="plan-card"><b>${esc(date)}</b>${rows.map(r=>`<small>${esc(r.site_name)}｜${Number(workUnitsFromNote(r.note).toFixed(3))} 工${r.is_site_leader?'｜案場負責人':''}${Number(r.leave_hours||0)?`｜請假 ${Number(r.leave_hours)}h`:''}${Number(r.overtime_hours||0)?`｜加班 ${overtimeLabel(r.overtime_hours)}`:''}</small>`).join('')}</div>`:'<div class="empty">這天沒有出勤</div>'}
@@ -5006,6 +5047,7 @@ Object.assign(window,{
   saveProgressReview,
   openPersonalAttendance,
   closePersonalAttendance,
+  changePersonalAttendanceMonth,
   loadPersonalAttendance,
   showPersonalAttendanceDay,
   openProjectPnl,
@@ -5309,7 +5351,7 @@ Object.assign(window,{
   </div>
 </div>
 
-<div id="personalAttendanceModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>👤 個人出勤月曆</h2><button class="work-close" type="button" onclick="closePersonalAttendance()">×</button></div><div class="row"><div id="personalWorkerField" class="work-field"><label>人員</label><select id="personalWorker" onchange="loadPersonalAttendance()"></select></div><div class="work-field"><label>月份</label><input id="personalMonth" type="month" onchange="loadPersonalAttendance()"></div></div><div class="personal-summary"><div><b id="personalUnits">0</b><small>本月工數</small></div><div><b id="personalLeave">0</b><small>請假時數</small></div><div><b id="personalOvertime">0</b><small>加班紀錄</small></div></div><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="personalCalendarGrid" class="personal-month-grid"></div><div id="personalDayDetail" class="personal-calendar-list"></div><div class="stats-sub" style="margin-top:10px">管理員與管理員助理可查看全部人員；其他角色只顯示自己的出勤。此畫面不顯示日薪或薪資金額。</div></div></div>
+<div id="personalAttendanceModal" class="work-modal"><div class="work-sheet"><div class="personal-modal-head"><div class="work-head"><div><h2>👤 個人出勤月曆</h2><div class="personal-modal-sub">每月出勤、工數與請假紀錄</div></div><button class="work-close" type="button" onclick="closePersonalAttendance()">×</button></div></div><div class="personal-body"><div id="personalWorkerField" class="personal-filter"><label>查看人員</label><select id="personalWorker" onchange="loadPersonalAttendance()"></select></div><div class="personal-toolbar"><button type="button" onclick="changePersonalAttendanceMonth(-1)" aria-label="上個月">‹</button><div class="personal-filter"><label>月份</label><input id="personalMonth" type="month" onchange="loadPersonalAttendance()"></div><button type="button" onclick="changePersonalAttendanceMonth(1)" aria-label="下個月">›</button></div><div class="personal-summary"><div><b id="personalUnits">0</b><small>本月工數</small></div><div><b id="personalLeave">0</b><small>請假時數</small></div><div><b id="personalOvertime">0</b><small>加班時數</small></div></div><div class="personal-calendar-card"><div class="calendar-weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="personalCalendarGrid" class="personal-month-grid"></div></div><div id="personalDayDetail" class="personal-calendar-list"></div><div class="personal-privacy-note">管理員與管理員助理可查看全部人員；其他角色只顯示自己的出勤。本頁不顯示薪資金額。</div></div></div></div>
 
 <div id="progressReviewModal" class="work-modal"><div class="work-sheet"><div class="work-head"><h2>✅ 進度回報確認</h2><button class="work-close" type="button" onclick="closeProgressReview()">×</button></div><input id="progressReviewId" type="hidden"><div class="work-field"><label>確認狀態</label><select id="progressReviewStatus"><option value="confirmed">已確認</option><option value="reshoot">需要補拍</option><option value="issue">有問題</option></select></div><div class="work-field"><label>管理回覆</label><textarea id="progressReviewNote" placeholder="例如：右側收邊請再補拍近照"></textarea></div><div class="work-field"><label>明日待辦</label><textarea id="progressNextTodo" placeholder="例如：完成門片安裝並補拍"></textarea></div><button id="saveProgressReviewBtn" class="work-submit" type="button" onclick="saveProgressReview()">儲存確認結果</button></div></div>
 
