@@ -1016,7 +1016,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.23</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.24</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1146,7 +1146,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 </div></div>
 <div id="qrModal" class="modal"><div class="modalbox qrbox"><h3>工具 QR Code</h3><p id="qrTitle" class="meta"></p><img id="qrImage" class="qrimg" alt="工具 QR Code"><div id="qrUrl" class="qrurl"></div><button class="btn secondary" onclick="closeQr()">關閉</button></div></div><div id="labelModal" class="modal"><div class="modalbox">
 <h3>QR 工具標籤列印</h3>
-<p class="meta">選擇標籤尺寸後即可預覽與列印</p>
+<p class="meta">NIIMBOT B1 Pro／iPhone：先儲存標籤圖片，再到 NIIMBOT App 匯入列印</p>
 <div class="noprint">
   <div class="label-size-title">選擇標籤尺寸</div>
   <div class="label-size-grid">
@@ -1176,12 +1176,12 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 </div>
 <div class="modalactions noprint">
   <button class="btn secondary" onclick="closeLabel()">關閉</button>
-  <button id="printLabelBtn" class="btn" onclick="printToolLabel()">列印 40 × 25 mm</button>
+  <button id="printLabelBtn" class="btn" onclick="exportToolLabelImage()">儲存／分享到 NIIMBOT</button>
 </div>
 </div></div>
 <div id="batchLabelModal" class="modal"><div class="modalbox">
 <h3>全部工具 QR 標籤</h3>
-<p class="meta">已自動全選全部工具，可調整標籤尺寸後一次列印。</p>
+<p class="meta">已自動全選全部工具，可一次產生標籤圖片，再到 NIIMBOT App 匯入。</p>
 <div class="noprint">
   <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
     <b style="font-size:13px">選擇工具</b>
@@ -1205,7 +1205,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div id="batchPreview" style="display:grid;gap:10px;justify-content:center;padding:10px 0"></div>
 <div class="modalactions noprint">
   <button class="btn secondary" onclick="closeBatchLabel()">關閉</button>
-  <button id="batchPrintBtn" class="btn" onclick="printBatchLabels()">列印已選標籤</button>
+  <button id="batchPrintBtn" class="btn" onclick="exportBatchLabelImages()">產生已選標籤圖片</button>
 </div>
 </div></div>
 <div id="repairEditModal" class="modal"><div class="modalbox"><h3>編輯維修紀錄</h3><div class="meta" style="margin-bottom:8px">已完成的維修紀錄僅管理員可以修改；儲存後累積維修費會依新金額重新計算。</div><input id="eRepairId" type="hidden"><div class="label">維修工具</div><select id="eRepairTool" class="select"></select><div class="label">故障類型</div><select id="eType" class="select"><option>異音</option><option>無法啟動</option><option>電源/電池</option><option>外殼/結構</option><option>精度異常</option><option>其他</option></select><div class="label">故障描述</div><textarea id="eDesc" class="textarea"></textarea><div class="row"><div><div class="label">報修日期</div><input id="eRepairDate" class="input" type="date"></div><div><div class="label">送修日期</div><input id="eSentDate" class="input" type="date"></div></div><div class="label">維修廠商</div><input id="eVendor" class="input"><div class="label">維修內容</div><textarea id="eContent" class="textarea"></textarea><div class="row"><div><div class="label">維修費</div><input id="eCost" class="input" type="number" min="0"></div><div><div class="label">狀態</div><select id="eStatus" class="select"><option>待維修</option><option>送修中</option><option>已完成</option></select></div></div><div class="label">完成日期</div><input id="eCompletedDate" class="input" type="date"><div class="modalactions"><button class="btn secondary" onclick="closeRepairEdit()">取消</button><button class="btn" onclick="saveRepairEdit()">儲存修改</button></div></div></div><div class="nav"><div onclick="show('home')"><b>⌂</b>首頁</div><div onclick="show('add')"><b>＋</b>新增</div><div onclick="quickReport()"><b>🛠</b>報修</div><div onclick="refreshAll()"><b>↻</b>同步</div></div></div>
@@ -2532,7 +2532,7 @@ window.showQr=id=>{
 };
 window.closeQr=()=>$('qrModal').classList.remove('open');
 
-let currentLabelWidth=40,currentLabelHeight=25;
+let currentLabelWidth=40,currentLabelHeight=25,currentLabelToolId=null;
 
 function updateLabelPreview(){
   const area=$('labelPrintArea');
@@ -2548,7 +2548,7 @@ function updateLabelPreview(){
   document.querySelector('#labelPrintArea .labelhint').style.fontSize=Math.max(6,Math.min(10,h*0.28))+'px';
 
   $('labelSizeInfo').textContent='實際列印尺寸：'+currentLabelWidth+' × '+currentLabelHeight+' mm';
-  $('printLabelBtn').textContent='列印 '+currentLabelWidth+' × '+currentLabelHeight+' mm';
+  $('printLabelBtn').textContent='儲存／分享 '+currentLabelWidth+' × '+currentLabelHeight+' mm';
   $('customLabelWidth').value=currentLabelWidth;
   $('customLabelHeight').value=currentLabelHeight;
 
@@ -2580,6 +2580,7 @@ window.applyCustomLabelSize=()=>{
 window.showLabel=id=>{
   const t=tools.find(x=>x.id===id);
   if(!t)return alert('找不到工具');
+  currentLabelToolId=id;
   const url=toolShareUrl(t);
 
   $('labelCode').textContent=t.tool_code||'';
@@ -2606,6 +2607,67 @@ window.showLabel=id=>{
 };
 
 window.closeLabel=()=>$('labelModal').classList.remove('open');
+
+function safeLabelFilename(value){
+  return String(value||'QR標籤').replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_').slice(0,60);
+}
+function canvasToBlob(canvas){
+  return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('圖片建立失敗')),'image/png'));
+}
+async function loadLabelQrImage(url){
+  const qrUrl='https://quickchart.io/qr?size=700&margin=1&text='+encodeURIComponent(url);
+  const res=await fetch(qrUrl);
+  if(!res.ok)throw new Error('QR Code 下載失敗');
+  const objectUrl=URL.createObjectURL(await res.blob());
+  try{
+    const img=new Image();
+    await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=objectUrl});
+    return img;
+  }finally{setTimeout(()=>URL.revokeObjectURL(objectUrl),1000)}
+}
+async function makeNiimbotLabelFile(t,widthMm=40,heightMm=25){
+  const dotsPerMm=8,w=Math.round(widthMm*dotsPerMm),h=Math.round(heightMm*dotsPerMm);
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.fillStyle='#111';
+  const band=Math.max(26,Math.round(h*.20));ctx.fillRect(0,0,w,band);
+  ctx.fillStyle='#fff';ctx.font=`bold ${Math.max(10,Math.round(h*.065))}px sans-serif`;
+  ctx.textBaseline='middle';ctx.fillText('LUMBERKINGS｜木作設備中心',Math.round(w*.035),band/2);
+  const qrSize=Math.min(Math.round(h*.70),Math.round(w*.40));
+  const qr=await loadLabelQrImage(toolShareUrl(t));
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,w-qrSize-Math.round(w*.035),band+Math.round(h*.045),qrSize,qrSize);
+  const left=Math.round(w*.045),maxTextW=w-qrSize-Math.round(w*.12);
+  ctx.fillStyle='#111';ctx.textBaseline='alphabetic';
+  ctx.font=`900 ${Math.max(20,Math.round(h*.15))}px sans-serif`;
+  ctx.fillText(String(t.tool_code||''),left,band+Math.round(h*.25),maxTextW);
+  ctx.font=`bold ${Math.max(14,Math.round(h*.095))}px sans-serif`;
+  ctx.fillText(((t.brand||'')+' '+(t.name||'')).trim(),left,band+Math.round(h*.46),maxTextW);
+  ctx.font=`${Math.max(11,Math.round(h*.07))}px sans-serif`;
+  if(t.model)ctx.fillText('型號：'+t.model,left,band+Math.round(h*.61),maxTextW);
+  ctx.fillStyle='#111';ctx.fillRect(left,h-Math.round(h*.15),Math.round(maxTextW*.74),Math.round(h*.11));
+  ctx.fillStyle='#fff';ctx.font=`bold ${Math.max(9,Math.round(h*.057))}px sans-serif`;ctx.textBaseline='middle';
+  ctx.fillText('掃碼查看 / 報修',left+Math.round(w*.02),h-Math.round(h*.095));
+  const blob=await canvasToBlob(canvas);
+  return new File([blob],safeLabelFilename((t.tool_code||'工具')+'_'+widthMm+'x'+heightMm+'mm')+'.png',{type:'image/png'});
+}
+async function shareOrSaveLabelFiles(files){
+  if(navigator.canShare&&navigator.canShare({files})){
+    await navigator.share({files,title:'NIIMBOT QR 工具標籤'});
+    return;
+  }
+  for(const file of files){
+    const a=document.createElement('a'),objectUrl=URL.createObjectURL(file);a.href=objectUrl;a.download=file.name;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),1500);
+    await new Promise(r=>setTimeout(r,250));
+  }
+}
+window.exportToolLabelImage=async()=>{
+  const t=tools.find(x=>x.id===currentLabelToolId);
+  if(!t)return alert('找不到工具');
+  const btn=$('printLabelBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='正在產生標籤圖片…';
+  try{await shareOrSaveLabelFiles([await makeNiimbotLabelFile(t,currentLabelWidth,currentLabelHeight)])}
+  catch(e){if(e?.name!=='AbortError')alert('標籤圖片建立失敗：'+(e?.message||e))}
+  finally{btn.disabled=false;btn.textContent=old}
+};
 
 window.printToolLabel=()=>{
   const area=$('labelPrintArea');
@@ -2716,7 +2778,20 @@ function batchLabelHtml(t,preview=true){
 window.renderBatchPreview=()=>{
   const arr=batchSelectedTools();
   $('batchPreview').innerHTML=arr.length?arr.map(t=>batchLabelHtml(t,true)).join(''):'<div class="empty">請先勾選要列印的工具</div>';
-  $('batchPrintBtn').textContent=arr.length?'列印 '+arr.length+' 張標籤':'列印已選標籤';
+  $('batchPrintBtn').textContent=arr.length?'產生 '+arr.length+' 張標籤圖片':'產生已選標籤圖片';
+};
+window.exportBatchLabelImages=async()=>{
+  const arr=batchSelectedTools();if(!arr.length)return alert('請至少選擇一台工具');
+  const btn=$('batchPrintBtn'),old=btn.textContent;btn.disabled=true;
+  try{
+    const files=[];
+    for(let i=0;i<arr.length;i++){
+      btn.textContent=`產生中 ${i+1} / ${arr.length}`;
+      files.push(await makeNiimbotLabelFile(arr[i],batchLabelWidth,batchLabelHeight));
+    }
+    await shareOrSaveLabelFiles(files);
+  }catch(e){if(e?.name!=='AbortError')alert('批次標籤建立失敗：'+(e?.message||e))}
+  finally{btn.disabled=false;btn.textContent=old;renderBatchPreview()}
 };
 window.printBatchLabels=()=>{
   const arr=batchSelectedTools();
