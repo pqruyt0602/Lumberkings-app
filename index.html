@@ -1022,6 +1022,10 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .scan-success-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.88);z-index:10000;min-width:250px;max-width:calc(100vw - 40px);padding:20px 22px;border-radius:20px;background:#21864a;color:#fff;text-align:center;box-shadow:0 14px 45px #0008;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s}
 .scan-success-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .scan-success-toast .scan-ok{font-size:42px;line-height:1}.scan-success-toast b{display:block;font-size:21px;margin-top:7px}.scan-success-toast span{display:block;font-size:14px;margin-top:5px;color:#eafff0}
+.site-stock-summary{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.site-stock-summary>div{border:1px solid #514940;background:#2b2926;border-radius:13px;padding:11px;text-align:center}.site-stock-summary b{display:block;color:#fff;font-size:23px}.site-stock-summary span{color:#bdb3a9;font-size:11px}
+.site-stock-progress{height:10px;border-radius:999px;background:#423d38;overflow:hidden;margin:10px 0 14px}.site-stock-progress>div{height:100%;width:0;background:#4ea66d;transition:width .2s}
+.site-stock-category{border:1px solid #514940;border-radius:14px;overflow:hidden;margin-bottom:10px;background:#242321}.site-stock-category summary{min-height:54px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;background:#302d29;color:#fff;list-style:none}.site-stock-category summary::-webkit-details-marker{display:none}.site-stock-category summary b{font-size:15px}.site-stock-category summary span{font-size:12px;color:#d1c3b6}
+.site-stock-row{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:center;min-height:68px;padding:10px 12px;border-top:1px solid #47413b;color:#fff}.site-stock-row input{width:23px;height:23px;accent-color:#4ea66d}.site-stock-row b{font-size:14px}.site-stock-row small{display:block;margin-top:4px;color:#bdb3a9;font-size:12px;line-height:1.45}.site-stock-row.checked{background:#23352a}.site-stock-empty{padding:26px 12px;text-align:center;color:#aaa}
 </style>
 </head>
 <body>
@@ -1029,7 +1033,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.28</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.29</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1049,6 +1053,9 @@ html,body,.app{background:var(--bg);color:var(--ink)}
   </button>
   <button type="button" onclick="openBatchReturn()" style="width:100%;margin-top:8px;padding:16px 14px;border:1px solid #8b6844;border-radius:16px;background:#fff;color:#6f5035;font-size:18px;font-weight:900;cursor:pointer">
     ↩ QR 批次歸還
+  </button>
+  <button type="button" onclick="openSiteToolStocktake()" style="width:100%;margin-top:8px;padding:16px 14px;border:1px solid #8b6844;border-radius:16px;background:#2c2926;color:#e0ad7b;font-size:18px;font-weight:900;cursor:pointer">
+    ☑ 案場工具盤點
   </button>
 </div>
 <div class="quick"><div id="quickAddTool" class="q" onclick="show('add')"><b>＋</b>新增工具</div><div class="q" onclick="quickReport()"><b>🛠️</b>快速報修</div><div class="q" onclick="refreshAll()"><b>↻</b>重新整理</div><div class="q" onclick="logout()"><b>⇥</b>登出</div></div></div>
@@ -1156,6 +1163,17 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 <div class="label">歸還狀況</div><select id="returnCondition" class="select"><option>正常</option><option>輕微損傷</option><option>需維修</option></select>
 <div class="label">備註</div><textarea id="returnNote" class="textarea" placeholder="可留空"></textarea>
 <div class="modalactions"><button class="btn secondary" onclick="closeReturn()">取消</button><button id="returnBtn" class="btn" onclick="confirmReturn()">確認歸還</button></div>
+</div></div>
+<div id="siteToolStocktakeModal" class="modal"><div class="modalbox">
+  <h3>☑ 案場工具盤點</h3>
+  <p class="meta">選擇案場後，會列出目前尚未歸還的工具並依分類整理。</p>
+  <div class="label">選擇案場</div>
+  <select id="siteStocktakeSelect" class="select" onchange="renderSiteToolStocktake()"></select>
+  <div class="site-stock-summary"><div><b id="siteStockTotal">0</b><span>借出工具</span></div><div><b id="siteStockChecked">0 / 0</b><span>已盤點</span></div></div>
+  <div class="site-stock-progress"><div id="siteStockProgressBar"></div></div>
+  <div style="display:flex;justify-content:flex-end;gap:7px;margin-bottom:10px"><button class="mini" type="button" onclick="siteStocktakeCheckAll(true)">全部盤到</button><button class="mini" type="button" onclick="siteStocktakeCheckAll(false)">全部清除</button></div>
+  <div id="siteStocktakeList"></div>
+  <button class="btn secondary" type="button" onclick="closeSiteToolStocktake()">關閉</button>
 </div></div>
 <div id="qrModal" class="modal"><div class="modalbox qrbox"><h3>工具 QR Code</h3><p id="qrTitle" class="meta"></p><img id="qrImage" class="qrimg" alt="工具 QR Code"><div id="qrUrl" class="qrurl"></div><button class="btn secondary" onclick="closeQr()">關閉</button></div></div><div id="labelModal" class="modal"><div class="modalbox">
 <h3>QR 工具標籤列印</h3>
@@ -2544,6 +2562,64 @@ window.showQr=id=>{
   $('qrModal').classList.add('open');
 };
 window.closeQr=()=>$('qrModal').classList.remove('open');
+
+let siteStocktakeChecked=new Set(),siteStocktakeSite='';
+function activeSiteLoanRows(){
+  const seen=new Set(),rows=[];
+  transactions.forEach(tx=>{
+    if(tx.action!=='借出'||tx.return_date||seen.has(Number(tx.tool_id)))return;
+    seen.add(Number(tx.tool_id));
+    const tool=tools.find(t=>Number(t.id)===Number(tx.tool_id));
+    if(tool)rows.push({tool,loan:tx});
+  });
+  return rows;
+}
+window.openSiteToolStocktake=()=>{
+  const rows=activeSiteLoanRows();
+  const sites=[...new Set(rows.map(x=>String(x.loan.location||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  const sel=$('siteStocktakeSelect');
+  sel.innerHTML=sites.length?'<option value="">請選擇案場</option>'+sites.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join(''):'<option value="">目前沒有案場借出工具</option>';
+  siteStocktakeChecked.clear();siteStocktakeSite='';
+  renderSiteToolStocktake();
+  $('siteToolStocktakeModal').classList.add('open');
+};
+window.closeSiteToolStocktake=()=>$('siteToolStocktakeModal').classList.remove('open');
+function selectedSiteStockRows(){
+  const site=$('siteStocktakeSelect')?.value||'';
+  return activeSiteLoanRows().filter(x=>String(x.loan.location||'').trim()===site);
+}
+window.renderSiteToolStocktake=()=>{
+  const site=$('siteStocktakeSelect')?.value||'';
+  if(site!==siteStocktakeSite){siteStocktakeSite=site;siteStocktakeChecked.clear()}
+  const rows=selectedSiteStockRows();
+  const validIds=new Set(rows.map(x=>Number(x.tool.id)));
+  siteStocktakeChecked=new Set([...siteStocktakeChecked].filter(id=>validIds.has(Number(id))));
+  $('siteStockTotal').textContent=rows.length;
+  $('siteStockChecked').textContent=`${siteStocktakeChecked.size} / ${rows.length}`;
+  $('siteStockProgressBar').style.width=(rows.length?siteStocktakeChecked.size/rows.length*100:0)+'%';
+  if(!site){$('siteStocktakeList').innerHTML='<div class="site-stock-empty">請先選擇案場</div>';return}
+  if(!rows.length){$('siteStocktakeList').innerHTML='<div class="site-stock-empty">這個案場目前沒有借出中的工具</div>';return}
+  const groups=new Map();
+  rows.sort((a,b)=>String(a.tool.tool_code||'').localeCompare(String(b.tool.tool_code||''),'zh-Hant')).forEach(row=>{
+    const cat=String(row.tool.category||'未分類').trim()||'未分類';if(!groups.has(cat))groups.set(cat,[]);groups.get(cat).push(row);
+  });
+  $('siteStocktakeList').innerHTML=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],'zh-Hant')).map(([cat,list])=>{
+    const checkedCount=list.filter(x=>siteStocktakeChecked.has(Number(x.tool.id))).length;
+    return `<details class="site-stock-category" open><summary><b>${esc(cat)}</b><span>${checkedCount} / ${list.length} 已盤點</span></summary><div>${list.map(({tool,loan})=>{
+      const checked=siteStocktakeChecked.has(Number(tool.id));
+      const loanDate=loan.created_at?new Date(loan.created_at).toLocaleDateString('zh-TW'):'';
+      return `<label class="site-stock-row${checked?' checked':''}"><input type="checkbox" ${checked?'checked':''} onchange="stocktakeToggle(${Number(tool.id)},this.checked)"><span><b>${esc(tool.tool_code||'')}｜${esc(((tool.brand||'')+' '+(tool.name||'')).trim())}</b><small>${loan.employee_name?'借用人：'+esc(loan.employee_name):'未設定借用人'}${loanDate?'｜借出：'+esc(loanDate):''}${tool.model?'<br>型號：'+esc(tool.model):''}</small></span></label>`;
+    }).join('')}</div></details>`;
+  }).join('');
+};
+window.stocktakeToggle=(id,checked)=>{
+  checked?siteStocktakeChecked.add(Number(id)):siteStocktakeChecked.delete(Number(id));
+  renderSiteToolStocktake();
+};
+window.siteStocktakeCheckAll=checked=>{
+  const ids=selectedSiteStockRows().map(x=>Number(x.tool.id));
+  siteStocktakeChecked=checked?new Set(ids):new Set();renderSiteToolStocktake();
+};
 
 let currentLabelWidth=40,currentLabelHeight=25,currentLabelToolId=null;
 
