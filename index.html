@@ -42,11 +42,16 @@
 
 .batch-tool{display:flex;align-items:center;gap:9px;padding:9px 6px;border-bottom:1px solid var(--line);font-size:12px}
 .batch-tool:last-child{border-bottom:0}.batch-tool input{width:18px;height:18px}
-.batch-category{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;margin-bottom:8px}
-.batch-category summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 10px;background:#f5f1eb;cursor:pointer;list-style:none}
-.batch-category summary::-webkit-details-marker{display:none}.batch-category-title{font-weight:900;font-size:13px}.batch-category-count{font-size:11px;color:var(--muted);margin-left:5px}
-.batch-category-actions{display:flex;gap:5px}.batch-category-actions button{border:1px solid var(--line);background:#fff;color:var(--accent);border-radius:8px;padding:4px 7px;font-size:10px;font-weight:800}
-.batch-category-tools{padding:0 7px}.batch-category-tools .batch-tool:last-child{border-bottom:0}
+.batch-category{border:1px solid #544b43;border-radius:14px;background:#242321;overflow:hidden;margin-bottom:10px}
+.batch-category summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:58px;padding:12px;background:#302d29;color:#fff;cursor:pointer;list-style:none}
+.batch-category summary::-webkit-details-marker{display:none}.batch-category-title{font-weight:900;font-size:16px;color:#fff}.batch-category-count{font-size:13px;color:#d4c8bc;margin-left:7px;font-weight:700}
+.batch-category-actions{display:flex;gap:6px}.batch-category-actions button{border:1px solid #b28a61;background:#242321;color:#e1ad79;border-radius:9px;padding:7px 10px;font-size:12px;font-weight:900}
+.batch-category-tools{padding:0 10px;background:#242321}.batch-category-tools .batch-tool:last-child{border-bottom:0}
+#batchLabelModal #batchToolList{max-height:min(52vh,460px);min-height:320px;overflow:auto;background:#1f1e1c;border:1px solid #544b43;border-radius:14px;padding:10px;-webkit-overflow-scrolling:touch}
+#batchLabelModal .batch-tool{min-height:64px;padding:10px 7px;border-bottom:1px solid #4a443e;color:#fff;font-size:14px}
+#batchLabelModal .batch-tool input{width:23px;height:23px;flex:0 0 23px;accent-color:#b18458}
+#batchLabelModal .batch-tool b{font-size:15px;color:#fff;font-weight:900;line-height:1.45}
+#batchLabelModal .batch-tool .meta{font-size:13px;color:#c8bfb6;font-weight:700;line-height:1.5}
 .batch-sheet{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:0}
 .batch-label{position:relative;background:#fff;color:#111;overflow:hidden;border:1px solid #ddd}
 .batch-label .labelbrand{font-size:8px}.batch-label .labelcode{font-size:14px}.batch-label .labelname{font-size:10px}.batch-label .labelmodel{font-size:7px}.batch-label .labelhint{font-size:6px}
@@ -1024,7 +1029,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.27</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.28</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1195,7 +1200,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     <b style="font-size:13px">選擇工具</b>
     <div><button class="mini" onclick="batchSelectAll(true)">全選</button> <button class="mini" onclick="batchSelectAll(false)">清除</button></div>
   </div>
-  <div id="batchToolList" style="max-height:220px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px"></div>
+  <div id="batchToolList"></div>
   <div class="label-size-title">選擇標籤尺寸</div>
   <div class="label-size-grid">
     <button id="batchSizeSmall" class="label-size-btn" onclick="setBatchLabelSize(40,25)"><b>小型</b><span>40 × 25 mm</span></button>
