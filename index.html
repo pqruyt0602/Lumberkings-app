@@ -1009,6 +1009,9 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 #toolCategoryWrap.show{display:block}
 #toolListSection.show{display:block}
 
+.scan-success-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.88);z-index:10000;min-width:250px;max-width:calc(100vw - 40px);padding:20px 22px;border-radius:20px;background:#21864a;color:#fff;text-align:center;box-shadow:0 14px 45px #0008;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s}
+.scan-success-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.scan-success-toast .scan-ok{font-size:42px;line-height:1}.scan-success-toast b{display:block;font-size:21px;margin-top:7px}.scan-success-toast span{display:block;font-size:14px;margin-top:5px;color:#eafff0}
 </style>
 </head>
 <body>
@@ -1016,7 +1019,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.24</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.26</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2586,7 +2589,8 @@ window.showLabel=id=>{
   $('labelCode').textContent=t.tool_code||'';
   $('labelName').textContent=((t.brand||'')+' '+(t.name||'')).trim();
   $('labelModel').textContent=t.model?'型號：'+t.model:'';
-  $('labelQr').src='https://quickchart.io/qr?size=500&margin=1&text='+encodeURIComponent(url);
+  // 小標籤只放工具短碼，避免完整網址讓 QR 格子過密、熱感列印後難掃。
+  $('labelQr').src='https://quickchart.io/qr?size=500&margin=4&ecLevel=H&text='+encodeURIComponent(t.tool_code||String(t.id));
 
   try{
     const saved=JSON.parse(localStorage.getItem('woodtool-label-size'));
@@ -2614,8 +2618,8 @@ function safeLabelFilename(value){
 function canvasToBlob(canvas){
   return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('圖片建立失敗')),'image/png'));
 }
-async function loadLabelQrImage(url){
-  const qrUrl='https://quickchart.io/qr?size=700&margin=1&text='+encodeURIComponent(url);
+async function loadLabelQrImage(payload){
+  const qrUrl='https://quickchart.io/qr?size=700&margin=4&ecLevel=H&text='+encodeURIComponent(payload);
   const res=await fetch(qrUrl);
   if(!res.ok)throw new Error('QR Code 下載失敗');
   const objectUrl=URL.createObjectURL(await res.blob());
@@ -2632,9 +2636,9 @@ async function makeNiimbotLabelFile(t,widthMm=40,heightMm=25){
   const band=Math.max(26,Math.round(h*.20));ctx.fillRect(0,0,w,band);
   ctx.fillStyle='#fff';ctx.font=`bold ${Math.max(10,Math.round(h*.065))}px sans-serif`;
   ctx.textBaseline='middle';ctx.fillText('LUMBERKINGS｜木作設備中心',Math.round(w*.035),band/2);
-  const qrSize=Math.min(Math.round(h*.70),Math.round(w*.40));
-  const qr=await loadLabelQrImage(toolShareUrl(t));
-  ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,w-qrSize-Math.round(w*.035),band+Math.round(h*.045),qrSize,qrSize);
+  const qrSize=Math.min(Math.round(h*.76),Math.round(w*.47));
+  const qr=await loadLabelQrImage(t.tool_code||String(t.id));
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,w-qrSize-Math.round(w*.025),band+Math.round(h*.015),qrSize,qrSize);
   const left=Math.round(w*.045),maxTextW=w-qrSize-Math.round(w*.12);
   ctx.fillStyle='#111';ctx.textBaseline='alphabetic';
   ctx.font=`900 ${Math.max(20,Math.round(h*.15))}px sans-serif`;
@@ -2762,7 +2766,7 @@ function updateBatchSizeUI(){
   if(batchLabelWidth===60&&batchLabelHeight===50)$('batchSizeLarge').classList.add('active');
 }
 function batchLabelHtml(t,preview=true){
-  const url=toolShareUrl(t),scale=preview?5:1,unit=preview?'px':'mm';
+  const scale=preview?5:1,unit=preview?'px':'mm';
   const w=preview?batchLabelWidth*scale:batchLabelWidth,h=preview?batchLabelHeight*scale:batchLabelHeight;
   return `<div class="batch-label" style="width:${w}${unit};height:${h}${unit}">
     <div class="labelbrand">LUMBERKINGS｜木作設備中心</div>
@@ -2771,7 +2775,7 @@ function batchLabelHtml(t,preview=true){
       <div class="labelname">${esc(((t.brand||'')+' '+(t.name||'')).trim())}</div>
       <div class="labelmodel">${t.model?'型號：'+esc(t.model):''}</div>
     </div>
-    <img src="https://quickchart.io/qr?size=500&margin=1&text=${encodeURIComponent(url)}">
+    <img src="https://quickchart.io/qr?size=500&margin=4&ecLevel=H&text=${encodeURIComponent(t.tool_code||String(t.id))}">
     <div class="labelhint">掃碼查看 / 報修</div>
   </div>`;
 }
@@ -3270,6 +3274,27 @@ let batchToolIds=[];
 let batchStream=null;
 let batchScanTimer=null;
 
+let scanSuccessTimer=null;
+function playScanSuccessTone(){
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx)return;
+    const ctx=new AudioCtx(),gain=ctx.createGain(),osc=ctx.createOscillator();
+    osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);osc.frequency.setValueAtTime(1175,ctx.currentTime+.08);
+    gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.18,ctx.currentTime+.015);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.20);
+    osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.21);osc.onended=()=>ctx.close();
+  }catch(e){}
+}
+function showScanSuccess(t,action='加入'){
+  let toast=$('scanSuccessToast');
+  if(!toast){toast=document.createElement('div');toast.id='scanSuccessToast';toast.className='scan-success-toast';document.body.appendChild(toast)}
+  toast.innerHTML=`<div class="scan-ok">✓</div><b>掃描成功</b><span>${esc(t.tool_code||'')}｜${esc(t.name||'工具')}　已${esc(action)}</span>`;
+  toast.classList.remove('show');requestAnimationFrame(()=>toast.classList.add('show'));
+  clearTimeout(scanSuccessTimer);scanSuccessTimer=setTimeout(()=>toast.classList.remove('show'),1250);
+  playScanSuccessTone();
+  if(navigator.vibrate)navigator.vibrate([70,45,100]);
+}
+
 window.openBatchLoan=async()=>{
   batchToolIds=[];
   $('batchLocation').value='';
@@ -3364,6 +3389,7 @@ window.addBatchCode=(raw)=>{
   batchToolIds.push(Number(t.id));
   $('batchMsg').textContent=`已加入：${t.tool_code} ${t.name}`;
   renderBatchList();
+  showScanSuccess(t,'加入借出清單');
 };
 
 window.removeBatchTool=id=>{
@@ -3389,7 +3415,7 @@ window.startBatchCamera=async()=>{
   try{
     stopBatchCamera();
     batchStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
+      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},
       audio:false
     });
     video.srcObject=batchStream;video.style.display='block';if($('batchScanGuide'))$('batchScanGuide').style.display='flex';await video.play();
@@ -3414,9 +3440,12 @@ window.startBatchCamera=async()=>{
         if(!raw && typeof window.jsQR==='function'){
           const vw=video.videoWidth,vh=video.videoHeight;
           if(vw&&vh){
-            const maxW=900,scale=Math.min(1,maxW/vw);
-            canvas.width=Math.round(vw*scale);canvas.height=Math.round(vh*scale);
-            ctx.drawImage(video,0,0,canvas.width,canvas.height);
+            // 先放大取樣畫面中央，配合掃描框可提高小尺寸 QR 的辨識率。
+            const cropSize=Math.min(vw,vh)*.82;
+            const sx=(vw-cropSize)/2,sy=(vh-cropSize)/2;
+            const target=1000,scale=Math.min(1,target/cropSize);
+            canvas.width=Math.round(cropSize*scale);canvas.height=Math.round(cropSize*scale);
+            ctx.drawImage(video,sx,sy,cropSize,cropSize,0,0,canvas.width,canvas.height);
             const img=ctx.getImageData(0,0,canvas.width,canvas.height);
             const qr=window.jsQR(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});
             raw=qr?.data||'';
@@ -3433,7 +3462,7 @@ window.startBatchCamera=async()=>{
         }
       }catch(e){console.warn('QR 掃描失敗',e)}
       busy=false;
-    },300);
+    },170);
     msg.textContent=(detector||typeof window.jsQR==='function')
       ?'相機已開啟，請將 QR Code 放在畫面中央'
       :'相機已開啟，但 QR 掃描元件尚未載入，請確認網路後重新開啟。';
@@ -3540,6 +3569,7 @@ window.addReturnCode=(raw)=>{
   returnToolIds.push(Number(t.id));
   $('returnMsg').textContent=`已加入：${t.tool_code} ${t.name}`;
   renderReturnList();
+  showScanSuccess(t,'加入歸還清單');
 };
 
 window.removeReturnTool=id=>{
@@ -3560,32 +3590,46 @@ function renderReturnList(){
 }
 
 window.startReturnCamera=async()=>{
-  const video=$('returnVideo'),msg=$('returnMsg');
-  if(!('BarcodeDetector' in window)){
-    msg.textContent='這台瀏覽器目前不支援直接辨識 QR Code，可直接輸入工具代碼。';
+  const video=$('returnVideo'),msg=$('returnMsg'),canvas=$('batchScanCanvas');
+  if(!navigator.mediaDevices?.getUserMedia){
+    msg.textContent='這台瀏覽器無法開啟相機，可直接輸入工具代碼。';
     return;
   }
   try{
     stopReturnCamera();
-    returnStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    returnStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
     video.srcObject=returnStream;
     video.style.display='block';
     await video.play();
-    const detector=new BarcodeDetector({formats:['qr_code']});
-    let busy=false;
+    let detector=null;
+    if('BarcodeDetector' in window){try{detector=new BarcodeDetector({formats:['qr_code']})}catch(e){}}
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    let busy=false,lastCode='',lastAt=0;
     returnScanTimer=setInterval(async()=>{
       if(busy||video.readyState<2)return;
       busy=true;
       try{
-        const codes=await detector.detect(video);
-        if(codes?.length){
-          addReturnCode(codes[0].rawValue);
+        let raw='';
+        if(detector){const codes=await detector.detect(video);raw=codes?.[0]?.rawValue||''}
+        if(!raw&&typeof window.jsQR==='function'){
+          const vw=video.videoWidth,vh=video.videoHeight;
+          if(vw&&vh){
+            const cropSize=Math.min(vw,vh)*.82,sx=(vw-cropSize)/2,sy=(vh-cropSize)/2;
+            const scale=Math.min(1,1000/cropSize);
+            canvas.width=Math.round(cropSize*scale);canvas.height=Math.round(cropSize*scale);
+            ctx.drawImage(video,sx,sy,cropSize,cropSize,0,0,canvas.width,canvas.height);
+            const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+            raw=window.jsQR(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'})?.data||'';
+          }
+        }
+        const now=Date.now();
+        if(raw&&(raw!==lastCode||now-lastAt>1800)){
+          lastCode=raw;lastAt=now;addReturnCode(raw);
           if(navigator.vibrate)navigator.vibrate(80);
-          await new Promise(r=>setTimeout(r,700));
         }
       }catch(e){}
       busy=false;
-    },450);
+    },170);
     msg.textContent='相機已開啟，可連續掃描要歸還的工具';
   }catch(e){
     msg.textContent='無法開啟相機，請確認瀏覽器已允許相機權限。';
