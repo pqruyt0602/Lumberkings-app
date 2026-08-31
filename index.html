@@ -1033,7 +1033,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.29</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.30</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -4906,9 +4906,11 @@ async function loadWorkStats(){
   let totalUnits=0,totalCost=0,totalBonus=0,totalOvertimePay=0,totalOvertimeHours=0;
 
   const currentWageByName=new Map();
-  if(isAdmin()){
-    await loadWorkMaster();
-    workers.forEach(w=>currentWageByName.set(w.worker_name,Number(w.daily_wage||0)));
+  if(showMoney){
+    // 管理員與管理員助理使用同一份目前日薪，只補足沒有日薪快照的舊記工。
+    const {data:wageRows,error:wageError}=await db.rpc('get_worker_wages_for_stats');
+    if(wageError)return alert('日薪資料讀取失敗：'+wageError.message+'\n請先執行 V17.27.2.1.30 的薪資權限 SQL。');
+    (wageRows||[]).forEach(w=>currentWageByName.set(w.worker_name,Number(w.daily_wage||0)));
   }
 
   let totalLeaveDeduction=0;
