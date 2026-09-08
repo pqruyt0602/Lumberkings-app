@@ -1034,7 +1034,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.35</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.36</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2637,14 +2637,14 @@ window.siteStocktakeCheckAll=checked=>{
   siteStocktakeChecked=checked?new Set(ids):new Set();renderSiteToolStocktake();
 };
 
-// ===== V17.27.2.1.31 PDF 報價／施工進度／毛利 =====
-let quotePreviewRows=[],quoteItems=[],quoteDetectedTotals={subtotal:0,tax:0,total:0};
+// ===== V17.27.2.1.36 PDF 報價／施工進度／毛利 =====
+let quotePreviewRows=[],quoteItems=[],quoteDetectedTotals={subtotal:0,tax:0,total:0},quoteExcludedPaymentAmounts=new Set();
 window.openQuoteManager=async()=>{
   if(!canViewWorkStats())return alert('只有管理員或管理員助理可以查看報價與毛利');
   try{await refreshProjectSites()}catch(e){return alert('案場讀取失敗：'+e.message)}
   const sites=allProjectSites();
   $('quoteSite').innerHTML='<option value="">請選擇案場</option>'+sites.map(s=>`<option value="${Number(s.id)}" data-name="${esc(s.site_name)}">${esc(s.site_name)}</option>`).join('');
-  quotePreviewRows=[];quoteDetectedTotals={subtotal:0,tax:0,total:0};$('quoteImportPreview').innerHTML='';$('quoteDetectedSummary').style.display='none';$('quoteImportActions').style.display='none';$('quoteParseStatus').textContent='';
+  quotePreviewRows=[];quoteDetectedTotals={subtotal:0,tax:0,total:0};quoteExcludedPaymentAmounts=new Set();$('quoteImportPreview').innerHTML='';$('quoteDetectedSummary').style.display='none';$('quoteImportActions').style.display='none';$('quoteParseStatus').textContent='';
   $('quoteManagerModal').classList.add('open');
 };
 window.closeQuoteManager=()=>$('quoteManagerModal').classList.remove('open');
@@ -2652,7 +2652,7 @@ function quoteSelectedSite(){const opt=$('quoteSite')?.selectedOptions?.[0];retu
 function numberFromQuote(v){const n=Number(String(v||'').replace(/[$,，\s]/g,''));return Number.isFinite(n)?n:0}
 function isQuoteSummaryLine(text=''){
   const normalized=String(text).replace(/[\s：:()（）]/g,'');
-  return /(工程總價|報價總價|總價|總金額|工程款總額|工程總額|本頁合計|累計|小計|合計|總計|未稅金額|含稅金額|未稅合計|含稅合計|營業稅|稅額|稅金|折扣|優惠|訂金|定金|尾款|應付金額|實付金額)/.test(normalized);
+  return /(工程總價|報價總價|總價|總金額|工程款總額|工程總額|本頁合計|累計|小計|合計|總計|未稅金額|含稅金額|未稅合計|含稅合計|營業稅|稅額|稅金|折扣|優惠|訂金|定金|預付款|首期款|第一期款|二期款|第二期款|三期款|第三期款|尾款|付款階段|付款條件|請款|應付金額|實付金額)/.test(normalized);
 }
 function quoteAmountsInLine(text=''){
   return (String(text).match(/\$?\s*[\d,，]+(?:\.\d+)?/g)||[]).map(numberFromQuote).filter(n=>n>0);
@@ -2667,6 +2667,19 @@ function detectQuoteTotals(lines=[]){
   if(!subtotal&&total)subtotal=Math.round(total/1.05);
   if(!total&&subtotal)total=subtotal;
   return{subtotal,tax:Math.max(0,total-subtotal),total};
+}
+function detectPaymentAmounts(lines=[]){
+  const found=new Set(),payment=/(訂金|定金|預付款|首期款|第一期款|二期款|第二期款|三期款|第三期款|尾款|請款)/;
+  lines.forEach((parts,i)=>{
+    const text=parts.join(' ');if(!payment.test(text))return;
+    // 只取付款名稱後緊接的金額，避免同一行「含稅總價」被誤當成訂金。
+    const direct=text.match(/(?:訂金|定金|預付款|首期款|第一期款|二期款|第二期款|三期款|第三期款|尾款|請款)[^\d]{0,15}\$?\s*([\d,，]+(?:\.\d+)?)/);
+    if(direct){const n=numberFromQuote(direct[1]);if(n>0)found.add(n);return}
+    // PDF 若把名稱與金額拆成上下兩列，只檢查下一列的第一個純金額。
+    const next=(lines[i+1]||[]).map(x=>String(x).trim()).find(x=>/^\$?\s*[\d,，]+(?:\.\d+)?$/.test(x));
+    const n=numberFromQuote(next);if(n>0)found.add(n);
+  });
+  return found;
 }
 function renderDetectedQuoteTotals(){
   const el=$('quoteDetectedSummary'),t=quoteDetectedTotals;if(!el)return;
@@ -2734,7 +2747,9 @@ window.parseQuotePdf=async()=>{
   try{
     const lines=await extractPdfQuoteLines(file);
     quoteDetectedTotals=detectQuoteTotals(lines);renderDetectedQuoteTotals();
+    quoteExcludedPaymentAmounts=detectPaymentAmounts(lines);
     quotePreviewRows=lines.map((parts,i)=>parseQuoteLine(parts,i)).filter(Boolean)
+      .filter(row=>!quoteExcludedPaymentAmounts.has(Number(row.quote_amount)))
       .map((row,i)=>({...row,item_no:row.item_no||String(i+1)}));
     if(!quotePreviewRows.length)quotePreviewRows=[{item_no:'1',item_name:'',unit:'',quantity:1,unit_price:0,quote_amount:0}];
     renderQuotePreview();$('quoteImportActions').style.display='grid';
@@ -2750,7 +2765,7 @@ window.updateQuotePreview=(i,field,value)=>{if(!quotePreviewRows[i])return;quote
 window.deleteQuotePreviewRow=i=>{quotePreviewRows.splice(i,1);renderQuotePreview()};
 window.addQuotePreviewRow=()=>{quotePreviewRows.push({item_no:String(quotePreviewRows.length+1),item_name:'',unit:'',quantity:1,unit_price:0,quote_amount:0});renderQuotePreview()};
 window.saveImportedQuoteItems=async()=>{
-  const site=quoteSelectedSite(),rows=quotePreviewRows.filter(x=>x.item_name.trim()&&Number(x.quote_amount)>0);if(!site||!rows.length)return alert('沒有可匯入的施工項目');
+  const site=quoteSelectedSite(),rows=quotePreviewRows.filter(x=>x.item_name.trim()&&Number(x.quote_amount)>0&&!isQuoteSummaryLine(x.item_name)&&!quoteExcludedPaymentAmounts.has(Number(x.quote_amount)));if(!site||!rows.length)return alert('沒有可匯入的施工項目');
   const payload=rows.map((r,i)=>({...r,site_id:site.id,site_name:site.name,status:'未施工',progress_percent:0,sort_order:i+1,source_file:$('quotePdfFile')?.files?.[0]?.name||null,created_by:currentUser?.id||null}));
   const {error}=await db.from('project_quote_items').insert(payload);if(error)return alert('匯入失敗：'+error.message+'\n請先執行本版 SQL');
   const itemSum=rows.reduce((s,x)=>s+Number(x.quote_amount||0),0),subtotal=quoteDetectedTotals.subtotal||itemSum,total=quoteDetectedTotals.total||subtotal;
