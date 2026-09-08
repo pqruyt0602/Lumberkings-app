@@ -1026,6 +1026,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 .site-stock-progress{height:10px;border-radius:999px;background:#423d38;overflow:hidden;margin:10px 0 14px}.site-stock-progress>div{height:100%;width:0;background:#4ea66d;transition:width .2s}
 .site-stock-category{border:1px solid #514940;border-radius:14px;overflow:hidden;margin-bottom:10px;background:#242321}.site-stock-category summary{min-height:54px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;background:#302d29;color:#fff;list-style:none}.site-stock-category summary::-webkit-details-marker{display:none}.site-stock-category summary b{font-size:15px}.site-stock-category summary span{font-size:12px;color:#d1c3b6}
 .site-stock-row{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:center;min-height:68px;padding:10px 12px;border-top:1px solid #47413b;color:#fff}.site-stock-row input{width:23px;height:23px;accent-color:#4ea66d}.site-stock-row b{font-size:14px}.site-stock-row small{display:block;margin-top:4px;color:#bdb3a9;font-size:12px;line-height:1.45}.site-stock-row.checked{background:#23352a}.site-stock-empty{padding:26px 12px;text-align:center;color:#aaa}
+.quote-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.quote-summary>div{padding:11px;border:1px solid var(--line);border-radius:12px;background:#292724}.quote-summary span{display:block;color:var(--muted);font-size:10px}.quote-summary b{display:block;margin-top:3px;font-size:17px}.quote-profit{color:#78d99a}.quote-loss{color:#ff8b8b}.quote-item{border:1px solid var(--line);border-radius:14px;background:#292724;padding:12px;margin-bottom:9px}.quote-item-head{display:flex;justify-content:space-between;gap:8px}.quote-item-head b{font-size:14px}.quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.quote-grid label{font-size:10px;color:var(--muted)}.quote-grid input,.quote-grid select{width:100%;margin-top:4px;padding:9px;border:1px solid var(--line);border-radius:9px;background:#1f1e1c;color:var(--ink)}.quote-progress{grid-column:1/-1}.quote-import-preview{max-height:45vh;overflow:auto;margin-top:10px}.quote-import-row{display:grid;grid-template-columns:56px 1fr 80px;gap:6px;margin-bottom:6px}.quote-import-row input{min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:#292724;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -1033,7 +1034,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.30</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.31</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1107,6 +1108,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
     <button id="personalAttendanceBtn" class="btn secondary wide" type="button" onclick="openPersonalAttendance()">👤 個人出勤月曆</button>
     <button class="btn secondary wide" type="button" onclick="openProjectProgress()">📷 今日進度回報／確認</button>
     <button id="projectPnlBtn" class="btn secondary wide" type="button" onclick="openProjectPnl()">📊 案場損益</button>
+    <button id="quoteManagerBtn" class="btn secondary wide" type="button" onclick="openQuoteManager()">📄 報價施工／毛利</button>
   </div>
 
   <div id="attendanceGroups" class="attendance-groups"></div>
@@ -1174,6 +1176,19 @@ html,body,.app{background:var(--bg);color:var(--ink)}
   <div style="display:flex;justify-content:flex-end;gap:7px;margin-bottom:10px"><button class="mini" type="button" onclick="siteStocktakeCheckAll(true)">全部盤到</button><button class="mini" type="button" onclick="siteStocktakeCheckAll(false)">全部清除</button></div>
   <div id="siteStocktakeList"></div>
   <button class="btn secondary" type="button" onclick="closeSiteToolStocktake()">關閉</button>
+</div></div>
+<div id="quoteManagerModal" class="modal"><div class="modalbox">
+  <h3>📄 報價施工／毛利</h3>
+  <p class="meta">匯入 PDF 報價單，自動整理施工項目並追蹤完成度與毛利。</p>
+  <div class="label">案場</div><select id="quoteSite" class="select" onchange="loadQuoteItems()"></select>
+  <div class="label">PDF 報價單</div><input id="quotePdfFile" class="input" type="file" accept="application/pdf,.pdf">
+  <button id="parseQuoteBtn" class="btn secondary" type="button" onclick="parseQuotePdf()">辨識 PDF 施工項目</button>
+  <div id="quoteParseStatus" class="meta"></div><div id="quoteImportPreview" class="quote-import-preview"></div>
+  <div id="quoteImportActions" style="display:none" class="modalactions"><button class="btn secondary" type="button" onclick="addQuotePreviewRow()">＋新增一項</button><button class="btn" type="button" onclick="saveImportedQuoteItems()">確認匯入</button></div>
+  <div id="quoteSummary" class="quote-summary"></div>
+  <div class="meta">項目人工成本依報價金額比例分攤；整場人工成本直接使用記工資料。</div>
+  <div id="quoteItemList"></div>
+  <button class="btn secondary" type="button" onclick="closeQuoteManager()">關閉</button>
 </div></div>
 <div id="qrModal" class="modal"><div class="modalbox qrbox"><h3>工具 QR Code</h3><p id="qrTitle" class="meta"></p><img id="qrImage" class="qrimg" alt="工具 QR Code"><div id="qrUrl" class="qrurl"></div><button class="btn secondary" onclick="closeQr()">關閉</button></div></div><div id="labelModal" class="modal"><div class="modalbox">
 <h3>QR 工具標籤列印</h3>
@@ -1331,6 +1346,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script type="module">
 // Lumberkings 木作設備中心 V17.10.1｜管理員助理可查看完整薪資統計
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -2620,6 +2636,94 @@ window.siteStocktakeCheckAll=checked=>{
   const ids=selectedSiteStockRows().map(x=>Number(x.tool.id));
   siteStocktakeChecked=checked?new Set(ids):new Set();renderSiteToolStocktake();
 };
+
+// ===== V17.27.2.1.31 PDF 報價／施工進度／毛利 =====
+let quotePreviewRows=[],quoteItems=[];
+window.openQuoteManager=async()=>{
+  if(!canViewWorkStats())return alert('只有管理員或管理員助理可以查看報價與毛利');
+  try{await refreshProjectSites()}catch(e){return alert('案場讀取失敗：'+e.message)}
+  const sites=allProjectSites();
+  $('quoteSite').innerHTML='<option value="">請選擇案場</option>'+sites.map(s=>`<option value="${Number(s.id)}" data-name="${esc(s.site_name)}">${esc(s.site_name)}</option>`).join('');
+  quotePreviewRows=[];$('quoteImportPreview').innerHTML='';$('quoteImportActions').style.display='none';$('quoteParseStatus').textContent='';
+  $('quoteManagerModal').classList.add('open');
+};
+window.closeQuoteManager=()=>$('quoteManagerModal').classList.remove('open');
+function quoteSelectedSite(){const opt=$('quoteSite')?.selectedOptions?.[0];return opt&&opt.value?{id:Number(opt.value),name:opt.dataset.name||opt.textContent}:null}
+function numberFromQuote(v){const n=Number(String(v||'').replace(/[$,，\s]/g,''));return Number.isFinite(n)?n:0}
+function parseQuoteLine(parts,index){
+  const clean=parts.map(x=>String(x||'').trim()).filter(Boolean);
+  const full=clean.join(' ');
+  if(!full||/(項次|施工項目|工程項目|單位|數量|單價|複價|合計|小計|總計|稅金|未稅|含稅|備註)/.test(full))return null;
+  const numeric=clean.map((v,i)=>({i,v,n:numberFromQuote(v)})).filter(x=>/^[-+]?[$]?[\d,，]+(?:\.\d+)?$/.test(x.v.replace(/\s/g,'')));
+  if(!numeric.length)return null;
+  const amount=numeric[numeric.length-1].n;if(amount<=0)return null;
+  const unitPrice=numeric.length>=2?numeric[numeric.length-2].n:amount;
+  const quantity=numeric.length>=3?numeric[numeric.length-3].n:1;
+  let itemNo='';let start=0;
+  if(/^\d+[.、]?$/i.test(clean[0]||'')){itemNo=clean[0].replace(/[.、]/g,'');start=1}
+  const unitWords=['式','項','才','坪','尺','米','公尺','平方公尺','樘','組','座','台','支','片','面','個','只','工','天'];
+  const firstQtyIndex=numeric.length>=3?numeric[numeric.length-3].i:numeric[numeric.length-1].i;
+  let unit='';for(let i=start;i<firstQtyIndex;i++){if(unitWords.includes(clean[i]))unit=clean[i]}
+  const excluded=new Set(numeric.map(x=>x.i));
+  const name=clean.map((v,i)=>({v,i})).filter(x=>x.i>=start&&x.i<firstQtyIndex&&!excluded.has(x.i)&&x.v!==unit).map(x=>x.v).join(' ').trim();
+  if(name.length<2)return null;
+  return{item_no:itemNo||String(index+1),item_name:name,unit,quantity:quantity||1,unit_price:unitPrice||amount,quote_amount:amount};
+}
+async function extractPdfQuoteLines(file){
+  if(!window.pdfjsLib)throw new Error('PDF 辨識元件尚未載入，請確認網路後重試');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,lines=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    $('quoteParseStatus').textContent=`正在辨識第 ${p} / ${pdf.numPages} 頁…`;
+    const page=await pdf.getPage(p),content=await page.getTextContent(),groups=[];
+    content.items.forEach(item=>{
+      const y=Math.round(item.transform[5]);let g=groups.find(x=>Math.abs(x.y-y)<=2);
+      if(!g){g={y,items:[]};groups.push(g)}g.items.push({x:item.transform[4],text:item.str});
+    });
+    groups.sort((a,b)=>b.y-a.y).forEach(g=>lines.push(g.items.sort((a,b)=>a.x-b.x).map(x=>x.text)));
+  }
+  return lines;
+}
+window.parseQuotePdf=async()=>{
+  const site=quoteSelectedSite(),file=$('quotePdfFile')?.files?.[0];
+  if(!site)return alert('請先選擇案場');if(!file)return alert('請選擇 PDF 報價單');
+  const btn=$('parseQuoteBtn');btn.disabled=true;btn.textContent='辨識中…';
+  try{
+    const lines=await extractPdfQuoteLines(file);
+    quotePreviewRows=lines.map((parts,i)=>parseQuoteLine(parts,i)).filter(Boolean);
+    if(!quotePreviewRows.length)quotePreviewRows=[{item_no:'1',item_name:'',unit:'',quantity:1,unit_price:0,quote_amount:0}];
+    renderQuotePreview();$('quoteImportActions').style.display='grid';
+    $('quoteParseStatus').textContent=`辨識完成，共找到 ${quotePreviewRows.filter(x=>x.item_name).length} 個可能施工項目，請確認後匯入。`;
+  }catch(e){$('quoteParseStatus').textContent='辨識失敗：'+e.message}
+  finally{btn.disabled=false;btn.textContent='辨識 PDF 施工項目'}
+};
+function renderQuotePreview(){
+  $('quoteImportPreview').innerHTML=quotePreviewRows.map((r,i)=>`<div class="quote-item" data-preview="${i}"><div class="quote-import-row"><input value="${esc(r.item_no)}" placeholder="項次" oninput="updateQuotePreview(${i},'item_no',this.value)"><input value="${esc(r.item_name)}" placeholder="施工項目" oninput="updateQuotePreview(${i},'item_name',this.value)"><input value="${esc(r.unit)}" placeholder="單位" oninput="updateQuotePreview(${i},'unit',this.value)"></div><div class="quote-grid"><label>數量<input type="number" step="0.01" value="${r.quantity}" oninput="updateQuotePreview(${i},'quantity',this.value)"></label><label>單價<input type="number" value="${r.unit_price}" oninput="updateQuotePreview(${i},'unit_price',this.value)"></label><label>報價金額<input type="number" value="${r.quote_amount}" oninput="updateQuotePreview(${i},'quote_amount',this.value)"></label><label>操作<button class="mini danger" type="button" onclick="deleteQuotePreviewRow(${i})">刪除</button></label></div></div>`).join('')
+}
+window.renderQuotePreview=renderQuotePreview;
+window.updateQuotePreview=(i,field,value)=>{if(!quotePreviewRows[i])return;quotePreviewRows[i][field]=['quantity','unit_price','quote_amount'].includes(field)?numberFromQuote(value):value};
+window.deleteQuotePreviewRow=i=>{quotePreviewRows.splice(i,1);renderQuotePreview()};
+window.addQuotePreviewRow=()=>{quotePreviewRows.push({item_no:String(quotePreviewRows.length+1),item_name:'',unit:'',quantity:1,unit_price:0,quote_amount:0});renderQuotePreview()};
+window.saveImportedQuoteItems=async()=>{
+  const site=quoteSelectedSite(),rows=quotePreviewRows.filter(x=>x.item_name.trim()&&Number(x.quote_amount)>0);if(!site||!rows.length)return alert('沒有可匯入的施工項目');
+  const payload=rows.map((r,i)=>({...r,site_id:site.id,site_name:site.name,status:'未施工',progress_percent:0,sort_order:i+1,source_file:$('quotePdfFile')?.files?.[0]?.name||null,created_by:currentUser?.id||null}));
+  const {error}=await db.from('project_quote_items').insert(payload);if(error)return alert('匯入失敗：'+error.message+'\n請先執行本版 SQL');
+  quotePreviewRows=[];$('quoteImportPreview').innerHTML='';$('quoteImportActions').style.display='none';$('quoteParseStatus').textContent='報價項目已匯入';await loadQuoteItems();
+};
+window.loadQuoteItems=async()=>{
+  const site=quoteSelectedSite();if(!site){$('quoteSummary').innerHTML='';$('quoteItemList').innerHTML='';return}
+  const {data,error}=await db.from('project_quote_items').select('*').eq('site_id',site.id).order('sort_order').order('id');if(error){$('quoteItemList').innerHTML='<div class="empty">讀取失敗：'+esc(error.message)+'</div>';return}
+  quoteItems=data||[];let labor=0;try{labor=(await projectLaborCost(site.name)).total}catch(e){console.warn(e)}
+  const revenue=quoteItems.reduce((s,x)=>s+Number(x.quote_amount||0),0),extraCosts=quoteItems.reduce((s,x)=>s+Number(x.material_cost||0)+Number(x.subcontract_cost||0)+Number(x.other_cost||0),0),totalCost=labor+extraCosts,profit=revenue-totalCost,margin=revenue?profit/revenue*100:0;
+  $('quoteSummary').innerHTML=`<div><span>案場報價</span><b>${money(revenue)}</b></div><div><span>記工人工</span><b>${money(labor)}</b></div><div><span>總成本</span><b>${money(totalCost)}</b></div><div><span>毛利／毛利率</span><b class="${profit>=0?'quote-profit':'quote-loss'}">${money(profit)}｜${margin.toFixed(1)}%</b></div>`;
+  $('quoteItemList').innerHTML=quoteItems.length?quoteItems.map(x=>{
+    const allocated=revenue?labor*Number(x.quote_amount||0)/revenue:0,cost=allocated+Number(x.material_cost||0)+Number(x.subcontract_cost||0)+Number(x.other_cost||0),p=Number(x.quote_amount||0)-cost,m=Number(x.quote_amount||0)?p/Number(x.quote_amount)*100:0;
+    return `<div class="quote-item" id="quoteItem-${x.id}"><div class="quote-item-head"><b>${esc(x.item_no||'')}｜${esc(x.item_name)}</b><span class="${p>=0?'quote-profit':'quote-loss'}">${m.toFixed(1)}%</span></div><div class="meta">報價 ${money(x.quote_amount)}｜分攤人工 ${money(allocated)}｜項目毛利 ${money(p)}</div><div class="quote-grid"><label>狀態<select data-f="status" onchange="syncQuoteStatus(${x.id},this.value)"><option ${x.status==='未施工'?'selected':''}>未施工</option><option ${x.status==='施工中'?'selected':''}>施工中</option><option ${x.status==='已完成'?'selected':''}>已完成</option></select></label><label>完成百分比<input data-f="progress_percent" type="number" min="0" max="100" value="${Number(x.progress_percent||0)}"></label><label>材料成本<input data-f="material_cost" type="number" min="0" value="${Number(x.material_cost||0)}"></label><label>外包成本<input data-f="subcontract_cost" type="number" min="0" value="${Number(x.subcontract_cost||0)}"></label><label>其他成本<input data-f="other_cost" type="number" min="0" value="${Number(x.other_cost||0)}"></label><label>操作<button class="mini" type="button" onclick="saveQuoteItem(${x.id})">儲存</button> <button class="mini danger" type="button" onclick="deleteQuoteItem(${x.id})">刪除</button></label></div></div>`;
+  }).join(''):'<div class="empty">尚未匯入報價單</div>';
+};
+window.syncQuoteStatus=(id,status)=>{const box=$('quoteItem-'+id),input=box?.querySelector('[data-f="progress_percent"]');if(!input)return;if(status==='未施工')input.value=0;if(status==='施工中'&&Number(input.value)===0)input.value=50;if(status==='已完成')input.value=100};
+window.saveQuoteItem=async id=>{const box=$('quoteItem-'+id);if(!box)return;const val=f=>box.querySelector(`[data-f="${f}"]`)?.value;let progress=Math.max(0,Math.min(100,Number(val('progress_percent')||0))),status=val('status');if(progress===0)status='未施工';else if(progress===100)status='已完成';else status='施工中';const {error}=await db.from('project_quote_items').update({status,progress_percent:progress,material_cost:Number(val('material_cost')||0),subcontract_cost:Number(val('subcontract_cost')||0),other_cost:Number(val('other_cost')||0),updated_at:new Date().toISOString()}).eq('id',id);if(error)return alert('儲存失敗：'+error.message);await loadQuoteItems()};
+window.deleteQuoteItem=async id=>{if(!confirm('確定刪除這個施工項目？'))return;const {error}=await db.from('project_quote_items').delete().eq('id',id);if(error)return alert('刪除失敗：'+error.message);await loadQuoteItems()};
 
 let currentLabelWidth=40,currentLabelHeight=25,currentLabelToolId=null;
 
@@ -5260,6 +5364,8 @@ function fillProjectSiteSelect(id){
 function syncProjectButtons(){
   const pnl=$('projectPnlBtn');
   if(pnl)pnl.style.display=canViewWorkStats()?'block':'none';
+  const quote=$('quoteManagerBtn');
+  if(quote)quote.style.display=canViewWorkStats()?'block':'none';
   const personal=$('personalAttendanceBtn');
   if(personal)personal.style.display=currentUser?'block':'none';
 }
