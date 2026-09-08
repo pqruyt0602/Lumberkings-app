@@ -1034,7 +1034,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.32</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.33</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -2651,7 +2651,17 @@ window.closeQuoteManager=()=>$('quoteManagerModal').classList.remove('open');
 function quoteSelectedSite(){const opt=$('quoteSite')?.selectedOptions?.[0];return opt&&opt.value?{id:Number(opt.value),name:opt.dataset.name||opt.textContent}:null}
 function numberFromQuote(v){const n=Number(String(v||'').replace(/[$,，\s]/g,''));return Number.isFinite(n)?n:0}
 function parseQuoteLine(parts,index){
-  const clean=parts.map(x=>String(x||'').trim()).filter(Boolean);
+  const unitWords=['式','項','才','坪','尺','呎','吋','碼','米','公尺','公分','mm','cm','m','m2','m²','㎡','樘','組','套','座','台','支','片','張','面','個','只','件','盒','包','捲','桶','車','趟','顆','盞','孔','口','間','工','天'];
+  const unitPattern=unitWords.slice().sort((a,b)=>b.length-a.length).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+  const clean=[];
+  parts.map(x=>String(x||'').trim()).filter(Boolean).forEach(token=>{
+    // 兼容 PDF 把單位和數量黏在一起，例如「5.5尺」或「尺5.5」。
+    let m=token.match(new RegExp('^([\\d,，]+(?:\\.\\d+)?)\\s*('+unitPattern+')$','i'));
+    if(m){clean.push(m[1],m[2]);return}
+    m=token.match(new RegExp('^('+unitPattern+')\\s*([\\d,，]+(?:\\.\\d+)?)$','i'));
+    if(m){clean.push(m[1],m[2]);return}
+    clean.push(token);
+  });
   const full=clean.join(' ');
   if(!full||/(項次|施工項目|工程項目|單位|數量|單價|複價|合計|小計|總計|稅金|未稅|含稅|備註)/.test(full))return null;
   const numeric=clean.map((v,i)=>({i,v,n:numberFromQuote(v)})).filter(x=>/^[-+]?[$]?[\d,，]+(?:\.\d+)?$/.test(x.v.replace(/\s/g,'')));
@@ -2661,9 +2671,13 @@ function parseQuoteLine(parts,index){
   const quantity=numeric.length>=3?numeric[numeric.length-3].n:1;
   let itemNo='';let start=0;
   if(/^\d+[.、]?$/i.test(clean[0]||'')){itemNo=clean[0].replace(/[.、]/g,'');start=1}
-  const unitWords=['式','項','才','坪','尺','米','公尺','平方公尺','樘','組','座','台','支','片','面','個','只','工','天'];
   const firstQtyIndex=numeric.length>=3?numeric[numeric.length-3].i:numeric[numeric.length-1].i;
-  let unit='';for(let i=start;i<firstQtyIndex;i++){if(unitWords.includes(clean[i]))unit=clean[i]}
+  // 單位可能在數量前或數量後，因此掃描整個項目列中的獨立單位欄。
+  let unit='';
+  for(let i=start;i<clean.length;i++){
+    const found=unitWords.find(x=>x.toLowerCase()===String(clean[i]).toLowerCase());
+    if(found){unit=clean[i];if(Math.abs(i-firstQtyIndex)<=2)break}
+  }
   const excluded=new Set(numeric.map(x=>x.i));
   let name=clean.map((v,i)=>({v,i})).filter(x=>x.i>=start&&x.i<firstQtyIndex&&!excluded.has(x.i)&&x.v!==unit).map(x=>x.v).join(' ').trim();
   // 有些 PDF 會把項次黏在施工名稱前面，例如「7 Post機台」。
@@ -2681,7 +2695,8 @@ async function extractPdfQuoteLines(file){
     $('quoteParseStatus').textContent=`正在辨識第 ${p} / ${pdf.numPages} 頁…`;
     const page=await pdf.getPage(p),content=await page.getTextContent(),groups=[];
     content.items.forEach(item=>{
-      const y=Math.round(item.transform[5]);let g=groups.find(x=>Math.abs(x.y-y)<=2);
+      // 報價表不同欄位的文字基線常差 3～4px，放寬後才能把單位併回同一列。
+      const y=Math.round(item.transform[5]);let g=groups.find(x=>Math.abs(x.y-y)<=4);
       if(!g){g={y,items:[]};groups.push(g)}g.items.push({x:item.transform[4],text:item.str});
     });
     groups.sort((a,b)=>b.y-a.y).forEach(g=>lines.push(g.items.sort((a,b)=>a.x-b.x).map(x=>x.text)));
