@@ -3,7 +3,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8"/>
-<meta name="app-version" content="17.27.2.1.41"/>
+<meta name="app-version" content="17.27.2.1.42"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#171717"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -828,6 +828,11 @@ html,body,.app{background:var(--bg);color:var(--ink)}
 
 /* ===== V17.27.2.1.3 多案場工時分攤 ===== */
 .work-units-hint{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
+.work-allocation-list{display:grid;gap:8px;margin-top:9px}
+.work-allocation-row{display:grid;grid-template-columns:minmax(0,1fr) 94px;gap:12px;align-items:center;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:13px}
+.work-allocation-info{min-width:0}.work-allocation-info strong{display:block;font-size:14px;line-height:1.45;overflow-wrap:anywhere}.work-allocation-info small{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+.work-allocation-input label{display:block;text-align:center;color:var(--muted);font-size:10px;margin-bottom:4px}.work-allocation-input div{display:flex;align-items:center;gap:5px}.work-allocation-input input{width:70px!important;min-width:0;padding:10px 7px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font-size:16px;font-weight:800;text-align:center}.work-allocation-input b{font-size:12px;color:var(--accent)}
+.work-allocation-total{position:sticky;bottom:-1px;z-index:2;margin-top:9px!important;padding:9px 10px;border-radius:10px;background:#332b22;color:#e0b983!important;font-size:11px!important;font-weight:800}
 
 /* ===== V17.27.2.1.3 已完工案場管理 ===== */
 .completed-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -1035,7 +1040,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.41</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.42</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -3508,7 +3513,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.41';
+const APP_VERSION='17.27.2.1.42';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3573,7 +3578,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.41',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.42',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
@@ -4339,7 +4344,8 @@ async function loadWorkQuoteItemsForLog(){
   const {data,error}=await db.rpc('get_project_quote_work_items',{p_site_id:siteId});
   if(error){workQuoteItems=[];box.innerHTML='<div class="empty">施工項目讀取失敗，請先執行 V17.27.2.1.40 SQL</div>';return}
   workQuoteItems=data||[];
-  box.innerHTML=workQuoteItems.length?workQuoteItems.map(x=>`<div class="worker-row"><div class="worker-main"><strong>${x.is_extra?'<span class="quote-extra-tag">追加</span>':''}${esc(x.item_no||'')}｜${esc(x.item_name)}</strong><br><small>數量 ${Number(x.quantity||0).toLocaleString('zh-TW',{maximumFractionDigits:3})} ${esc(x.unit||'單位待確認')}</small></div><input class="work-item-allocation" data-item-id="${Number(x.id)}" type="number" min="0" step="0.125" value="0" style="width:82px" oninput="updateWorkAllocationTotal()"></div>`).join(''):'<div class="empty">此案場尚未匯入施工項目；本次仍可正常記工。</div>';
+  box.classList.add('work-allocation-list');
+  box.innerHTML=workQuoteItems.length?workQuoteItems.map(x=>`<div class="work-allocation-row"><div class="work-allocation-info"><strong>${x.is_extra?'<span class="quote-extra-tag">追加</span>':''}${esc(x.item_no||'')}｜${esc(x.item_name)}</strong><small>報價數量：${Number(x.quantity||0).toLocaleString('zh-TW',{maximumFractionDigits:3})} ${esc(x.unit||'單位待確認')}</small></div><div class="work-allocation-input"><label>分攤工數</label><div><input class="work-item-allocation" data-item-id="${Number(x.id)}" type="number" min="0" step="0.125" value="0" inputmode="decimal" oninput="updateWorkAllocationTotal()"><b>工</b></div></div></div>`).join(''):'<div class="empty">此案場尚未匯入施工項目；本次仍可正常記工。</div>';
   updateWorkAllocationTotal();
 }
 window.loadWorkQuoteItemsForLog=loadWorkQuoteItemsForLog;
@@ -5963,7 +5969,7 @@ Object.assign(window,{
       <label>施工項目工數分攤</label>
       <div class="work-units-hint">勾選人員後，將這批人的總工數分配到實際施作項目；分攤合計必須一致。</div>
       <div id="workQuoteAllocation" class="worker-list"><div class="empty">請先選擇案場</div></div>
-      <div id="workQuoteAllocationTotal" class="work-units-hint"></div>
+      <div id="workQuoteAllocationTotal" class="work-units-hint work-allocation-total"></div>
     </div>
     <div class="work-field">
       <label>備註</label>
@@ -6143,4 +6149,3 @@ Object.assign(window,{
 </script>
 
 </body></html>
-
