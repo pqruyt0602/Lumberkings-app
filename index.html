@@ -3,7 +3,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8"/>
-<meta name="app-version" content="17.27.2.1.45"/>
+<meta name="app-version" content="17.27.2.1.46"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#171717"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -994,6 +994,34 @@ html,body,.app{background:var(--bg);color:var(--ink)}
   align-items:center;justify-content:center;pointer-events:none;text-shadow:0 1px 4px #000;
 }
 
+/* ===== V17.27.2.1.46 QR 批次借出版面美化 ===== */
+#batchLoanModal{background:rgba(0,0,0,.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+#batchLoanModal .modalbox{width:min(520px,calc(100% - 24px));max-height:92vh;padding:0 18px calc(18px + env(safe-area-inset-bottom));border:1px solid #4b4138;border-radius:24px;background:#211f1d!important;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+#batchLoanModal .modalhead{position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 -18px 16px;padding:17px 18px 14px;background:linear-gradient(180deg,#2b2825 80%,rgba(43,40,37,.94));border-bottom:1px solid #453d35}
+#batchLoanModal .modalhead b{font-size:21px;letter-spacing:.02em;color:#fff}
+#batchLoanModal .modalhead .x{width:48px;height:48px;min-width:48px;padding:0;border:1px solid #5a5047;border-radius:14px;background:#35312d;color:#fff;font-size:30px;line-height:1;display:grid;place-items:center;cursor:pointer}
+#batchLoanModal .field{margin-bottom:14px}
+#batchLoanModal .field label{display:block;margin:0 0 7px;color:#e7ded5;font-size:14px;font-weight:900}
+#batchLoanModal .field select,#batchLoanModal .field input{min-height:54px!important;border:1px solid #50463d!important;border-radius:14px!important;background:#292724!important;color:#fff!important;font-size:16px!important;font-weight:700;padding:12px 14px!important}
+#batchLoanModal #batchReturnDate{color-scheme:dark}
+#batchLoanModal .scan-box{margin:18px 0;padding:16px;border:1px solid #584838;border-radius:18px;background:#292622!important;color:#fff}
+#batchLoanModal .scan-box>b{display:block;font-size:17px;color:#efbe8d}
+#batchLoanModal .scan-box .meta{color:#bcaea1!important;line-height:1.55}
+#batchLoanModal .batch-action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+#batchLoanModal .batch-action-row button,#batchLoanModal .batch-code-row button{min-height:48px;border:1px solid #6a5541;border-radius:13px;background:#35302b;color:#f1d0ad;font-size:15px;font-weight:900;cursor:pointer}
+#batchLoanModal .batch-action-row .primary{background:#9a7149;color:#fff;border-color:#b48a60}
+#batchLoanModal .batch-code-row{display:grid;grid-template-columns:minmax(0,1fr) 82px;gap:10px;margin-top:10px}
+#batchLoanModal .batch-code-row input{min-width:0;min-height:50px;padding:12px 13px;border:1px solid #50463d;border-radius:13px;background:#1d1c1a;color:#fff;font-size:16px}
+#batchLoanModal .batch-list-title{display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding:0 2px;color:#fff;font-size:16px}
+#batchLoanModal .batch-count-pill{display:inline-grid;place-items:center;min-width:32px;height:32px;margin-left:5px;padding:0 9px;border-radius:999px;background:#3b3026;color:#efb375}
+#batchLoanModal .batch-list{min-height:84px;margin:10px 0 14px;padding:8px;border:1px solid #403933;border-radius:16px;background:#1c1b19}
+#batchLoanModal .batch-list .empty{display:grid;place-items:center;min-height:66px;color:#998c80}
+#batchLoanModal .batch-row{background:#292622!important;border-color:#50463d!important;color:#fff}
+#batchLoanModal .batch-row small{color:#b8aa9d}
+#batchLoanModal .batch-submit{position:sticky;bottom:0;z-index:3;width:100%;min-height:58px;border:0;border-radius:15px;background:linear-gradient(135deg,#b18458,#8e6640);color:#fff;font-size:18px;font-weight:900;box-shadow:0 -8px 22px #211f1d,0 7px 18px rgba(0,0,0,.25);cursor:pointer}
+@media(min-width:701px){#batchLoanModal{align-items:center}#batchLoanModal .modalbox{border-radius:24px}}
+@media(max-width:700px){#batchLoanModal .modalbox{width:100%;max-height:94vh;border-radius:24px 24px 0 0;border-bottom:0}#batchLoanModal .modalhead .x{width:52px;height:52px;min-width:52px}}
+
 
 /* ===== V17.27.2.1.3 工具清單摺疊 ===== */
 .tool-list-toggle{
@@ -1041,7 +1069,7 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       <button id="openRegisterBtn" class="auth-secondary" type="button">申請帳號</button>
       <button id="forgotPasswordBtn" class="auth-secondary" type="button">忘記密碼</button><div id="loginErr" class="err"></div></div></div>
 <div id="mainApp" class="app" style="display:none">
-<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.45</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
+<div id="home" class="screen active"><div class="top"><div class="brand"><h1>木作設備中心</h1><div class="brandright"><button id="headerNotifyBell" class="notifybell" type="button" onclick="openNotifications()" aria-label="管理員通知">🔔<span id="headerNotifyCount" class="notifydot">0</span></button><div class="badge">雲端版 · <span id="appVersionText">V17.27.2.1.46</span></div></div></div><div class="subtitle">工具、維修、保養，一支手機管起來</div><div id="userLine" class="userline"></div><div class="search"><input id="search" placeholder="搜尋工具名稱、型號、位置" oninput="if(this.value.trim())openToolList(false);renderHome()"></div></div><div id="installHint" class="install">iPhone：Safari 分享 → 加入主畫面。Android：Chrome 選單 → 安裝應用程式。</div>
 <div id="adminNoticeSection" class="admin-notice">
   <button class="notice-card" type="button" onclick="openNotifications()">
     <div><b>🔔 管理員通知</b><br><span id="noticeHint">目前沒有新通知</span></div>
@@ -1304,20 +1332,20 @@ html,body,.app{background:var(--bg);color:var(--ink)}
       </div>
       <canvas id="batchScanCanvas" style="display:none"></canvas>
       <input id="batchCameraFallback" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleBatchCameraPhoto(this)">
-      <div style="display:flex;gap:8px;margin-top:8px">
+      <div class="batch-action-row">
         <button class="primary" type="button" onclick="startBatchCamera()">開啟相機掃描</button>
         <button type="button" onclick="stopBatchCamera()">停止相機</button>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
+      <div class="batch-code-row">
         <input id="batchCode" placeholder="掃碼或輸入工具代碼" onkeydown="if(event.key==='Enter'){event.preventDefault();addBatchCode()}">
         <button type="button" onclick="addBatchCode()">加入</button>
       </div>
       <div id="batchMsg" class="meta" style="margin-top:8px"></div>
     </div>
 
-    <b>待借出工具 <span id="batchCount">0</span> 支</b>
+    <b class="batch-list-title">待借出工具 <span><span id="batchCount" class="batch-count-pill">0</span> 支</span></b>
     <div id="batchList" class="batch-list"></div>
-    <button class="primary" style="width:100%" type="button" onclick="confirmBatchLoan()">確認借出全部</button>
+    <button class="primary batch-submit" type="button" onclick="confirmBatchLoan()">確認借出全部</button>
   </div>
 </div>
 
@@ -3520,7 +3548,7 @@ window.saveRepair=async()=>{
 
 if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)$('installHint').style.display='none';
 
-const APP_VERSION='17.27.2.1.45';
+const APP_VERSION='17.27.2.1.46';
 let lastVersionCheckAt=0;
 let updateInProgress=false;
 
@@ -3585,7 +3613,7 @@ async function checkForAppUpdate(force=false){
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.45',{updateViaCache:'none'});
+      const reg=await navigator.serviceWorker.register('./sw.js?v=17.27.2.1.46',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service Worker 註冊失敗',e)}
     checkForAppUpdate(true);
